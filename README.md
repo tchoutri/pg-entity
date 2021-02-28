@@ -28,6 +28,12 @@ Even though this work is mainly for my personal consumption, I encourage you to 
 necessary inspiration to build something greater. Therefore, I aim to maintain a decent documentation for this library.
 Do not hesitate to raise an issue if you feel that something is badly explained and should be improved.
 
+## TODO
+
+* [ ] Document Entity.hs
+* [ ] Have doctests for the SQL generators
+* [ ] Have a working CI
+
 ## Acknowledgements 
 
 I wish to thank
