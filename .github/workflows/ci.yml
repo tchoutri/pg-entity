@@ -13,9 +13,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        cabal: ["3.4"]
+        cabal: ["3.4.0.0"]
         ghc:
-          - "9.0.1"
+          - "8.10.4"
 
     steps:
     - uses: actions/checkout@v2
@@ -29,8 +29,10 @@ jobs:
         cabal-version: ${{ matrix.cabal }}
 
     - name: Prepare environment
-      run: echo "$HOME/.ghcup/bin" >> $GITHUB_PATH
-
+      run: |
+        sudo apt-get update && sudo apt install -y postgresql-10 libpq-dev 
+        echo "/usr/lib/postgresql/10/bin" >> $GITHUB_PATH
+        echo "$HOME/.ghcup/bin" >> $GITHUB_PATH
 
     - name: Freeze
       run: |
@@ -47,7 +49,7 @@ jobs:
     - name: Build
       run: |
         cabal configure --enable-tests --enable-benchmarks --test-show-details=direct
-        cabal build all
+        cabal build -j all
 
     - name: Test
       run: cabal test all
