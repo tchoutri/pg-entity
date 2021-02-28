@@ -1,8 +1,8 @@
 {-# LANGUAGE StrictData #-}
 {-|
   Module      : Database.PostgreSQL.Entity.DBT.Types
-  Copyright   : (c) Clément Delafargue, 2018
-                    Théophile Choutri, 2021
+  Copyright   : © Clément Delafargue, 2018
+                  Théophile Choutri, 2021
   License     : MIT
   Maintainer  : theophile@choutri.eu
   Stability   : stable

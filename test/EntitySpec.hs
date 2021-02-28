@@ -1,50 +1,16 @@
 {-# LANGUAGE OverloadedLists #-}
 module EntitySpec where
 
-import Data.Time (UTCTime)
-import Data.UUID (UUID)
 import qualified Data.Vector as V
-import Database.PostgreSQL.Simple (Connection, FromRow, ToRow, Only (..))
-import Database.PostgreSQL.Simple.FromField (FromField)
+import Database.PostgreSQL.Simple (Connection, Only (..))
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
                                              runMigrations)
-import Database.PostgreSQL.Simple.ToField (ToField)
 import Relude.Unsafe (read)
 import Test.Hspec (Spec, shouldBe, shouldMatchList)
 import Test.Hspec.DB (describeDB, itDB)
 
-import Database.PostgreSQL.Entity (Entity (..), insert, selectById, selectOneByField, selectManyByField, deleteByField, delete)
-import Database.PostgreSQL.Entity.DBT (DBT)
-
-newtype BlogPostId
-  = BlogPostId { getBlogPostId :: UUID }
-  deriving newtype (Eq, FromField, Show, ToField)
-newtype AuthorId
-  = AuthorId { getAuthorId :: UUID }
-  deriving newtype (Eq, FromField, Show, ToField)
-
-data BlogPost
-  = BlogPost { blogPostId :: BlogPostId
-             , authorId   :: AuthorId
-             , title      :: Text
-             , content    :: Text
-             , createdAt  :: UTCTime
-             }
-  deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromRow, ToRow)
-
-instance Entity BlogPost where
-  tableName  = "blogposts"
-  primaryKey = "blogpost_id"
-  fields = V.fromList [ "blogpost_id"
-                      , "author_id"
-                      , "title"
-                      , "content"
-                      , "created_at"
-                      ]
-
-insertBlogPost :: BlogPost -> DBT IO ()
-insertBlogPost = insert @BlogPost
+import Database.PostgreSQL.Entity (selectById, selectOneByField, selectManyByField, deleteByField, delete)
+import Database.PostgreSQL.Entity.BlogPost
 
 blogPost1 :: BlogPost
 blogPost1 =

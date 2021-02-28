@@ -1,12 +1,12 @@
 {-|
   Module      : Database.PostgreSQL.Entity.DBT
-  Copyright   : (c) Clément Delafargue, 2018
-                    Théophile Choutri, 2021
+  Copyright   : © Clément Delafargue, 2018
+                  Théophile Choutri, 2021
   License     : MIT
   Maintainer  : theophile@choutri.eu
   Stability   : stable
 
-  The DBT plumbing module to handle database queries and pools
+  The 'Database.PostgreSQL.Transact.DBT' plumbing module to handle database queries and pools
 -}
 module Database.PostgreSQL.Entity.DBT
   ( module Database.PostgreSQL.Entity.DBT.Types
