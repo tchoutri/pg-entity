@@ -29,13 +29,15 @@ newtype AuthorId
   deriving newtype (Eq, FromField, Show, ToField)
 
 data BlogPost
-  = BlogPost { blogPostId :: BlogPostId -- ^ Primary key
-             , authorIds  :: Vector AuthorId -- ^ Foreign keys, for which we need an explicit type annotation
+  = BlogPost { blogPostId :: BlogPostId
+               -- ^ Primary key
+             , authorIds  :: Vector AuthorId
+               -- ^ Foreign keys, for which we need an explicit type annotation
              , title      :: Text
              , content    :: Text
              , createdAt  :: UTCTime
              }
-  deriving stock (Eq, Show, Generic)
+  deriving stock (Eq, Generic, Show)
   deriving anyclass (FromRow, ToRow)
 
 instance Entity BlogPost where

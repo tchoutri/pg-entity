@@ -22,12 +22,12 @@ import Control.Exception (throw)
 import Control.Exception.Safe (MonadCatch, try)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Pool (createPool, withResource)
-import qualified Database.PostgreSQL.Transact as PGT
-import Database.PostgreSQL.Simple as PG (close, connect)
 import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Entity.DBT.Types
+import Database.PostgreSQL.Simple as PG (close, connect)
+import qualified Database.PostgreSQL.Transact as PGT
 
 runDB :: (MonadCatch m, MonadBaseControl IO m)
       => ConnectionPool -> DBT m a -> m (Either DBError a)
@@ -53,10 +53,10 @@ queryOne queryNature q params = do
   pure $ listToOne result
 
 execute :: (ToRow params, MonadIO m) => QueryNature -> Query -> params -> DBT m ()
-execute queryNature q params = do                                                 
-  logQueryFormat queryNature q params                                             
-  PGT.execute q params                                                            
-  pure ()                                                                         
+execute queryNature q params = do
+  logQueryFormat queryNature q params
+  PGT.execute q params
+  pure ()
 
 listToOne :: [result] -> result
 listToOne [r] = r
@@ -64,10 +64,10 @@ listToOne []  = throw NotFound
 listToOne _   = throw TooManyResults
 
 logQueryFormat :: (ToRow params, MonadIO m) => QueryNature -> Query -> params -> DBT m ()
-logQueryFormat queryNature q params = do                      
-  msg <- PGT.formatQuery q params                      
-  case queryNature of                      
-    Select -> liftIO $ cyanMessage $ "[SELECT] " <> decodeUtf8 msg                      
-    Update -> liftIO $ yellowMessage $ "[UPDATE] " <> decodeUtf8 msg                     
-    Insert -> liftIO $ yellowMessage $ "[INSERT] " <> decodeUtf8 msg                     
+logQueryFormat queryNature q params = do
+  msg <- PGT.formatQuery q params
+  case queryNature of
+    Select -> liftIO $ cyanMessage $ "[SELECT] " <> decodeUtf8 msg
+    Update -> liftIO $ yellowMessage $ "[UPDATE] " <> decodeUtf8 msg
+    Insert -> liftIO $ yellowMessage $ "[INSERT] " <> decodeUtf8 msg
     Delete -> liftIO $ redMessage $ "[DELETE] " <> decodeUtf8 msg

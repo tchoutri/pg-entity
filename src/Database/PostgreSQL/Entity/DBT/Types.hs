@@ -9,7 +9,7 @@
 
   Associated types provided to the library and users
 -}
-module Database.PostgreSQL.Entity.DBT.Types 
+module Database.PostgreSQL.Entity.DBT.Types
   ( DBError (..)
   , ConnectInfo
   , Connection
@@ -29,15 +29,14 @@ import Database.PostgreSQL.Transact (DBT)
 
 type ConnectionPool = Pool Connection
 
-data QueryNature = Select | Insert | Update | Delete
-  deriving (Show, Eq)
+data QueryNature = Select | Insert | Update | Delete deriving (Eq, Show)
 
-data DBError                          
-  = ConstraintError {-# UNPACK #-} Text   
-  | NotFound                                
-  | TooManyResults                          
-  | InsertionError                          
-  | DeserialisationError {-# UNPACK #-} Text
-  deriving stock (Show, Generic)            
-                                            
+data DBError
+  = ConstraintError {-# UNPACK #-}Text
+  | NotFound
+  | TooManyResults
+  | InsertionError
+  | DeserialisationError {-# UNPACK #-}Text
+  deriving stock (Generic, Show)
+
 instance Exception DBError

@@ -41,8 +41,10 @@ class Entity e where
 
 -- | A wrapper for table fields, with a very convenient 'IsString' instance.
 data Field
-  = Field { fieldName :: Text       -- ^ The name of the field in the database schema
-          , fieldType :: Maybe Text -- ^ An optional postgresql type for which we need to be explicit, like `uuid[]`
+  = Field { fieldName :: Text
+            -- ^ The name of the field in the database schema
+          , fieldType :: Maybe Text
+            -- ^ An optional postgresql type for which we need to be explicit, like `uuid[]`
           }
   deriving (Eq, Show)
 
@@ -98,7 +100,7 @@ deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
 
 -- * SQL keywords API
 
--- | Produce a SELECT expression for a given entity. 
+-- | Produce a SELECT expression for a given entity.
 --
 -- __Examples__
 --
@@ -110,12 +112,12 @@ _select = fromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> quoteN
 -- | Produce a WHERE clause, given a vector of fields
 -- It is most useful composed with a '_select' or '_delete', which is why these two combinations have their dedicated functions,
 -- but the user is free to compose their own queries.
--- 
--- __Examples__ 
+--
+-- __Examples__
 --
 -- >>> _select @BlogPost <> _where @BlogPost ["blogpost_id"]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
--- 
+--
 -- >>> _select @BlogPost <> _where @BlogPost ["author_ids"]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_ids\" = ?::uuid[]"
 _where :: forall e. Entity e => Vector Field -> Query
@@ -180,7 +182,7 @@ inParens :: Text -> Text
 inParens t = "(" <> t <> ")"
 
 -- | Wrap the given text between double quotes
--- 
+--
 -- __Examples__
 --
 -- >>> quoteName "meow."
@@ -189,7 +191,7 @@ quoteName :: Text -> Text
 quoteName n = "\"" <> n <> "\""
 
 -- | Produce a comma-separated list of an entity's fields.
--- 
+--
 -- __Examples__
 --
 -- >>> expandFields @BlogPost
