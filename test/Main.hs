@@ -1,7 +1,7 @@
 module Main where
 
-import Test.Hspec
 import qualified EntitySpec
+import Test.Hspec
 
 main :: IO ()
 main = hspec spec

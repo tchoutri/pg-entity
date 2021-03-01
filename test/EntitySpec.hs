@@ -3,14 +3,14 @@ module EntitySpec where
 
 import qualified Data.Vector as V
 -- import Database.PostgreSQL.Simple (Connection, Only (..))
-import Database.PostgreSQL.Simple 
-import Database.PostgreSQL.Simple.Migration 
+import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.Migration
 import Relude.Unsafe (read)
-import Test.Hspec 
+import Test.Hspec
 import Test.Hspec.DB (describeDB, itDB)
 
 -- import Database.PostgreSQL.Entity (selectById, selectOneByField, selectManyByField, deleteByField, delete)
-import Database.PostgreSQL.Entity 
+import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Entity.BlogPost
 
 blogPost1 :: BlogPost
@@ -56,7 +56,7 @@ migrate conn = void $ runMigrations False conn [MigrationInitialization, Migrati
 spec :: Spec
 spec = describeDB migrate "Entity DB " $ do
   itDB "Insert blog posts" $ do
-    insertBlogPost blogPost1 
+    insertBlogPost blogPost1
     insertBlogPost blogPost2
     insertBlogPost blogPost3
     insertBlogPost blogPost4

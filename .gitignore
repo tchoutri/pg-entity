@@ -1,2 +1,3 @@
 dist-newstyle
 .hie
+cabal.project.local

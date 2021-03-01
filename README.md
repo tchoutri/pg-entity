@@ -1,4 +1,4 @@
-# PG-Entity ![CI-badge][CI-url] ![simple-haskell][simple-haskell]
+# PG-Entity [![CI-badge][CI-badge]][CI-url] ![simple-haskell][simple-haskell]
 
 This library is a pleasant layer on top of [postgresql-simple][pg-simple]. It exposes both a high-level API and its 
 building blocks, as to provide an escape hatch should the higher-level API fail to satisfy your needs.
@@ -8,7 +8,8 @@ Its dependency footprint is optimised for my own setups, and as such it makes us
 
 ## Installation
 
-To use pg-entity in your project, add it to your `build-depends` stanza and insert the following in your `cabal.project`:
+To use pg-entity in your project, add it to the `build-depends` stanza of you .cabal file,
+and insert the following in your `cabal.project`:
 
 ```
  source-repository-package
@@ -22,19 +23,18 @@ Don't forget to fill the `tag` with the desired commit you desire to pin.
 Due to the fact that it depends on a non-Hackage version of [pg-transact-hspec][pg-transact-hspec], I doubt that I
 will upload it on Hackage one day. We shall see.
 
-## Documentation
+## Documentation policy
 
 Even though this work is mainly for my personal consumption, I encourage you to dive in the code and maybe get the 
 necessary inspiration to build something greater. Therefore, I aim to maintain a decent documentation for this library.
 Do not hesitate to raise an issue if you feel that something is badly explained and should be improved.
 
-## TODO
+## TODO before release 0.0.1.0 to Hackage
 
 * [ ] Documentation, doctests and `@since` tags
-  * [ ] Entity.hs
+  * [x] Entity.hs
   * [ ] DBT.hs
   * [ ] DBT.Types.hs
-* [ ] Have a working CI
 
 ## Acknowledgements 
 
