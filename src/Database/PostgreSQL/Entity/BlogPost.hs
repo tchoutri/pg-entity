@@ -14,8 +14,9 @@ module Database.PostgreSQL.Entity.BlogPost where
 
 import Data.Time (UTCTime)
 import Data.UUID (UUID)
+import Data.Vector (Vector)
 import qualified Data.Vector as V
-import Database.PostgreSQL.Entity (Entity (..), insert)
+import Database.PostgreSQL.Entity (Entity (..), insert, withType)
 import Database.PostgreSQL.Entity.DBT.Types (DBT, FromRow, ToRow)
 import Database.PostgreSQL.Simple.FromField (FromField)
 import Database.PostgreSQL.Simple.ToField (ToField)
@@ -29,7 +30,7 @@ newtype AuthorId
 
 data BlogPost
   = BlogPost { blogPostId :: BlogPostId -- ^ Primary key
-             , authorId   :: AuthorId -- ^ Foreign key
+             , authorIds  :: Vector AuthorId -- ^ Foreign keys, for which we need an explicit type annotation
              , title      :: Text
              , content    :: Text
              , createdAt  :: UTCTime
@@ -41,7 +42,7 @@ instance Entity BlogPost where
   tableName  = "blogposts"
   primaryKey = "blogpost_id"
   fields = V.fromList [ "blogpost_id"
-                      , "author_id"
+                      , "author_ids" `withType` "uuid[]"
                       , "title"
                       , "content"
                       , "created_at"
@@ -50,4 +51,3 @@ instance Entity BlogPost where
 -- | A specialisation of the 'Database.PostgreSQL.Entity.insert' function.
 insertBlogPost :: BlogPost -> DBT IO ()
 insertBlogPost = insert @BlogPost
-

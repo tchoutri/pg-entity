@@ -37,10 +37,12 @@ mkPool :: ConnectInfo -> Int -> NominalDiffTime -> Int -> IO ConnectionPool
 mkPool connectInfo subPools timeout connections =
   createPool (connect connectInfo) close subPools timeout connections
 
-queryMany :: (ToRow params, FromRow result, MonadIO m)
+queryMany :: (ToRow params, Show params, FromRow result, MonadIO m)
           => QueryNature -> Query -> params -> DBT m (Vector result)
 queryMany queryNature q params = do
   logQueryFormat queryNature q params
+  liftIO $ writeFile "./query.sql" (show q)
+  liftIO $ writeFile "./params.txt" (show params)
   V.fromList <$> PGT.query q params
 
 queryOne :: (ToRow params, FromRow result, MonadIO m)

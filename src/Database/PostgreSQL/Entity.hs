@@ -40,12 +40,23 @@ class Entity e where
   fields     :: Vector Field
 
 -- | A wrapper for table fields, with a very convenient 'IsString' instance.
-newtype Field
-  = Field { fieldName :: Text }
+data Field
+  = Field { fieldName :: Text       -- ^ The name of the field in the database schema
+          , fieldType :: Maybe Text -- ^ An optional postgresql type for which we need to be explicit, like `uuid[]`
+          }
   deriving (Eq, Show)
 
 instance IsString Field where
-  fromString n = Field (toText n)
+  fromString n = Field (toText n) Nothing
+
+-- | A infix helper to declare a table field with an explicit type annotation.
+--
+-- __Examples__
+--
+-- >>> "ids" `withType` "uuid[]"
+-- Field {fieldName = "ids", fieldType = Just "uuid[]"}
+withType :: Field -> Text -> Field
+withType (Field n _) t = Field n (Just t)
 
 -- * High-level API
 
@@ -63,7 +74,7 @@ selectOneByField f value = queryOne Select (_selectWhere @e [f]) (Only value)
 
 -- | Select potentially many entities by a provided field.
 selectManyByField :: forall e value m.
-                  (Entity e, FromRow e, ToField value, MonadIO m)
+                  (Entity e, FromRow e, ToField value, Show value, MonadIO m)
                   => Field -> value -> DBT m (Vector e)
 selectManyByField f value = queryMany Select (_selectWhere @e [f]) (Only value)
 
@@ -92,7 +103,7 @@ deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
 -- __Examples__
 --
 -- >>> _select @BlogPost
--- "SELECT blogposts.blogpost_id, blogposts.author_id, blogposts.title, blogposts.content, blogposts.created_at FROM \"blogposts\""
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\""
 _select :: forall e. Entity e => Query
 _select = fromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> quoteName (tableName @e)
 
@@ -102,28 +113,37 @@ _select = fromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> quoteN
 -- 
 -- __Examples__ 
 --
--- >>> _select @BlogPost <> _where ["blogpost_id"]
--- "SELECT blogposts.blogpost_id, blogposts.author_id, blogposts.title, blogposts.content, blogposts.created_at FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
-_where :: Vector Field -> Query
-_where fs = fromText $ " WHERE " <> clauseFields
+-- >>> _select @BlogPost <> _where @BlogPost ["blogpost_id"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
+-- 
+-- >>> _select @BlogPost <> _where @BlogPost ["author_ids"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_ids\" = ?::uuid[]"
+_where :: forall e. Entity e => Vector Field -> Query
+_where fs' = fromText $ " WHERE " <> clauseFields
   where
+    fs = V.filter (\f -> fieldName f `elem` fieldNames) (fields @e)
+    fieldNames = fmap fieldName fs'
     clauseFields = fold $ intercalateVector " AND " (fmap placeHolder fs)
 
--- | The composition of '_select' and '_where'. Nothing magical happens, it is just more convenient
+-- | The Entity is passed to the _typedWhere
+-- >>> _select @BlogPost <> _where @BlogPost ["author_ids"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_ids\" = ?::uuid[]"
+
+-- | The composition of '_select' and '_where'. Nothing magical happens, it is just more convenient.
 --
 -- __Examples__
 --
--- >>> _selectWhere @BlogPost ["content"]
--- "SELECT blogposts.blogpost_id, blogposts.author_id, blogposts.title, blogposts.content, blogposts.created_at FROM \"blogposts\" WHERE \"content\" = ?"
+-- >>> _selectWhere @BlogPost ["author_ids" `withType` "uuid[]"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_ids\" = ?::uuid[]"
 _selectWhere :: forall e. Entity e => Vector Field -> Query
-_selectWhere fs = _select @e <> _where fs
+_selectWhere fs = _select @e <> _where @e fs
 
 -- | Produce an INSERT statement for the given entity.
 --
 -- __Examples__
 --
 -- >>> _insert @BlogPost
--- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_id\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?)"
+-- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_ids\", \"title\", \"content\", \"created_at\") VALUES (?, ?::uuid[], ?, ?, ?)"
 _insert :: forall e. Entity e => Query
 _insert = fromText $ "INSERT INTO " <> quoteName (tableName @e) <> " " <> fs <> " VALUES " <> ps
   where
@@ -137,16 +157,16 @@ _insert = fromText $ "INSERT INTO " <> quoteName (tableName @e) <> " " <> fs <> 
 -- >>> _delete @BlogPost
 -- "DELETE FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
 _delete :: forall e. Entity e => Query
-_delete = fromText ("DELETE FROM " <> quoteName (tableName @e)) <> _where [primaryKey @e]
+_delete = fromText ("DELETE FROM " <> quoteName (tableName @e)) <> _where @e [primaryKey @e]
 
 -- | Produce a DELETE statement for the given entity, with a match on the desired fields
 --
 -- __Examples__
 --
--- >>> _deleteWhere @BlogPost ["title", "createdAt"]
--- "DELETE FROM blogposts WHERE \"title\" = ? AND \"createdAt\" = ?"
+-- >>> _deleteWhere @BlogPost ["title", "created_at"]
+-- "DELETE FROM blogposts WHERE \"title\" = ? AND \"created_at\" = ?"
 _deleteWhere :: forall e. Entity e => Vector Field -> Query
-_deleteWhere fs = fromText ("DELETE FROM " <> (tableName @e)) <> _where fs
+_deleteWhere fs = fromText ("DELETE FROM " <> (tableName @e)) <> _where @e fs
 
 -- * Helpers
 
@@ -173,7 +193,7 @@ quoteName n = "\"" <> n <> "\""
 -- __Examples__
 --
 -- >>> expandFields @BlogPost
--- "\"blogpost_id\", \"author_id\", \"title\", \"content\", \"created_at\""
+-- "\"blogpost_id\", \"author_ids\", \"title\", \"content\", \"created_at\""
 expandFields :: forall e. Entity e => Text
 expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . fieldName <$> fields @e)
 
@@ -182,7 +202,7 @@ expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . f
 -- __Examples__
 --
 -- >>> expandQualifiedFields @BlogPost
--- "blogposts.blogpost_id, blogposts.author_id, blogposts.title, blogposts.content, blogposts.created_at"
+-- "blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\""
 expandQualifiedFields :: forall e. Entity e => Text
 expandQualifiedFields = expandQualifiedFields' @e prefix
   where
@@ -193,7 +213,7 @@ expandQualifiedFields = expandQualifiedFields' @e prefix
 -- __Examples__
 --
 -- >>> expandQualifiedFields' @BlogPost "legacy"
--- "legacy.blogpost_id, legacy.author_id, legacy.title, legacy.content, legacy.created_at"
+-- "legacy.\"blogpost_id\", legacy.\"author_ids\", legacy.\"title\", legacy.\"content\", legacy.\"created_at\""
 expandQualifiedFields' :: forall e. Entity e => Text -> Text
 expandQualifiedFields' prefix = V.foldl1' (\element acc -> element <> ", " <> acc) fs
   where
@@ -204,9 +224,9 @@ expandQualifiedFields' prefix = V.foldl1' (\element acc -> element <> ", " <> ac
 -- __Examples__
 --
 -- >>> prefixFields "legacy" (fields @BlogPost)
--- [Field {fieldName = "legacy.blogpost_id"},Field {fieldName = "legacy.author_id"},Field {fieldName = "legacy.title"},Field {fieldName = "legacy.content"},Field {fieldName = "legacy.created_at"}]
+-- [Field {fieldName = "legacy.\"blogpost_id\"", fieldType = Nothing},Field {fieldName = "legacy.\"author_ids\"", fieldType = Just "uuid[]"},Field {fieldName = "legacy.\"title\"", fieldType = Nothing},Field {fieldName = "legacy.\"content\"", fieldType = Nothing},Field {fieldName = "legacy.\"created_at\"", fieldType = Nothing}]
 prefixFields :: Text -> Vector Field -> Vector Field
-prefixFields p fs = fmap (\(Field f) -> Field $ p <> "." <> f) fs
+prefixFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 
 -- | Produce a placeholder of the form @\"field\" = ?@
 --
@@ -214,17 +234,26 @@ prefixFields p fs = fmap (\(Field f) -> Field $ p <> "." <> f) fs
 --
 -- >>> placeHolder "id"
 -- "\"id\" = ?"
+--
+-- >>> placeHolder $ Field "ids" (Just "uuid[]")
+-- "\"ids\" = ?::uuid[]"
+--
+-- >>> fmap placeHolder $ fields @BlogPost
+-- ["\"blogpost_id\" = ?","\"author_ids\" = ?::uuid[]","\"title\" = ?","\"content\" = ?","\"created_at\" = ?"]
 placeHolder :: Field -> Text
-placeHolder (Field f) = quoteName f <> " = ?"
+placeHolder (Field f Nothing)  = quoteName f <> " = ?"
+placeHolder (Field f (Just t)) = quoteName f <> " = ?::" <> t
 
 -- | Generate an appropriate number of '?' placeholders given a vector of fields
 --
 -- __Examples__
 --
--- >>> generatePlaceholders ["id", "title", "content"]
--- "?, ?, ?"
+-- >>> generatePlaceholders $ fields @BlogPost
+-- "?, ?::uuid[], ?, ?, ?"
 generatePlaceholders :: Vector Field -> Text
-generatePlaceholders vf = fold $ intercalateVector ", " $ fmap (const "?") vf
+generatePlaceholders vf = fold $ intercalateVector ", " $ fmap ph vf
+  where
+    ph (Field _ t) = maybe "?" (\t' -> "?::" <> t') t
 
 -- | Since the 'Query' type has an 'IsString' instance, the process of converting from 'Text' to 'String' to 'Query' is
 -- factored into this function
