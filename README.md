@@ -1,4 +1,4 @@
-# PG-Entity ![CI][CI]
+# PG-Entity ![CI-badge][CI-url] ![simple-haskell][simple-haskell]
 
 This library is a pleasant layer on top of [postgresql-simple][pg-simple]. It exposes both a high-level API and its 
 building blocks, as to provide an escape hatch should the higher-level API fail to satisfy your needs.
@@ -53,4 +53,6 @@ I wish to thank
 [text]: https://hackage.haskell.org/package/text
 [vector]: https://hackage.haskell.org/package/vector
 [relude]: https://hackage.haskell.org/package/relude
-[CI]: https://github.com/tchoutri/pg-entity/workflows/CI/badge.svg?branch=main
+[CI-badge]: https://img.shields.io/github/checks-status/tchoutri/pg-entity/main?style=flat-square
+[CI-url]: https://github.com/tchoutri/pg-entity/actions
+[simple-haskell]: https://img.shields.io/badge/Simple-Haskell-purple?style=flat-square
