@@ -27,12 +27,22 @@ jobs:
       with:
         ghc-version: ${{ matrix.ghc }}
         cabal-version: ${{ matrix.cabal }}
-
     - name: Prepare environment
       run: |
+        mkdir -p $HOME/.local/bin
         sudo apt-get update && sudo apt install -y postgresql-10 libpq-dev 
         echo "/usr/lib/postgresql/10/bin" >> $GITHUB_PATH
         echo "$HOME/.ghcup/bin" >> $GITHUB_PATH
+        echo "HOME/.cabal/bin" >> $GITHUB_PATH
+        echo "HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install cabal-extras
+      run: |
+        wget https://github.com/phadej/cabal-extras/releases/download/cabal-docspec-0.0.0.20210111/cabal-docspec-0.0.0.20210111.xz -O ./cabal-docspec.xz
+        ls -lah
+        unxz ./cabal-docspec.xz
+        mv cabal-docspec $HOME/.local/bin
+        chmod +x $HOME/.local/bin/cabal-docspec
 
     - name: Freeze
       run: |
@@ -48,8 +58,12 @@ jobs:
 
     - name: Build
       run: |
-        cabal configure --enable-tests --enable-benchmarks --test-show-details=direct
+        cabal configure --enable-tests --enable-benchmarks --test-show-details=direct --disable-optimization
         cabal build -j all
+
+    - name: Docspecs
+      run: |
+        $HOME/.local/bin/cabal-docspec
 
     - name: Test
       run: cabal test all

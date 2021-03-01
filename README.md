@@ -30,8 +30,10 @@ Do not hesitate to raise an issue if you feel that something is badly explained 
 
 ## TODO
 
-* [ ] Document Entity.hs
-* [ ] Have doctests for the SQL generators
+* [ ] Documentation, doctests and `@since` tags
+  * [ ] Entity.hs
+  * [ ] DBT.hs
+  * [ ] DBT.Types.hs
 * [ ] Have a working CI
 
 ## Acknowledgements 
