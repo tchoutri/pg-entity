@@ -11,7 +11,7 @@
   A PostgreSQL database layer that does not get in your way.
 
 
-  See the "Database.PostgreSQL.Entity.BlogPost" module for an example of a datatype implementing the 'Entity' typeclass
+  See the "Database.PostgreSQL.Entity.BlogPost" module for an example of a data-type implementing the 'Entity' typeclass.
 -}
 module Database.PostgreSQL.Entity where
 
@@ -32,8 +32,26 @@ import Database.PostgreSQL.Entity.DBT (DBT, QueryNature (..), execute, queryMany
 -- >>> import Database.PostgreSQL.Entity
 -- >>> import Database.PostgreSQL.Entity.BlogPost
 
--- | The main typeclass that is implemented by the data models.
+-- | An 'Entity' stores information about the structure of a database table, and in particular:
 --
+-- * Its name
+-- * Its primary key
+-- * The fields it contains
+--
+-- When using the functions provided by this library, you will need to provide Type Applications in order to tell
+-- the compiler which 'Entity' you are referring to. 
+--
+-- This library aims to be a thin layer between that sits between rigid ORMs and hand-rolled SQL query strings.
+-- Here is its philosophy:
+-- 
+-- * The serialisation/deserialisation part is left to the consumer, so you have to go with your own FromRow/ToRow instances.
+-- You are encouraged to adopt business data types that model your business, rather than constrain yourself in the
+-- limits of what a SQL schema can represent, and use a data access object that can easily be serialised and deserialised
+-- in a SQL schema, to which you will morph your business data-types.
+--
+-- * Escape hatches are provided at every level. The types that are manipulated are 'Query' for which an IsString instance
+-- exists. Don't force yourself to use the higher-level API if the combinators work for you, and if they don't,
+-- Just Write SQL™.
 -- @since 0.0.1.0
 class Entity e where
   -- | The name of the table in the PostgreSQL database.
@@ -52,22 +70,11 @@ data Field
           , fieldType :: Maybe Text
             -- ^ An optional postgresql type for which we need to be explicit, like @uuid[]@
           }
-  deriving (Eq, Show)
+  deriving stock (Eq, Show)
 
 -- | @since 0.0.1.0
 instance IsString Field where
   fromString n = Field (toText n) Nothing
-
--- | A infix helper to declare a table field with an explicit type annotation.
---
--- __Examples__
---
--- >>> "author_ids" `withType` "uuid[]"
--- Field {fieldName = "author_ids", fieldType = Just "uuid[]"}
---
--- @since 0.0.1.0
-withType :: Field -> Text -> Field
-withType (Field n _) t = Field n (Just t)
 
 -- * High-level API
 
@@ -119,7 +126,7 @@ deleteByField :: forall e values m.
        => Vector Field -> values -> DBT m ()
 deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
 
--- * SQL keywords API
+-- * SQL combinators API
 
 -- | Produce a SELECT expression for a given entity.
 --
@@ -206,6 +213,17 @@ _deleteWhere :: forall e. Entity e => Vector Field -> Query
 _deleteWhere fs = fromText ("DELETE FROM " <> (tableName @e)) <> _where @e fs
 
 -- * Helpers
+
+-- | A infix helper to declare a table field with an explicit type annotation.
+--
+-- __Examples__
+--
+-- >>> "author_ids" `withType` "uuid[]"
+-- Field {fieldName = "author_ids", fieldType = Just "uuid[]"}
+--
+-- @since 0.0.1.0
+withType :: Field -> Text -> Field
+withType (Field n _) t = Field n (Just t)
 
 -- | Wrap the given text between parentheses
 --

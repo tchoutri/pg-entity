@@ -23,6 +23,48 @@ Don't forget to fill the `tag` with the desired commit you desire to pin.
 Due to the fact that it depends on a non-Hackage version of [pg-transact-hspec][pg-transact-hspec], I doubt that I
 will upload it on Hackage one day. We shall see.
 
+## Usage
+
+This library aims to be a thin layer between that sits between rigid ORMs and hand-rolled SQL query strings.
+
+Implement the `Entity` typeclass for your data-type:
+
+```Haskell
+:set -XOverloadedLists
+:set -XOverloadedStrings
+
+import Data.UUID (UUID)
+import Data.Vector (Vector)
+import Database.PostgreSQL.Entity
+
+newtype MyTypeId = MyTypeId { getMyTypeId :: UUID }
+  deriving newtype (Eq, Show, FromField, ToField)
+
+data MyType
+  = MyType { myId      :: MyTypeId
+           , someField :: Vector UUID
+           , enums     :: Vector MyEnum
+           }
+  deriving stock (Eq, Generic, Show)
+  deriving anyclass (FromRow, ToRow)
+
+
+instance Entity MyType where
+  tableName  = "my_table"
+  primaryKey = "my_id"
+  fields     = [ "my_id"
+               , "some_field" `withType` "uuid[]"
+               , "enums" `withType` "my_enum[]"
+               ]
+
+-- You can write specialised functions to remove the noise
+
+insertMyType :: MyType -> DBT IO ()
+insertMyType = insert @MyType
+```
+
+See the [BlogPost][BlogPost] module for the data-type that is used throughout the tests and doctests.
+
 ## Documentation policy
 
 Even though this work is mainly for my personal consumption, I encourage you to dive in the code and maybe get the 
@@ -56,3 +98,4 @@ I wish to thank
 [CI-badge]: https://img.shields.io/github/checks-status/tchoutri/pg-entity/main?style=flat-square
 [CI-url]: https://github.com/tchoutri/pg-entity/actions
 [simple-haskell]: https://img.shields.io/badge/Simple-Haskell-purple?style=flat-square
+[BlogPost]: https://github.com/tchoutri/pg-entity/blob/main/src/Database/PostgreSQL/Entity/BlogPost.hs
