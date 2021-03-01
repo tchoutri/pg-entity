@@ -50,10 +50,12 @@ common common-ghc-options
                -Widentities
                -Wincomplete-record-updates
                -Wincomplete-uni-patterns
+               -Wno-unused-do-bind
+               -Wno-deprecations
                -Wpartial-fields
                -Wredundant-constraints
                -fhide-source-paths
-               -Wno-unused-do-bind
+               -funbox-strict-fields
                -fwrite-ide-info
                -hiedir=.hie
                -haddock
