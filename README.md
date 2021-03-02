@@ -95,7 +95,7 @@ I wish to thank
 [text]: https://hackage.haskell.org/package/text
 [vector]: https://hackage.haskell.org/package/vector
 [relude]: https://hackage.haskell.org/package/relude
-[CI-badge]: https://img.shields.io/github/checks-status/tchoutri/pg-entity/main?style=flat-square
+[CI-badge]: https://img.shields.io/github/workflow/status/tchoutri/pg-entity/CI?style=flat-square
 [CI-url]: https://github.com/tchoutri/pg-entity/actions
 [simple-haskell]: https://img.shields.io/badge/Simple-Haskell-purple?style=flat-square
 [BlogPost]: https://github.com/tchoutri/pg-entity/blob/main/src/Database/PostgreSQL/Entity/BlogPost.hs
