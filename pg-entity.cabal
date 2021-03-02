@@ -26,6 +26,7 @@ common common-extensions
                       DeriveGeneric
                       DerivingStrategies
                       DerivingVia
+                      DisambiguateRecordFields
                       DuplicateRecordFields
                       FlexibleContexts
                       FlexibleInstances

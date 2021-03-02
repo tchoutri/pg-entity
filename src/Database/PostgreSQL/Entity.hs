@@ -17,20 +17,22 @@ module Database.PostgreSQL.Entity where
 
 import Data.Vector (Vector)
 import qualified Data.Vector as V
-import Database.PostgreSQL.Simple (Only (..), Query)
 import Database.PostgreSQL.Simple.FromRow (FromRow)
 import Database.PostgreSQL.Simple.ToField (ToField)
 import Database.PostgreSQL.Simple.ToRow (ToRow)
+import Database.PostgreSQL.Simple.Types (Only (..), Query (..))
+import Database.PostgreSQL.Transact (DBT)
 
-import Database.PostgreSQL.Entity.DBT (DBT, QueryNature (..), execute, queryMany, queryOne)
+import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOne, query_)
 
 -- $setup
 -- >>> :set -XOverloadedStrings
 -- >>> :set -XOverloadedLists
 -- >>> :set -XTypeApplications
--- >>> import qualified Data.Vector as V
 -- >>> import Database.PostgreSQL.Entity
 -- >>> import Database.PostgreSQL.Entity.BlogPost
+
+-- * Class 
 
 -- | An 'Entity' stores information about the structure of a database table, and in particular:
 --
@@ -39,18 +41,18 @@ import Database.PostgreSQL.Entity.DBT (DBT, QueryNature (..), execute, queryMany
 -- * The fields it contains
 --
 -- When using the functions provided by this library, you will need to provide Type Applications in order to tell
--- the compiler which 'Entity' you are referring to. 
+-- the compiler which 'Entity' you are referring to.
 --
 -- This library aims to be a thin layer between that sits between rigid ORMs and hand-rolled SQL query strings.
 -- Here is its philosophy:
 -- 
 -- * The serialisation\/deserialisation part is left to the consumer, so you have to go with your own FromRow\/ToRow instances.
--- You are encouraged to adopt business data types that model your business, rather than constrain yourself in the
+-- You are encouraged to adopt data types that model your business, rather than restrict yourself with the
 -- limits of what a SQL schema can represent, and use a data access object that can easily be serialised and deserialised
--- in a SQL schema, to which you will morph your business data-types.
+-- in a SQL schema, to and from which you will morph your business data-types.
 --
 -- * Escape hatches are provided at every level. The types that are manipulated are 'Query' for which an IsString instance
--- exists. Don't force yourself to use the higher-level API if the combinators work for you, and if they don't,
+-- exists. Don't force yourself to use the higher-level API if the combinators work for you, and if those don't either,
 -- Just Write SQL™.
 --
 -- @since 0.0.1.0
@@ -101,7 +103,15 @@ selectOneByField f value = queryOne Select (_selectWhere @e [f]) (Only value)
 selectManyByField :: forall e value m.
                   (Entity e, FromRow e, ToField value, MonadIO m)
                   => Field -> value -> DBT m (Vector e)
-selectManyByField f value = queryMany Select (_selectWhere @e [f]) (Only value)
+selectManyByField f value = query Select (_selectWhere @e [f]) (Only value)
+
+-- | Perform a INNER JOIN between two entities
+--
+-- @since 0.0.1.0
+crossSelectById :: forall e1 e2 m.
+                (Entity e1, Entity e2, FromRow e1, MonadIO m)
+                => DBT m (Vector e1)
+crossSelectById = query_ Select (_crossSelect @e1 @e2)
 
 -- | Insert an entity.
 --
@@ -129,32 +139,44 @@ deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
 
 -- * SQL combinators API
 
--- | Produce a SELECT expression for a given entity.
+-- | Produce a SELECT statement for a given entity.
 --
 -- __Examples__
 --
 -- >>> _select @BlogPost
--- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\""
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\""
 --
 -- @since 0.0.1.0
 _select :: forall e. Entity e => Query
 _select = fromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> quoteName (tableName @e)
+
+-- | Produce a SELECT statement with explicit fields for a given entity
+--
+-- __Examples__
+--
+-- >>> _selectWithFields @BlogPost ["blogpost_id", "created_at"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"created_at\" FROM \"blogposts\""
+--
+-- @since 0.0.1.0
+_selectWithFields :: forall e. Entity e => Vector Field -> Query
+_selectWithFields fs = fromText $ "SELECT " <> expandQualifiedFields_ fs tn <> " FROM " <> quoteName tn
+  where tn = tableName @e
 
 -- | Produce a WHERE clause, given a vector of fields.
 --
 -- It is most useful composed with a '_select' or '_delete', which is why these two combinations have their dedicated functions,
 -- but the user is free to compose their own queries.
 --
--- The Entity is required for '_where' in order to get any type annotation that was given in the schema, as well as to
+-- The 'Entity' constraint is required for '_where' in order to get any type annotation that was given in the schema, as well as to
 -- filter out unexisting fields.
 --
 -- __Examples__
 --
 -- >>> _select @BlogPost <> _where @BlogPost ["blogpost_id"]
--- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
 --
--- >>> _select @BlogPost <> _where @BlogPost ["author_ids"]
--- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_ids\" = ?::uuid[]"
+-- >>> _select @BlogPost <> _where @BlogPost ["uuid_list"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"uuid_list\" = ?::uuid[]"
 --
 -- @since 0.0.1.0
 _where :: forall e. Entity e => Vector Field -> Query
@@ -168,21 +190,64 @@ _where fs' = fromText $ " WHERE " <> clauseFields
 --
 -- __Examples__
 --
--- >>> _selectWhere @BlogPost ["author_ids"]
--- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_ids\" = ?::uuid[]"
-
--- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_ids\" = ?::uuid[]"
+-- >>> _selectWhere @BlogPost ["author_id"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" = ?"
 --
 -- @since 0.0.1.0
 _selectWhere :: forall e. Entity e => Vector Field -> Query
 _selectWhere fs = _select @e <> _where @e fs
+
+-- | Produce a "SELECT FROM" over two entities.
+--
+-- __Examples__
+--
+-- >>> _crossSelect @BlogPost @Author
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\", authors.\"author_id\", authors.\"name\", authors.\"created_at\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
+--
+-- @since 0.0.1.0
+_crossSelect :: forall e1 e2. (Entity e1, Entity e2) => Query
+_crossSelect = fromText $ "SELECT " <> expandQualifiedFields @e1 <> ", "
+                                    <> expandQualifiedFields @e2 <>
+                           " FROM " <> quoteName (tableName @e1)
+                           <> queryToText (_innerJoin @e2 (primaryKey @e2))
+
+-- | Produce a "INNER JOIN … USING(…)" fragment.
+--
+-- __Examples__
+--
+-- >>> _innerJoin @BlogPost "author_id"
+-- " INNER JOIN \"blogposts\" USING(author_id)"
+--
+-- @since 0.0.1.0
+_innerJoin :: forall e. (Entity e) => Field -> Query
+_innerJoin f = fromText $ " INNER JOIN " <> quoteName (tableName @e)
+                          <> " USING(" <> fieldName f <> ")"
+
+-- | Produce a "SELECT [table1_fields, table2_fields] FROM table1 INNER JOIN table2 USING(table2_pk)"
+--
+-- __Examples__
+--
+-- >>> _crossSelectWithFields @BlogPost @Author ["title"] ["name"]
+-- "SELECT blogposts.\"title\", authors.\"name\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
+--
+-- @since 0.0.1.0
+_crossSelectWithFields :: forall e1 e2. (Entity e1, Entity e2)
+                   => Vector Field -> Vector Field -> Query
+_crossSelectWithFields fs1 fs2 =
+  fromText $ "SELECT " <> expandQualifiedFields_ fs1 tn1
+    <> ", " <> expandQualifiedFields_ fs2 tn2
+    <> " FROM " <> quoteName (tableName @e1)
+    <> queryToText (_innerJoin @e2 (primaryKey @e2))
+  where
+    tn1 = tableName @e1
+    tn2 = tableName @e2
 
 -- | Produce an INSERT statement for the given entity.
 --
 -- __Examples__
 --
 -- >>> _insert @BlogPost
--- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_ids\", \"title\", \"content\", \"created_at\") VALUES (?, ?::uuid[], ?, ?, ?)"
+-- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?::uuid[], ?, ?, ?)"
 --
 -- @since 0.0.1.0
 _insert :: forall e. Entity e => Query
@@ -219,8 +284,8 @@ _deleteWhere fs = fromText ("DELETE FROM " <> (tableName @e)) <> _where @e fs
 --
 -- __Examples__
 --
--- >>> "author_ids" `withType` "uuid[]"
--- Field {fieldName = "author_ids", fieldType = Just "uuid[]"}
+-- >>> "author_id" `withType` "uuid[]"
+-- Field {fieldName = "author_id", fieldType = Just "uuid[]"}
 --
 -- @since 0.0.1.0
 withType :: Field -> Text -> Field
@@ -253,7 +318,7 @@ quoteName n = "\"" <> n <> "\""
 -- __Examples__
 --
 -- >>> expandFields @BlogPost
--- "\"blogpost_id\", \"author_ids\", \"title\", \"content\", \"created_at\""
+-- "\"blogpost_id\", \"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\""
 --
 -- @since 0.0.1.0
 expandFields :: forall e. Entity e => Text
@@ -264,11 +329,11 @@ expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . f
 -- __Examples__
 --
 -- >>> expandQualifiedFields @BlogPost
--- "blogposts.\"blogpost_id\", blogposts.\"author_ids\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\""
+-- "blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\""
 --
 -- @since 0.0.1.0
 expandQualifiedFields :: forall e. Entity e => Text
-expandQualifiedFields = expandQualifiedFields' @e prefix
+expandQualifiedFields = expandQualifiedFields_ (fields @e) prefix
   where
     prefix = tableName @e
 
@@ -276,21 +341,21 @@ expandQualifiedFields = expandQualifiedFields' @e prefix
 --
 -- __Examples__
 --
--- >>> expandQualifiedFields' @BlogPost "legacy"
--- "legacy.\"blogpost_id\", legacy.\"author_ids\", legacy.\"title\", legacy.\"content\", legacy.\"created_at\""
+-- >>> expandQualifiedFields_ (fields @BlogPost) "legacy"
+-- "legacy.\"blogpost_id\", legacy.\"author_id\", legacy.\"uuid_list\", legacy.\"title\", legacy.\"content\", legacy.\"created_at\""
 --
 -- @since 0.0.1.0
-expandQualifiedFields' :: forall e. Entity e => Text -> Text
-expandQualifiedFields' prefix = V.foldl1' (\element acc -> element <> ", " <> acc) fs
+expandQualifiedFields_ :: Vector Field -> Text -> Text
+expandQualifiedFields_ fs prefix = V.foldl1' (\element acc -> element <> ", " <> acc) fs'
   where
-    fs = fieldName <$> prefixFields prefix (fields @e)
+    fs' = fieldName <$> prefixFields prefix fs
 
 -- | Take a prefix and a vector of fields, and qualifies each field with the prefix
 --
 -- __Examples__
 --
 -- >>> prefixFields "legacy" (fields @BlogPost)
--- [Field {fieldName = "legacy.\"blogpost_id\"", fieldType = Nothing},Field {fieldName = "legacy.\"author_ids\"", fieldType = Just "uuid[]"},Field {fieldName = "legacy.\"title\"", fieldType = Nothing},Field {fieldName = "legacy.\"content\"", fieldType = Nothing},Field {fieldName = "legacy.\"created_at\"", fieldType = Nothing}]
+-- [Field {fieldName = "legacy.\"blogpost_id\"", fieldType = Nothing},Field {fieldName = "legacy.\"author_id\"", fieldType = Nothing},Field {fieldName = "legacy.\"uuid_list\"", fieldType = Just "uuid[]"},Field {fieldName = "legacy.\"title\"", fieldType = Nothing},Field {fieldName = "legacy.\"content\"", fieldType = Nothing},Field {fieldName = "legacy.\"created_at\"", fieldType = Nothing}]
 --
 -- @since 0.0.1.0
 prefixFields :: Text -> Vector Field -> Vector Field
@@ -307,7 +372,7 @@ prefixFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 -- "\"ids\" = ?::uuid[]"
 --
 -- >>> fmap placeHolder $ fields @BlogPost
--- ["\"blogpost_id\" = ?","\"author_ids\" = ?::uuid[]","\"title\" = ?","\"content\" = ?","\"created_at\" = ?"]
+-- ["\"blogpost_id\" = ?","\"author_id\" = ?","\"uuid_list\" = ?::uuid[]","\"title\" = ?","\"content\" = ?","\"created_at\" = ?"]
 --
 -- @since 0.0.1.0
 placeHolder :: Field -> Text
@@ -319,7 +384,7 @@ placeHolder (Field f (Just t)) = quoteName f <> " = ?::" <> t
 -- __Examples__
 --
 -- >>> generatePlaceholders $ fields @BlogPost
--- "?, ?::uuid[], ?, ?, ?"
+-- "?, ?, ?::uuid[], ?, ?, ?"
 --
 -- @since 0.0.1.0
 generatePlaceholders :: Vector Field -> Text
@@ -333,6 +398,12 @@ generatePlaceholders vf = fold $ intercalateVector ", " $ fmap ph vf
 -- @since 0.0.1.0
 fromText :: Text -> Query
 fromText = fromString . toString
+
+-- | For cases where combinator composition is tricky, we can safely get back to a 'Text' string from a 'Query'
+--
+-- @since 0.0.1.0
+queryToText :: Query -> Text
+queryToText = decodeUtf8 . fromQuery
 
 -- | The 'intercalateVector' function takes a Text and a Vector Text and concatenates the vector after interspersing
 -- the first argument between each element of the list.
