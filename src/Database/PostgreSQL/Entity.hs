@@ -44,7 +44,7 @@ import Database.PostgreSQL.Entity.DBT (DBT, QueryNature (..), execute, queryMany
 -- This library aims to be a thin layer between that sits between rigid ORMs and hand-rolled SQL query strings.
 -- Here is its philosophy:
 -- 
--- * The serialisation/deserialisation part is left to the consumer, so you have to go with your own FromRow/ToRow instances.
+-- * The serialisation\/deserialisation part is left to the consumer, so you have to go with your own FromRow\/ToRow instances.
 -- You are encouraged to adopt business data types that model your business, rather than constrain yourself in the
 -- limits of what a SQL schema can represent, and use a data access object that can easily be serialised and deserialised
 -- in a SQL schema, to which you will morph your business data-types.
@@ -52,6 +52,7 @@ import Database.PostgreSQL.Entity.DBT (DBT, QueryNature (..), execute, queryMany
 -- * Escape hatches are provided at every level. The types that are manipulated are 'Query' for which an IsString instance
 -- exists. Don't force yourself to use the higher-level API if the combinators work for you, and if they don't,
 -- Just Write SQL™.
+--
 -- @since 0.0.1.0
 class Entity e where
   -- | The name of the table in the PostgreSQL database.
