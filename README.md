@@ -63,7 +63,7 @@ insertMyType :: MyType -> DBT IO ()
 insertMyType = insert @MyType
 ```
 
-See the [BlogPost][BlogPost] module for the data-type that is used throughout the tests and doctests.
+See the [BlogPost][BlogPost-module] module for the data-type that is used throughout the tests and doctests.
 
 ## Documentation policy
 
@@ -98,4 +98,4 @@ I wish to thank
 [CI-badge]: https://img.shields.io/github/workflow/status/tchoutri/pg-entity/CI?style=flat-square
 [CI-url]: https://github.com/tchoutri/pg-entity/actions
 [simple-haskell]: https://img.shields.io/badge/Simple-Haskell-purple?style=flat-square
-[BlogPost]: https://github.com/tchoutri/pg-entity/blob/main/src/Database/PostgreSQL/Entity/BlogPost.hs
+[BlogPost-module]: https://github.com/tchoutri/pg-entity/blob/main/src/Database/PostgreSQL/Entity/BlogPost.hs
