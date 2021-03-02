@@ -71,7 +71,7 @@ Even though this work is mainly for my personal consumption, I encourage you to 
 necessary inspiration to build something greater. Therefore, I aim to maintain a decent documentation for this library.
 Do not hesitate to raise an issue if you feel that something is badly explained and should be improved.
 
-## TODO before release 0.0.1.0 to Hackage
+## TODO before release 0.0.1.0
 
 * [ ] Documentation, doctests and `@since` tags
   * [x] Entity.hs
