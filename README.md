@@ -1,7 +1,14 @@
 # PG-Entity [![CI-badge][CI-badge]][CI-url] ![simple-haskell][simple-haskell]
 
-This library is a pleasant layer on top of [postgresql-simple][pg-simple]. It exposes both a high-level API and its 
-building blocks, as to provide an escape hatch should the higher-level API fail to satisfy your needs.
+This library is a pleasant layer on top of [postgresql-simple][pg-simple]. 
+It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL query strings. Here is its philosophy:
+
+* The serialisation/deserialisation part is left to the consumer, so you have to go with your own FromRow/ToRow instances.
+  You are encouraged to adopt data types that model your business, rather than restrict yourself with the limits of what
+  a SQL schema can represent. Use a intermediate data access object (DAO) that can easily be serialised and deserialised
+  in a SQL schema, to and from which you will morph your business data-types.
+* Escape hatches are provided at every level. The types that are manipulated are Query for which an IsString instance exists.
+  Don't force yourself to use the higher-level API if the combinators work for you, and if those don't either, “Just Write SQL“™.
 
 Its dependency footprint is optimised for my own setups, and as such it makes use of [text][text], [vector][vector],
 [pg-transact][pg-transact] and [relude][relude].

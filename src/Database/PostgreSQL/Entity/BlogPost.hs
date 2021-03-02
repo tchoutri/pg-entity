@@ -8,8 +8,10 @@
   Maintainer  : theophile@choutri.eu
   Stability   : stable
 
-  Directly taken from Clément Delafargue's [Yet Another Unsafe DB Layer](https://tech.fretlink.com/yet-another-unsafe-db-layer/)
-  article. The model is used throughout the library's tests and docspecs.
+  Adapted from Clément Delafargue's [Yet Another Unsafe DB Layer](https://tech.fretlink.com/yet-another-unsafe-db-layer/)
+  article. 
+
+  The models described in this module are used throughout the library's tests and docspecs.
 -}
 module Database.PostgreSQL.Entity.BlogPost where
 
