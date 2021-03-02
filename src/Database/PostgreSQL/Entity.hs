@@ -13,7 +13,50 @@
 
   See the "Database.PostgreSQL.Entity.BlogPost" module for an example of a data-type implementing the 'Entity' typeclass.
 -}
-module Database.PostgreSQL.Entity where
+module Database.PostgreSQL.Entity
+  (
+    -- * The /Entity/ Typeclass
+    Entity (..)
+
+    -- * Associated Types
+  , Field (..)
+
+    -- * High-level API
+  , selectById
+  , selectOneByField
+  , selectManyByField
+  , crossSelectById
+  , insert
+  , delete
+  , deleteByField
+
+    -- * SQL Combinators API
+
+  , _select
+  , _selectWithFields
+  , _where
+  , _selectWhere
+  , _crossSelect
+  , _innerJoin
+  , _crossSelectWithFields
+  , _insert
+  , _delete
+  , _deleteWhere
+
+    -- * Helpers
+  , withType
+  , inParens
+  , quoteName
+  , expandFields
+  , expandQualifiedFields
+  , expandQualifiedFields_
+  , prefixFields
+  , placeHolder
+  , generatePlaceholders
+  , queryFromText
+  , queryToText
+  , intercalateVector
+  ) where
 
 import Data.Vector (Vector)
 import qualified Data.Vector as V
@@ -34,26 +77,15 @@ import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOn
 
 -- * Class 
 
--- | An 'Entity' stores information about the structure of a database table, and in particular:
+-- | An 'Entity' stores the following information about the structure of a database table:
 --
 -- * Its name
 -- * Its primary key
 -- * The fields it contains
 --
--- When using the functions provided by this library, you will need to provide Type Applications in order to tell
--- the compiler which 'Entity' you are referring to.
---
--- This library aims to be a thin layer between that sits between rigid ORMs and hand-rolled SQL query strings.
--- Here is its philosophy:
--- 
--- * The serialisation\/deserialisation part is left to the consumer, so you have to go with your own FromRow\/ToRow instances.
--- You are encouraged to adopt data types that model your business, rather than restrict yourself with the
--- limits of what a SQL schema can represent, and use a data access object that can easily be serialised and deserialised
--- in a SQL schema, to and from which you will morph your business data-types.
---
--- * Escape hatches are provided at every level. The types that are manipulated are 'Query' for which an IsString instance
--- exists. Don't force yourself to use the higher-level API if the combinators work for you, and if those don't either,
--- Just Write SQL™.
+-- When using the functions provided by this library, you will need to provide
+-- [Type Applications](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/type_applications.html)
+-- in order to tell the compiler which 'Entity' you are referring to.
 --
 -- @since 0.0.1.0
 class Entity e where
@@ -78,8 +110,6 @@ data Field
 -- | @since 0.0.1.0
 instance IsString Field where
   fromString n = Field (toText n) Nothing
-
--- * High-level API
 
 -- | Select an entity by its primary key.
 --
@@ -148,7 +178,7 @@ deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
 --
 -- @since 0.0.1.0
 _select :: forall e. Entity e => Query
-_select = fromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> quoteName (tableName @e)
+_select = queryFromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> quoteName (tableName @e)
 
 -- | Produce a SELECT statement with explicit fields for a given entity
 --
@@ -159,7 +189,7 @@ _select = fromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> quoteN
 --
 -- @since 0.0.1.0
 _selectWithFields :: forall e. Entity e => Vector Field -> Query
-_selectWithFields fs = fromText $ "SELECT " <> expandQualifiedFields_ fs tn <> " FROM " <> quoteName tn
+_selectWithFields fs = queryFromText $ "SELECT " <> expandQualifiedFields_ fs tn <> " FROM " <> quoteName tn
   where tn = tableName @e
 
 -- | Produce a WHERE clause, given a vector of fields.
@@ -180,7 +210,7 @@ _selectWithFields fs = fromText $ "SELECT " <> expandQualifiedFields_ fs tn <> "
 --
 -- @since 0.0.1.0
 _where :: forall e. Entity e => Vector Field -> Query
-_where fs' = fromText $ " WHERE " <> clauseFields
+_where fs' = queryFromText $ " WHERE " <> clauseFields
   where
     fs = V.filter (\f -> fieldName f `elem` fieldNames) (fields @e)
     fieldNames = fmap fieldName fs'
@@ -206,7 +236,7 @@ _selectWhere fs = _select @e <> _where @e fs
 --
 -- @since 0.0.1.0
 _crossSelect :: forall e1 e2. (Entity e1, Entity e2) => Query
-_crossSelect = fromText $ "SELECT " <> expandQualifiedFields @e1 <> ", "
+_crossSelect = queryFromText $ "SELECT " <> expandQualifiedFields @e1 <> ", "
                                     <> expandQualifiedFields @e2 <>
                            " FROM " <> quoteName (tableName @e1)
                            <> queryToText (_innerJoin @e2 (primaryKey @e2))
@@ -220,7 +250,7 @@ _crossSelect = fromText $ "SELECT " <> expandQualifiedFields @e1 <> ", "
 --
 -- @since 0.0.1.0
 _innerJoin :: forall e. (Entity e) => Field -> Query
-_innerJoin f = fromText $ " INNER JOIN " <> quoteName (tableName @e)
+_innerJoin f = queryFromText $ " INNER JOIN " <> quoteName (tableName @e)
                           <> " USING(" <> fieldName f <> ")"
 
 -- | Produce a "SELECT [table1_fields, table2_fields] FROM table1 INNER JOIN table2 USING(table2_pk)"
@@ -234,7 +264,7 @@ _innerJoin f = fromText $ " INNER JOIN " <> quoteName (tableName @e)
 _crossSelectWithFields :: forall e1 e2. (Entity e1, Entity e2)
                    => Vector Field -> Vector Field -> Query
 _crossSelectWithFields fs1 fs2 =
-  fromText $ "SELECT " <> expandQualifiedFields_ fs1 tn1
+  queryFromText $ "SELECT " <> expandQualifiedFields_ fs1 tn1
     <> ", " <> expandQualifiedFields_ fs2 tn2
     <> " FROM " <> quoteName (tableName @e1)
     <> queryToText (_innerJoin @e2 (primaryKey @e2))
@@ -251,7 +281,7 @@ _crossSelectWithFields fs1 fs2 =
 --
 -- @since 0.0.1.0
 _insert :: forall e. Entity e => Query
-_insert = fromText $ "INSERT INTO " <> quoteName (tableName @e) <> " " <> fs <> " VALUES " <> ps
+_insert = queryFromText $ "INSERT INTO " <> quoteName (tableName @e) <> " " <> fs <> " VALUES " <> ps
   where
     fs = inParens (expandFields @e)
     ps = inParens (generatePlaceholders $ fields @e)
@@ -265,7 +295,7 @@ _insert = fromText $ "INSERT INTO " <> quoteName (tableName @e) <> " " <> fs <> 
 --
 -- @since 0.0.1.0
 _delete :: forall e. Entity e => Query
-_delete = fromText ("DELETE FROM " <> quoteName (tableName @e)) <> _where @e [primaryKey @e]
+_delete = queryFromText ("DELETE FROM " <> quoteName (tableName @e)) <> _where @e [primaryKey @e]
 
 -- | Produce a DELETE statement for the given entity and fields
 --
@@ -276,9 +306,7 @@ _delete = fromText ("DELETE FROM " <> quoteName (tableName @e)) <> _where @e [pr
 --
 -- @since 0.0.1.0
 _deleteWhere :: forall e. Entity e => Vector Field -> Query
-_deleteWhere fs = fromText ("DELETE FROM " <> (tableName @e)) <> _where @e fs
-
--- * Helpers
+_deleteWhere fs = queryFromText ("DELETE FROM " <> (tableName @e)) <> _where @e fs
 
 -- | A infix helper to declare a table field with an explicit type annotation.
 --
@@ -396,8 +424,8 @@ generatePlaceholders vf = fold $ intercalateVector ", " $ fmap ph vf
 -- factored into this function
 --
 -- @since 0.0.1.0
-fromText :: Text -> Query
-fromText = fromString . toString
+queryFromText :: Text -> Query
+queryFromText = fromString . toString
 
 -- | For cases where combinator composition is tricky, we can safely get back to a 'Text' string from a 'Query'
 --
