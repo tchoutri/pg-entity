@@ -10,3 +10,4 @@ source-repository-package
     tag: 77e6a97e60838fcf5763310204b0a74835e4f1d5
 
 tests: True
+documentation: True

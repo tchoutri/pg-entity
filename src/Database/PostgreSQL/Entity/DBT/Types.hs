@@ -11,26 +11,22 @@
 -}
 module Database.PostgreSQL.Entity.DBT.Types
   ( DBError (..)
-  , ConnectInfo
-  , Connection
   , ConnectionPool
-  , DBT
-  , FromRow
-  , Pool
-  , Query
   , QueryNature (..)
-  , ToRow
   ) where
 
 import Data.Pool (Pool)
 import Database.PostgreSQL.Simple (Connection)
-import Database.PostgreSQL.Simple as PG (ConnectInfo, FromRow, Query, ToRow)
-import Database.PostgreSQL.Transact (DBT)
 
+-- | Type alias for the database pool
 type ConnectionPool = Pool Connection
 
+-- | This sum type is given to the query, queryOne and execute functions to help
+-- with logging.
 data QueryNature = Select | Insert | Update | Delete deriving (Eq, Show)
 
+-- | Database-facing errors. Unify them with your business-facing error data-type
+-- when reporting.
 data DBError
   = ConstraintError {-# UNPACK #-}Text
   | NotFound
