@@ -25,6 +25,8 @@ module Database.PostgreSQL.Entity
   , selectById
   , selectOneByField
   , selectManyByField
+  , selectWhereNotNull
+  , selectWhereNull
   , crossSelectById
   , insert
   , delete
@@ -36,6 +38,8 @@ module Database.PostgreSQL.Entity
   , _selectWithFields
   , _where
   , _selectWhere
+  , _selectWhereNotNull
+  , _selectWhereNull
   , _crossSelect
   , _innerJoin
   , _crossSelectWithFields
@@ -44,6 +48,8 @@ module Database.PostgreSQL.Entity
   , _deleteWhere
 
     -- * Helpers
+  , isNotNull
+  , isNull
   , withType
   , inParens
   , quoteName
@@ -75,7 +81,7 @@ import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOn
 -- >>> import Database.PostgreSQL.Entity
 -- >>> import Database.PostgreSQL.Entity.BlogPost
 
--- * Class 
+-- * Class
 
 -- | An 'Entity' stores the following information about the structure of a database table:
 --
@@ -134,6 +140,26 @@ selectManyByField :: forall e value m.
                   (Entity e, FromRow e, ToField value, MonadIO m)
                   => Field -> value -> DBT m (Vector e)
 selectManyByField f value = query Select (_selectWhere @e [f]) (Only value)
+
+-- | Select statement with a non-null condition
+--
+-- See '_selectWhereNotNull' for the generated query.
+--
+-- @since 0.0.1.0
+selectWhereNotNull :: forall e m.
+                   (Entity e, FromRow e, MonadIO m)
+                   => Vector Field -> DBT m (Vector e)
+selectWhereNotNull fs = query_ Select (_selectWhereNotNull @e fs)
+
+-- | Select statement with a null condition
+--
+-- See '_selectWhereNull' for the generated query.
+--
+-- @since 0.0.1.0
+selectWhereNull :: forall e m.
+                   (Entity e, FromRow e, MonadIO m)
+                   => Vector Field -> DBT m (Vector e)
+selectWhereNull fs = query_ Select (_selectWhereNull @e fs)
 
 -- | Perform a INNER JOIN between two entities
 --
@@ -212,11 +238,11 @@ _selectWithFields fs = queryFromText $ "SELECT " <> expandQualifiedFields_ fs tn
 _where :: forall e. Entity e => Vector Field -> Query
 _where fs' = queryFromText $ " WHERE " <> clauseFields
   where
-    fs = V.filter (\f -> fieldName f `elem` fieldNames) (fields @e)
     fieldNames = fmap fieldName fs'
+    fs = V.filter (\f -> fieldName f `elem` fieldNames) (fields @e)
     clauseFields = fold $ intercalateVector " AND " (fmap placeHolder fs)
 
--- | Produce a SELECT expression for a given entity and fields.
+-- | Produce a SELECT statement for a given entity and fields.
 --
 -- __Examples__
 --
@@ -226,6 +252,25 @@ _where fs' = queryFromText $ " WHERE " <> clauseFields
 -- @since 0.0.1.0
 _selectWhere :: forall e. Entity e => Vector Field -> Query
 _selectWhere fs = _select @e <> _where @e fs
+
+-- | Produce a SELECT statement where the provided fields are checked for being non-null.
+-- r
+--
+-- >>> _selectWhereNotNull @BlogPost ["author_id"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" IS NOT NULL"
+--
+-- @since 0.0.1.0
+_selectWhereNotNull :: forall e. Entity e => Vector Field -> Query
+_selectWhereNotNull fs = _select @e <> queryFromText (" WHERE " <> isNotNull fs)
+
+-- | Produce a SELECT statement where the provided fields are checked for being null.
+--
+-- >>> _selectWhereNull @BlogPost ["author_id"]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" IS NULL"
+--
+-- @since 0.0.1.0
+_selectWhereNull :: forall e. Entity e => Vector Field -> Query
+_selectWhereNull fs = _select @e <> queryFromText (" WHERE " <> isNull fs)
 
 -- | Produce a "SELECT FROM" over two entities.
 --
@@ -406,6 +451,36 @@ prefixFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 placeHolder :: Field -> Text
 placeHolder (Field f Nothing)  = quoteName f <> " = ?"
 placeHolder (Field f (Just t)) = quoteName f <> " = ?::" <> t
+
+-- | Produce an IS NOT NULL statement given a vector of fields
+--
+-- >>> isNotNull ["possibly_empty"]
+-- "\"possibly_empty\" IS NOT NULL"
+--
+-- >>> isNotNull ["possibly_empty", "that_one_too"]
+-- "\"possibly_empty\" IS NOT NULL AND \"that_one_too\" IS NOT NULL"
+--
+-- @since 0.0.1.0
+isNotNull :: Vector Field -> Text
+isNotNull fs' = fold $ intercalateVector " AND " (fmap process fieldNames)
+  where
+    fieldNames = fmap fieldName fs'
+    process f = quoteName f <> " IS NOT NULL"
+
+-- | Produce an IS NULL statement given a vector of fields
+--
+-- >>> isNull ["possibly_empty"]
+-- "\"possibly_empty\" IS NULL"
+--
+-- >>> isNull ["possibly_empty", "that_one_too"]
+-- "\"possibly_empty\" IS NULL AND \"that_one_too\" IS NULL"
+--
+-- @since 0.0.1.0
+isNull :: Vector Field -> Text
+isNull fs' = fold $ intercalateVector " AND " (fmap process fieldNames)
+  where
+    fieldNames = fmap fieldName fs'
+    process f = quoteName f <> " IS NULL"
 
 -- | Generate an appropriate number of “?” placeholders given a vector of fields
 --
