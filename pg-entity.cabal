@@ -1,7 +1,7 @@
 cabal-version:    3.0
 name:             pg-entity
 description:      A PostgreSQL database layer that does not get in your way
-version:          0.0.1
+version:          0.0.1.0
 homepage:         https://github.com/tchoutri/pg-entity#readme
 bug-reports:      https://github.com/tchoutri/pg-entity/issues
 author:           Théophile Choutri
