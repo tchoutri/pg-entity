@@ -33,6 +33,6 @@ data DBError
   | TooManyResults
   | InsertionError
   | DeserialisationError {-# UNPACK #-}Text
-  deriving stock (Generic, Show)
+  deriving stock (Eq, Generic, Show)
 
 instance Exception DBError
