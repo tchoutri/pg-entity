@@ -14,7 +14,7 @@ import Test.Hspec (Spec, shouldBe, shouldMatchList)
 import Test.Hspec.DB (describeDB, itDB)
 
 import Database.PostgreSQL.Entity (_crossSelectWithFields, delete, deleteByField, selectById, selectManyByField,
-                                   selectOneByField)
+                                   selectOneByField, selectWhereNotNull, selectWhereNull)
 import Database.PostgreSQL.Entity.BlogPost (Author (..), AuthorId (AuthorId), BlogPost (..), BlogPostId (BlogPostId),
                                             insertAuthor, insertBlogPost)
 import Database.PostgreSQL.Entity.DBT (query_)
@@ -92,6 +92,12 @@ spec = describeDB migrate "Entity DB " $ do
   itDB "Select blog post by title" $ do
     result <- selectOneByField @BlogPost "title" ("A Past and Future Secret" :: Text)
     pure $ result `shouldBe` blogPost2
+  itDB "Select all blog posts by non-null condition" $ do
+    result <- selectWhereNotNull @BlogPost ["author_id", "title"]
+    pure $ V.toList result `shouldMatchList` [blogPost1, blogPost2, blogPost3, blogPost4]
+  itDB "Select no blog post by null condition" $ do
+    result <- selectWhereNull @BlogPost ["author_id", "content"]
+    pure $ V.length result `shouldBe` 0
   itDB "Select multiple blog posts by author id" $ do
     result <- selectManyByField @BlogPost "author_id" (#authorId blogPost4)
     pure $ V.toList result `shouldMatchList` [blogPost4, blogPost3]
