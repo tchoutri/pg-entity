@@ -72,6 +72,25 @@ insertMyType = insert @MyType
 
 See the [BlogPost][BlogPost-module] module for the data-type that is used throughout the tests and doctests.
 
+### Escape hatches
+
+Safe SQL generation is a complex subject, and it is far from being the objective of this library. The main topic it
+addresses is listing the fields of a table, which is definitely something easier. This is why every level of this wrapper
+is fully exposed, so that you can drop down a level at your convience.
+
+It is my personal belief, firmly rooted in experience, that we should not aim to produce statically-checked SQL and have
+it "verified" by the compiler. The techniques that would allow that in Haskell are still far from being optimised and
+ergonomic. As such, this library makes no effort to produce semantically valid SQL queries, because one would have to
+encode the semantics of SQL in the type system (or in a rule engine of some sort), and this is clearly not the kind of
+things I want to spend my youth on.
+
+Now, that does not mean that we will blindly emit random strings. Each function is tested for its output with doctests,
+and the ones that cannot (due to database connections) are tested in the more traditional test-suite.
+
+The conclusion is : Test your DB queries. Test the encoding/decoding. Make roundtrip tests for your data-structures.
+
+!["Screenshot"](./assets/screencap.png)
+
 ## Documentation policy
 
 Even though this work is mainly for my personal consumption, I encourage you to dive in the code and maybe get the 

@@ -67,9 +67,8 @@ module Database.PostgreSQL.Entity
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple.FromRow (FromRow)
-import Database.PostgreSQL.Simple.ToField (ToField)
 import Database.PostgreSQL.Simple.ToRow (ToRow)
-import Database.PostgreSQL.Simple.Types (Only (..), Query (..))
+import Database.PostgreSQL.Simple.Types (Query (..))
 import Database.PostgreSQL.Transact (DBT)
 
 import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOne, query_)
@@ -121,7 +120,7 @@ instance IsString Field where
 --
 -- @since 0.0.1.0
 selectById :: forall e value m.
-           (Entity e, FromRow e, ToField value, MonadIO m)
+           (Entity e, FromRow e, ToRow value, MonadIO m)
            => value -> DBT m e
 selectById value = selectOneByField (primaryKey @e) value
 
@@ -129,17 +128,17 @@ selectById value = selectOneByField (primaryKey @e) value
 --
 -- @since 0.0.1.0
 selectOneByField :: forall e value m.
-                 (Entity e, FromRow e, ToField value, MonadIO m)
+                 (Entity e, FromRow e, ToRow value, MonadIO m)
                  => Field -> value -> DBT m e
-selectOneByField f value = queryOne Select (_selectWhere @e [f]) (Only value)
+selectOneByField f value = queryOne Select (_selectWhere @e [f]) value
 
 -- | Select potentially many entities by a provided field.
 --
 -- @since 0.0.1.0
 selectManyByField :: forall e value m.
-                  (Entity e, FromRow e, ToField value, MonadIO m)
+                  (Entity e, FromRow e, ToRow value, MonadIO m)
                   => Field -> value -> DBT m (Vector e)
-selectManyByField f value = query Select (_selectWhere @e [f]) (Only value)
+selectManyByField f value = query Select (_selectWhere @e [f]) value
 
 -- | Select statement with a non-null condition
 --
@@ -180,12 +179,12 @@ insert fs = void $ execute Insert (_insert @e) fs
 -- | Delete an entity according to its primary key.
 --
 -- @since 0.0.1.0
-delete :: forall e values m.
-       (Entity e, ToRow values, MonadIO m)
-       => values -> DBT m ()
-delete values = void $ execute Delete (_delete @e) values
+delete :: forall e value m.
+       (Entity e, ToRow value, MonadIO m)
+       => value -> DBT m ()
+delete value = deleteByField @e [primaryKey @e] value
 
--- | Delete an entity according to a provided field.
+-- | Delete an entity according to a vector of fields
 --
 -- @since 0.0.1.0
 deleteByField :: forall e values m.

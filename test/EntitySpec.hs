@@ -87,10 +87,10 @@ spec = describeDB migrate "Entity DB " $ do
     insertBlogPost blogPost2
     insertBlogPost blogPost3
     insertBlogPost blogPost4
-    result <- selectById (#blogPostId blogPost1)
+    result <- selectById $ Only (#blogPostId blogPost1)
     pure $ result `shouldBe` blogPost1
   itDB "Select blog post by title" $ do
-    result <- selectOneByField @BlogPost "title" ("A Past and Future Secret" :: Text)
+    result <- selectOneByField @BlogPost "title" $ Only ("A Past and Future Secret" :: Text)
     pure $ result `shouldBe` blogPost2
   itDB "Select all blog posts by non-null condition" $ do
     result <- selectWhereNotNull @BlogPost ["author_id", "title"]
@@ -99,15 +99,15 @@ spec = describeDB migrate "Entity DB " $ do
     result <- selectWhereNull @BlogPost ["author_id", "content"]
     pure $ V.length result `shouldBe` 0
   itDB "Select multiple blog posts by author id" $ do
-    result <- selectManyByField @BlogPost "author_id" (#authorId blogPost4)
+    result <- selectManyByField @BlogPost "author_id" $ Only (#authorId blogPost4)
     pure $ V.toList result `shouldMatchList` [blogPost4, blogPost3]
   itDB "Delete a blog post" $ do
     delete @BlogPost (Only (blogPostId blogPost2))
-    result <- selectManyByField @BlogPost "blogpost_id" (#blogPostId blogPost2)
+    result <- selectManyByField @BlogPost "blogpost_id" $ Only (#blogPostId blogPost2)
     pure $ V.length result `shouldBe` 0
   itDB "Delete a blog post by title" $ do
     deleteByField @BlogPost ["title"] (Only @Text "Echoes from the other world")
-    result <- selectManyByField @BlogPost "title" (#title blogPost1)
+    result <- selectManyByField @BlogPost "title" $ Only (#title blogPost1)
     pure $ V.length result `shouldBe` 0
   itDB "Get all the article titles by author name" $ do
     let q = _crossSelectWithFields @BlogPost @Author ["title"] ["name"]
