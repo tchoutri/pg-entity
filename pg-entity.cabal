@@ -78,7 +78,7 @@ library
   hs-source-dirs:
       src
   build-depends:
-    , base              ^>= 4.14
+    , base              >=4.12 && <= 4.16
     , colourista        ^>= 0.1
     , pg-transact       ^>= 0.3
     , postgresql-simple ^>= 0.6
