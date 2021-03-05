@@ -99,10 +99,10 @@ Do not hesitate to raise an issue if you feel that something is badly explained 
 
 ## TODO before release 0.0.1.0
 
-* [ ] Documentation, doctests and `@since` tags
+* [x] Documentation, doctests and `@since` tags
   * [x] Entity.hs
-  * [ ] DBT.hs
-  * [ ] DBT.Types.hs
+  * [x] DBT.hs
+  * [x] DBT.Types.hs
 
 ## Acknowledgements 
 

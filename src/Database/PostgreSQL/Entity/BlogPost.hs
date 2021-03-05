@@ -27,10 +27,12 @@ import GHC.Records (HasField (..))
 
 import Database.PostgreSQL.Entity (Entity (..), insert, withType)
 
+-- | Wrapper around the UUID type
 newtype AuthorId
   = AuthorId { getAuthorId :: UUID }
   deriving newtype (Eq, FromField, Show, ToField)
 
+-- | Author data-type
 data Author
   = Author { authorId  :: AuthorId
            , name      :: Text
@@ -50,9 +52,13 @@ instance Entity Author where
                , "created_at"
                ]
 
+-- | Wrapper around the UUID type
 newtype BlogPostId
   = BlogPostId { getBlogPostId :: UUID }
   deriving newtype (Eq, FromField, Show, ToField)
+
+-- | The BlogPost data-type. Look at its 'Entity' instance declaration for how to handle
+-- a "uuid[]" PostgreSQL type.
 data BlogPost
   = BlogPost { blogPostId :: BlogPostId
                -- ^ Primary key
@@ -82,8 +88,11 @@ instance Entity BlogPost where
            ]
 
 -- | A specialisation of the 'Database.PostgreSQL.Entity.insert' function.
+-- insertBlogPost = insert @BlogPost
 insertBlogPost :: BlogPost -> DBT IO ()
 insertBlogPost = insert @BlogPost
 
+-- | A specialisation of the 'Database.PostgreSQL.Entity.insert function.
+-- insertAuthor = insert @Author
 insertAuthor :: Author -> DBT IO ()
 insertAuthor = insert @Author

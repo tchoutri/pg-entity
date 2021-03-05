@@ -27,19 +27,23 @@ import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 
-import Database.PostgreSQL.Entity.DBT.Types
+import Database.PostgreSQL.Entity.DBT.Types (ConnectionPool, DBError (..), QueryNature (..))
 import Database.PostgreSQL.Simple as PG (ConnectInfo, FromRow, Query, ToRow, close, connect)
 import qualified Database.PostgreSQL.Transact as PGT
 
 -- | Execute a DBT action.
 --
--- This function wraps the DBT actions in a 'try', so that the exceptions raised
--- will be converted to the Left branch of the Either.
+-- This function wraps the DBT actions in a 'try', so that the 'DBError' exceptions
+-- raised will be converted to the Left branch of the Either.
+--
+-- @since 0.0.1.0
 runDB :: (MonadCatch m, MonadBaseControl IO m)
       => ConnectionPool -> PGT.DBT m a -> m (Either DBError a)
 runDB pool action = try $ withResource pool $ PGT.runDBTSerializable action
 
 -- | Create a ConnectionPool with the appropriate parameters
+--
+-- @since 0.0.1.0
 mkPool :: ConnectInfo     -- Database access information
        -> Int             -- Number of sub-pools
        -> NominalDiffTime -- Allowed timeout
@@ -48,19 +52,25 @@ mkPool :: ConnectInfo     -- Database access information
 mkPool connectInfo subPools timeout connections =
   createPool (connect connectInfo) close subPools timeout connections
 
--- | Query building block that returns a 'Vector' of results
+-- | Query wrapper that returns a 'Vector' of results
+--
+-- ⚠ This function may raise a 'DBError'
+--
+-- @since 0.0.1.0
 query :: (ToRow params, FromRow result, MonadIO m)
           => QueryNature -> Query -> params -> PGT.DBT m (Vector result)
 query queryNature q params = do
   logQueryFormat queryNature q params
   V.fromList <$> PGT.query q params
 
--- | Query building block that returns one result.
+-- | Query wrapper that returns one result.
 --
--- ⚠ This function will raise the following 'DBError':
+-- ⚠ This function may raise a 'DBError':
 --
 -- * 'NotFound' if the query returns zero results
 -- * 'TooManyResults' if the query returns more than one result
+--
+-- @since 0.0.1.0
 queryOne :: (ToRow params, FromRow result, MonadIO m)
          => QueryNature -> Query -> params -> PGT.DBT m result
 queryOne queryNature q params = do
@@ -68,13 +78,23 @@ queryOne queryNature q params = do
   result <- PGT.query q params
   pure $ listToOne result
 
+-- | Query wrapper that returns one result and does not take an argument
+--
+-- ⚠ This function will raise the following 'DBError':
+--
+-- * 'NotFound' if the query returns zero results
+-- * 'TooManyResults' if the query returns more than one result
+--
+-- @since 0.0.1.0
 query_ :: (FromRow result, MonadIO m)
        => QueryNature -> Query -> PGT.DBT m (Vector result)
 query_ queryNature q = do
   logQueryFormat queryNature q ()
   V.fromList <$> PGT.query_ q
 
--- | Query building block for SQL statements which do not return.
+-- | Query wrapper for SQL statements which do not return.
+--
+-- @since 0.0.1.0
 execute :: (ToRow params, MonadIO m) => QueryNature -> Query -> params -> PGT.DBT m ()
 execute queryNature q params = do
   logQueryFormat queryNature q params
