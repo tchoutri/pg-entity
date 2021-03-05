@@ -1,6 +1,6 @@
 packages: ./
 
-with-compiler: ghc-8.10.4
+-- with-compiler: ghc-8.10.4
 
 index-state: 2021-02-20T17:27:09Z
 
