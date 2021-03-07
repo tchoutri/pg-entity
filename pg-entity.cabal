@@ -106,16 +106,17 @@ test-suite entity-test
       test
   build-depends:
     , base
-    , pg-entity
     , hspec
+    , hspec-expectations-lifted
     , hspec-pg-transact
+    , pg-entity
     , pg-transact
     , postgresql-simple
+    , postgresql-simple-migration ^>= 0.1
     , relude
     , time
     , uuid
     , vector
-    , postgresql-simple-migration ^>= 0.1
   mixins: base hiding (Prelude)
         , relude ( Relude as Prelude
                  , Relude.Unsafe)

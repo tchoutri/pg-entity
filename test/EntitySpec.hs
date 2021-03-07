@@ -4,18 +4,20 @@
 module EntitySpec where
 
 import qualified Data.Vector as V
+import qualified Data.UUID as UUID
 import Database.PostgreSQL.Entity.DBT.Types (QueryNature (Select))
 import Database.PostgreSQL.Simple (Connection, Only (Only))
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
                                              runMigrations)
 import Database.PostgreSQL.Transact (DBT)
 import Relude.Unsafe (read)
-import Test.Hspec (Spec, shouldBe, shouldMatchList)
+import Test.Hspec (Spec)
+import Test.Hspec.Expectations.Lifted (shouldBe, shouldReturn, shouldMatchList)
 import Test.Hspec.DB (describeDB, itDB)
 
 import Database.PostgreSQL.Entity (_crossSelectWithFields, delete, deleteByField, selectById, selectManyByField,
-                                   selectOneByField, selectWhereNotNull, selectWhereNull)
-import Database.PostgreSQL.Entity.BlogPost (Author (..), AuthorId (AuthorId), BlogPost (..), BlogPostId (BlogPostId),
+                                   selectOneByField, selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
+import Database.PostgreSQL.Entity.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
                                             insertAuthor, insertBlogPost)
 import Database.PostgreSQL.Entity.DBT (query_)
 
@@ -31,6 +33,13 @@ author2 =
   let authorId = AuthorId (read "bc97c16c-7b83-11eb-83e5-5405db82c3cd")
       name = "Hansi Kürsch"
       createdAt = read "2021-02-28 17:30:17 UTC"
+   in Author{..}
+
+author3 :: Author
+author3 =
+  let authorId = AuthorId (read "3aa9232e-7f6d-11eb-823f-5405db82c3cd")
+      name = "Johnson McElroy"
+      createdAt = read "2021-02-28 17:31:39 UTC"
    in Author{..}
 
 blogPost1 :: BlogPost
@@ -82,35 +91,51 @@ spec = describeDB migrate "Entity DB " $ do
   itDB "Insert authors" $ do
     insertAuthor author1
     insertAuthor author2
+    insertAuthor author3
   itDB "Insert blog posts" $ do
     insertBlogPost blogPost1
     insertBlogPost blogPost2
     insertBlogPost blogPost3
     insertBlogPost blogPost4
     result <- selectById $ Only (#blogPostId blogPost1)
-    pure $ result `shouldBe` blogPost1
+    result `shouldBe` blogPost1
   itDB "Select blog post by title" $ do
-    result <- selectOneByField @BlogPost "title" $ Only ("A Past and Future Secret" :: Text)
-    pure $ result `shouldBe` blogPost2
+    selectOneByField @BlogPost "title" (Only ("A Past and Future Secret" :: Text))
+      `shouldReturn` blogPost2
   itDB "Select all blog posts by non-null condition" $ do
     result <- selectWhereNotNull @BlogPost ["author_id", "title"]
-    pure $ V.toList result `shouldMatchList` [blogPost1, blogPost2, blogPost3, blogPost4]
+    V.toList result `shouldMatchList` [blogPost1, blogPost2, blogPost3, blogPost4]
   itDB "Select no blog post by null condition" $ do
     result <- selectWhereNull @BlogPost ["author_id", "content"]
-    pure $ V.length result `shouldBe` 0
+    V.length result `shouldBe` 0
   itDB "Select multiple blog posts by author id" $ do
     result <- selectManyByField @BlogPost "author_id" $ Only (#authorId blogPost4)
-    pure $ V.toList result `shouldMatchList` [blogPost4, blogPost3]
+    V.toList result `shouldMatchList` [blogPost2, blogPost3, blogPost4]
   itDB "Delete a blog post" $ do
     delete @BlogPost (Only (blogPostId blogPost2))
     result <- selectManyByField @BlogPost "blogpost_id" $ Only (#blogPostId blogPost2)
-    pure $ V.length result `shouldBe` 0
+    V.length result `shouldBe` 0
   itDB "Delete a blog post by title" $ do
     deleteByField @BlogPost ["title"] (Only @Text "Echoes from the other world")
     result <- selectManyByField @BlogPost "title" $ Only (#title blogPost1)
-    pure $ V.length result `shouldBe` 0
+    V.length result `shouldBe` 0
   itDB "Get all the article titles by author name" $ do
     let q = _crossSelectWithFields @BlogPost @Author ["title"] ["name"]
-    result <- query_ Select q :: (MonadIO m) => DBT m (V.Vector (Text, Text))
-    pure $ result `shouldBe` [("The Script for my requiem","Hansi Kürsch"),("Mordred's Song","Hansi Kürsch")]
-
+    (query_ Select q :: (MonadIO m) => DBT m (V.Vector (Text, Text)))
+      `shouldReturn` [("The Script for my requiem","Hansi Kürsch"),("Mordred's Song","Hansi Kürsch")]
+  itDB "Change the name of an author" $ do
+    let newAuthor = author2{name = "Hannah Kürsch"}
+    update @Author newAuthor 
+    selectById (Only (#authorId author2))
+      `shouldReturn` newAuthor
+  itDB "Change the name of an author according to their name" $ do
+    let newName = "Tiberus McElroy" :: Text
+    let oldName = "Johnson McElroy" :: Text
+    updateFieldsBy @Author ["name"] ("name", oldName) [newName]
+     `shouldReturn` 1
+  itDB "Change the author and title of a blogpost" $ do
+    let newAuthorId =  UUID.toText $ getAuthorId $ #authorId author3 :: Text
+    let newTitle    = "Something Entirely New" :: Text
+    modifiedRows <- updateFieldsBy @BlogPost ["author_id", "title"] ("title", #title blogPost4) [newAuthorId, newTitle]
+    result <- selectManyByField @BlogPost "author_id" (Only (#authorId author3))
+    V.length result `shouldBe` fromIntegral modifiedRows

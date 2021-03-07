@@ -20,20 +20,26 @@ module Database.PostgreSQL.Entity
 
     -- * Associated Types
   , Field (..)
-
+  , UpdateRow(..)
     -- * High-level API
+    -- ** Selection
   , selectById
   , selectOneByField
   , selectManyByField
   , selectWhereNotNull
   , selectWhereNull
   , crossSelectById
+    -- ** Insertion
   , insert
+    -- ** Update
+  , update
+  , updateFieldsBy
+    -- ** Deletion
   , delete
   , deleteByField
 
     -- * SQL Combinators API
-
+    -- ** Selection
   , _select
   , _selectWithFields
   , _where
@@ -43,7 +49,14 @@ module Database.PostgreSQL.Entity
   , _crossSelect
   , _innerJoin
   , _crossSelectWithFields
+    -- ** Insertion
   , _insert
+    -- ** Update
+  , _update
+  , _updateBy
+  , _updateFields
+  , _updateFieldsBy
+    -- ** Deletion
   , _delete
   , _deleteWhere
 
@@ -53,13 +66,14 @@ module Database.PostgreSQL.Entity
   , withType
   , inParens
   , quoteName
+  , getTableName
   , expandFields
   , expandQualifiedFields
   , expandQualifiedFields_
   , prefixFields
-  , placeHolder
+  , placeholder
   , generatePlaceholders
-  , queryFromText
+  , textToQuery
   , queryToText
   , intercalateVector
   ) where
@@ -67,7 +81,8 @@ module Database.PostgreSQL.Entity
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple.FromRow (FromRow)
-import Database.PostgreSQL.Simple.ToRow (ToRow)
+import Database.PostgreSQL.Simple.ToRow (ToRow(..))
+import Database.PostgreSQL.Simple.ToField (ToField(..))
 import Database.PostgreSQL.Simple.Types (Query (..))
 import Database.PostgreSQL.Transact (DBT)
 
@@ -115,6 +130,17 @@ data Field
 -- | @since 0.0.1.0
 instance IsString Field where
   fromString n = Field (toText n) Nothing
+
+-- | Wrapper used by the update function in order to have the primary key as the last parameter passed,
+-- since it appears in the WHERE clause.
+--
+-- @since 0.0.1.0
+newtype UpdateRow a = UpdateRow { getUpdate :: a }
+  deriving stock (Eq, Show)
+  deriving newtype (Entity)
+
+instance ToRow a => ToRow (UpdateRow a) where
+  toRow = (drop <> take) 1 . toRow . getUpdate
 
 -- | Select an entity by its primary key.
 --
@@ -176,6 +202,30 @@ insert :: forall e values m.
        => values -> DBT m ()
 insert fs = void $ execute Insert (_insert @e) fs
 
+-- | Update an entity.
+-- 
+-- __Examples__
+--
+-- > let newAuthor = oldAuthor{…}
+-- > update @Author newAuthor
+--
+-- @since 0.0.1.0
+update :: forall e newValue m.
+       (Entity e, ToRow newValue, MonadIO m)
+       => newValue -> DBT m ()
+update fs = void $ execute Update (_update @e) (UpdateRow fs)
+
+-- | Update rows of an entity matching the given value
+--
+-- @since 0.0.1.0
+updateFieldsBy :: forall e v m.
+           (Entity e, ToField v, MonadIO m)
+           => Vector Field   -- ^ Fields to change
+           -> (Field, v) -- ^ Field on which to match and its value
+           -> Vector v -- ^ New values of those fields
+           -> DBT m Int64
+updateFieldsBy fs (f, oldValue) newValue = execute Update (_updateFieldsBy @e fs f) (V.toList $ newValue `V.snoc` oldValue)
+
 -- | Delete an entity according to its primary key.
 --
 -- @since 0.0.1.0
@@ -203,7 +253,7 @@ deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
 --
 -- @since 0.0.1.0
 _select :: forall e. Entity e => Query
-_select = queryFromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> quoteName (tableName @e)
+_select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> getTableName @e
 
 -- | Produce a SELECT statement with explicit fields for a given entity
 --
@@ -214,7 +264,7 @@ _select = queryFromText $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> q
 --
 -- @since 0.0.1.0
 _selectWithFields :: forall e. Entity e => Vector Field -> Query
-_selectWithFields fs = queryFromText $ "SELECT " <> expandQualifiedFields_ fs tn <> " FROM " <> quoteName tn
+_selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields_ fs tn <> " FROM " <> quoteName tn
   where tn = tableName @e
 
 -- | Produce a WHERE clause, given a vector of fields.
@@ -235,11 +285,11 @@ _selectWithFields fs = queryFromText $ "SELECT " <> expandQualifiedFields_ fs tn
 --
 -- @since 0.0.1.0
 _where :: forall e. Entity e => Vector Field -> Query
-_where fs' = queryFromText $ " WHERE " <> clauseFields
+_where fs' = textToQuery $ " WHERE " <> clauseFields
   where
     fieldNames = fmap fieldName fs'
     fs = V.filter (\f -> fieldName f `elem` fieldNames) (fields @e)
-    clauseFields = fold $ intercalateVector " AND " (fmap placeHolder fs)
+    clauseFields = fold $ intercalateVector " AND " (fmap placeholder fs)
 
 -- | Produce a SELECT statement for a given entity and fields.
 --
@@ -260,7 +310,7 @@ _selectWhere fs = _select @e <> _where @e fs
 --
 -- @since 0.0.1.0
 _selectWhereNotNull :: forall e. Entity e => Vector Field -> Query
-_selectWhereNotNull fs = _select @e <> queryFromText (" WHERE " <> isNotNull fs)
+_selectWhereNotNull fs = _select @e <> textToQuery (" WHERE " <> isNotNull fs)
 
 -- | Produce a SELECT statement where the provided fields are checked for being null.
 --
@@ -269,7 +319,7 @@ _selectWhereNotNull fs = _select @e <> queryFromText (" WHERE " <> isNotNull fs)
 --
 -- @since 0.0.1.0
 _selectWhereNull :: forall e. Entity e => Vector Field -> Query
-_selectWhereNull fs = _select @e <> queryFromText (" WHERE " <> isNull fs)
+_selectWhereNull fs = _select @e <> textToQuery (" WHERE " <> isNull fs)
 
 -- | Produce a "SELECT FROM" over two entities.
 --
@@ -280,9 +330,9 @@ _selectWhereNull fs = _select @e <> queryFromText (" WHERE " <> isNull fs)
 --
 -- @since 0.0.1.0
 _crossSelect :: forall e1 e2. (Entity e1, Entity e2) => Query
-_crossSelect = queryFromText $ "SELECT " <> expandQualifiedFields @e1 <> ", "
+_crossSelect = textToQuery $ "SELECT " <> expandQualifiedFields @e1 <> ", "
                                     <> expandQualifiedFields @e2 <>
-                           " FROM " <> quoteName (tableName @e1)
+                           " FROM " <> getTableName @e1
                            <> queryToText (_innerJoin @e2 (primaryKey @e2))
 
 -- | Produce a "INNER JOIN … USING(…)" fragment.
@@ -294,7 +344,7 @@ _crossSelect = queryFromText $ "SELECT " <> expandQualifiedFields @e1 <> ", "
 --
 -- @since 0.0.1.0
 _innerJoin :: forall e. (Entity e) => Field -> Query
-_innerJoin f = queryFromText $ " INNER JOIN " <> quoteName (tableName @e)
+_innerJoin f = textToQuery $ " INNER JOIN " <> getTableName @e
                           <> " USING(" <> fieldName f <> ")"
 
 -- | Produce a "SELECT [table1_fields, table2_fields] FROM table1 INNER JOIN table2 USING(table2_pk)"
@@ -308,9 +358,9 @@ _innerJoin f = queryFromText $ " INNER JOIN " <> quoteName (tableName @e)
 _crossSelectWithFields :: forall e1 e2. (Entity e1, Entity e2)
                    => Vector Field -> Vector Field -> Query
 _crossSelectWithFields fs1 fs2 =
-  queryFromText $ "SELECT " <> expandQualifiedFields_ fs1 tn1
+  textToQuery $ "SELECT " <> expandQualifiedFields_ fs1 tn1
     <> ", " <> expandQualifiedFields_ fs2 tn2
-    <> " FROM " <> quoteName (tableName @e1)
+    <> " FROM " <> getTableName @e1
     <> queryToText (_innerJoin @e2 (primaryKey @e2))
   where
     tn1 = tableName @e1
@@ -325,10 +375,68 @@ _crossSelectWithFields fs1 fs2 =
 --
 -- @since 0.0.1.0
 _insert :: forall e. Entity e => Query
-_insert = queryFromText $ "INSERT INTO " <> quoteName (tableName @e) <> " " <> fs <> " VALUES " <> ps
+_insert = textToQuery $ "INSERT INTO " <> getTableName @e <> " " <> fs <> " VALUES " <> ps
   where
     fs = inParens (expandFields @e)
     ps = inParens (generatePlaceholders $ fields @e)
+
+-- | Produce an UPDATE statement for the given entity by primary key
+-- 
+-- __Examples__
+--
+-- >>> _update @Author
+-- "UPDATE \"authors\" SET (\"name\", \"created_at\") = ROW(?, ?) WHERE \"author_id\" = ?"
+--
+-- >>> _update @BlogPost
+-- "UPDATE \"blogposts\" SET (\"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") = ROW(?, ?::uuid[], ?, ?, ?) WHERE \"blogpost_id\" = ?"
+--
+-- @since 0.0.1.0
+
+_update :: forall e. Entity e => Query
+_update = _updateBy @e (primaryKey @e)
+
+-- | Produce an UPDATE statement for the given entity by the given field.
+-- 
+-- __Examples__
+--
+-- >>> _updateBy @Author "name"
+-- "UPDATE \"authors\" SET (\"name\", \"created_at\") = ROW(?, ?) WHERE \"name\" = ?"
+--
+-- @since 0.0.1.0
+_updateBy :: forall e. Entity e => Field -> Query
+_updateBy f = _updateFieldsBy @e (fields @e) f
+
+-- | Produce an UPDATE statement for the given entity and fields, by primary key.
+--
+-- >>> _updateFields @Author ["name"]
+-- "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"author_id\" = ?"
+--
+-- @since 0.0.1.0
+_updateFields :: forall e. Entity e => Vector Field -> Query
+_updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
+
+-- | Produce an UPDATE statement for the given entity and fields, by the specified field.
+--
+-- >>> _updateFieldsBy @Author ["name"] "name"
+-- "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"name\" = ?"
+--
+-- >>> _updateFieldsBy @BlogPost ["author_id", "title"] "title"
+-- "UPDATE \"blogposts\" SET (\"author_id\", \"title\") = ROW(?, ?) WHERE \"title\" = ?"
+-- 
+-- @since 0.0.1.0
+_updateFieldsBy :: forall e. Entity e
+                => Vector Field -- ^ Field names to update
+                -> Field        -- ^ Field on which to match
+                -> Query
+_updateFieldsBy fs' f = textToQuery (
+    "UPDATE " <> getTableName @e
+              <> " SET " <> updatedFields <> " = " <> newValues)
+              <> _where @e [f]
+  where
+    fs = V.filter (/= (primaryKey @e)) fs'
+    newValues = "ROW" <> inParens (generatePlaceholders fs)
+    updatedFields = inParens $
+      V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . fieldName <$> fs)
 
 -- | Produce a DELETE statement for the given entity, with a match on the Primary Key
 --
@@ -339,7 +447,7 @@ _insert = queryFromText $ "INSERT INTO " <> quoteName (tableName @e) <> " " <> f
 --
 -- @since 0.0.1.0
 _delete :: forall e. Entity e => Query
-_delete = queryFromText ("DELETE FROM " <> quoteName (tableName @e)) <> _where @e [primaryKey @e]
+_delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryKey @e]
 
 -- | Produce a DELETE statement for the given entity and fields
 --
@@ -350,7 +458,7 @@ _delete = queryFromText ("DELETE FROM " <> quoteName (tableName @e)) <> _where @
 --
 -- @since 0.0.1.0
 _deleteWhere :: forall e. Entity e => Vector Field -> Query
-_deleteWhere fs = queryFromText ("DELETE FROM " <> (tableName @e)) <> _where @e fs
+_deleteWhere fs = textToQuery ("DELETE FROM " <> (tableName @e)) <> _where @e fs
 
 -- | A infix helper to declare a table field with an explicit type annotation.
 --
@@ -385,6 +493,18 @@ inParens t = "(" <> t <> ")"
 quoteName :: Text -> Text
 quoteName n = "\"" <> n <> "\""
 
+-- | Safe getter that quotes a table name
+--
+-- __Examples__
+--
+-- >>> getTableName @Author
+-- "\"authors\""
+getTableName :: forall e. Entity e => Text
+getTableName = quoteName (tableName @e)
+
+getFieldName :: Field -> Text
+getFieldName = quoteName . fieldName
+
 -- | Produce a comma-separated list of an entity's fields.
 --
 -- __Examples__
@@ -394,7 +514,7 @@ quoteName n = "\"" <> n <> "\""
 --
 -- @since 0.0.1.0
 expandFields :: forall e. Entity e => Text
-expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . fieldName <$> fields @e)
+expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (getFieldName <$> fields @e)
 
 -- | Produce a comma-separated list of an entity's fields, qualified with the table name
 --
@@ -433,23 +553,38 @@ expandQualifiedFields_ fs prefix = V.foldl1' (\element acc -> element <> ", " <>
 prefixFields :: Text -> Vector Field -> Vector Field
 prefixFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 
--- | Produce a placeholder of the form @\"field\" = ?@
+-- | Produce a placeholder of the form @\"field\" = ?@ with an optional type annotation.
 --
 -- __Examples__
 --
--- >>> placeHolder "id"
+-- >>> placeholder "id"
 -- "\"id\" = ?"
 --
--- >>> placeHolder $ Field "ids" (Just "uuid[]")
+-- >>> placeholder $ Field "ids" (Just "uuid[]")
 -- "\"ids\" = ?::uuid[]"
 --
--- >>> fmap placeHolder $ fields @BlogPost
+-- >>> fmap placeholder $ fields @BlogPost
 -- ["\"blogpost_id\" = ?","\"author_id\" = ?","\"uuid_list\" = ?::uuid[]","\"title\" = ?","\"content\" = ?","\"created_at\" = ?"]
 --
 -- @since 0.0.1.0
-placeHolder :: Field -> Text
-placeHolder (Field f Nothing)  = quoteName f <> " = ?"
-placeHolder (Field f (Just t)) = quoteName f <> " = ?::" <> t
+placeholder :: Field -> Text
+placeholder (Field f Nothing)  = quoteName f <> " = ?"
+placeholder (Field f (Just t)) = quoteName f <> " = ?::" <> t
+
+-- | Generate an appropriate number of “?” placeholders given a vector of fields.
+--
+-- Used to generate INSERT queries.
+--
+-- __Examples__
+--
+-- >>> generatePlaceholders $ fields @BlogPost
+-- "?, ?, ?::uuid[], ?, ?, ?"
+--
+-- @since 0.0.1.0
+generatePlaceholders :: Vector Field -> Text
+generatePlaceholders vf = fold $ intercalateVector ", " $ fmap ph vf
+  where
+    ph (Field _ t) = maybe "?" (\t' -> "?::" <> t') t
 
 -- | Produce an IS NOT NULL statement given a vector of fields
 --
@@ -481,25 +616,12 @@ isNull fs' = fold $ intercalateVector " AND " (fmap process fieldNames)
     fieldNames = fmap fieldName fs'
     process f = quoteName f <> " IS NULL"
 
--- | Generate an appropriate number of “?” placeholders given a vector of fields
---
--- __Examples__
---
--- >>> generatePlaceholders $ fields @BlogPost
--- "?, ?, ?::uuid[], ?, ?, ?"
---
--- @since 0.0.1.0
-generatePlaceholders :: Vector Field -> Text
-generatePlaceholders vf = fold $ intercalateVector ", " $ fmap ph vf
-  where
-    ph (Field _ t) = maybe "?" (\t' -> "?::" <> t') t
-
 -- | Since the 'Query' type has an 'IsString' instance, the process of converting from 'Text' to 'String' to 'Query' is
 -- factored into this function
 --
 -- @since 0.0.1.0
-queryFromText :: Text -> Query
-queryFromText = fromString . toString
+textToQuery :: Text -> Query
+textToQuery = fromString . toString
 
 -- | For cases where combinator composition is tricky, we can safely get back to a 'Text' string from a 'Query'
 --
