@@ -95,11 +95,11 @@ query_ queryNature q = do
 -- | Query wrapper for SQL statements which do not return.
 --
 -- @since 0.0.1.0
-execute :: (ToRow params, MonadIO m) => QueryNature -> Query -> params -> PGT.DBT m ()
+execute :: (ToRow params, MonadIO m)
+        => QueryNature -> Query -> params -> PGT.DBT m Int64
 execute queryNature q params = do
   logQueryFormat queryNature q params
   PGT.execute q params
-  pure ()
 
 listToOne :: [result] -> result
 listToOne [r] = r
