@@ -80,10 +80,11 @@ module Database.PostgreSQL.Entity
 
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import Database.PostgreSQL.Simple (Only (..))
 import Database.PostgreSQL.Simple.FromRow (FromRow)
-import Database.PostgreSQL.Simple.ToField (ToField (..))
+import Database.PostgreSQL.Simple.ToField (ToField)
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
-import Database.PostgreSQL.Simple.Types (Only (..), Query (..))
+import Database.PostgreSQL.Simple.Types (Query (..))
 import Database.PostgreSQL.Transact (DBT)
 
 import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOne, query_)
@@ -220,12 +221,12 @@ update fs = void $ execute Update (_update @e) (UpdateRow fs)
 --
 -- @since 0.0.1.0
 updateFieldsBy :: forall e v1 v2 m.
-           (Entity e, ToField v1, ToField v2, MonadIO m)
+           (Entity e, MonadIO m, ToRow v2, ToField v1)
            => Vector Field -- ^ Fields to change
            -> (Field, v1)  -- ^ Field on which to match and its value
-           -> Vector v2    -- ^ New values of those fields
+           -> v2    -- ^ New values of those fields
            -> DBT m Int64
-updateFieldsBy fs (f, oldValue) newValue = execute Update (_updateFieldsBy @e fs f) (toRow (V.toList newValue) ++ toRow (Only oldValue))
+updateFieldsBy fs (f, oldValue) newValue = execute Update (_updateFieldsBy @e fs f) (toRow newValue ++ toRow (Only oldValue))
 
 -- | Delete an entity according to its primary key.
 --

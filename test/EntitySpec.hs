@@ -131,11 +131,11 @@ spec = describeDB migrate "Entity DB " $ do
   itDB "Change the name of an author according to their name" $ do
     let newName = "Tiberus McElroy" :: Text
     let oldName = "Johnson McElroy" :: Text
-    updateFieldsBy @Author ["name"] ("name", oldName) [newName]
+    updateFieldsBy @Author ["name"] ("name", oldName) (Only newName)
      `shouldReturn` 1
   itDB "Change the author and title of a blogpost" $ do
     let newAuthorId =  UUID.toText $ getAuthorId $ #authorId author3 :: Text
     let newTitle    = "Something Entirely New" :: Text
-    modifiedRows <- updateFieldsBy @BlogPost ["author_id", "title"] ("title", #title blogPost4) [newAuthorId, newTitle]
+    modifiedRows <- updateFieldsBy @BlogPost ["author_id", "title"] ("title", #title blogPost4) (newAuthorId, newTitle)
     result <- selectManyByField @BlogPost "author_id" (Only (#authorId author3))
     V.length result `shouldBe` fromIntegral modifiedRows
