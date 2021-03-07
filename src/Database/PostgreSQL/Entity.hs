@@ -81,9 +81,9 @@ module Database.PostgreSQL.Entity
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple.FromRow (FromRow)
-import Database.PostgreSQL.Simple.ToRow (ToRow(..))
-import Database.PostgreSQL.Simple.ToField (ToField(..))
-import Database.PostgreSQL.Simple.Types (Query (..))
+import Database.PostgreSQL.Simple.ToField (ToField (..))
+import Database.PostgreSQL.Simple.ToRow (ToRow (..))
+import Database.PostgreSQL.Simple.Types (Only (..), Query (..))
 import Database.PostgreSQL.Transact (DBT)
 
 import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOne, query_)
@@ -135,7 +135,8 @@ instance IsString Field where
 -- since it appears in the WHERE clause.
 --
 -- @since 0.0.1.0
-newtype UpdateRow a = UpdateRow { getUpdate :: a }
+newtype UpdateRow a
+  = UpdateRow { getUpdate :: a }
   deriving stock (Eq, Show)
   deriving newtype (Entity)
 
@@ -146,7 +147,7 @@ instance ToRow a => ToRow (UpdateRow a) where
 --
 -- @since 0.0.1.0
 selectById :: forall e value m.
-           (Entity e, FromRow e, ToRow value, MonadIO m)
+           (Entity e, FromRow e, MonadIO m, ToRow value)
            => value -> DBT m e
 selectById value = selectOneByField (primaryKey @e) value
 
@@ -154,7 +155,7 @@ selectById value = selectOneByField (primaryKey @e) value
 --
 -- @since 0.0.1.0
 selectOneByField :: forall e value m.
-                 (Entity e, FromRow e, ToRow value, MonadIO m)
+                 (Entity e, FromRow e, MonadIO m, ToRow value)
                  => Field -> value -> DBT m e
 selectOneByField f value = queryOne Select (_selectWhere @e [f]) value
 
@@ -162,7 +163,7 @@ selectOneByField f value = queryOne Select (_selectWhere @e [f]) value
 --
 -- @since 0.0.1.0
 selectManyByField :: forall e value m.
-                  (Entity e, FromRow e, ToRow value, MonadIO m)
+                  (Entity e, FromRow e, MonadIO m, ToRow value)
                   => Field -> value -> DBT m (Vector e)
 selectManyByField f value = query Select (_selectWhere @e [f]) value
 
@@ -203,7 +204,7 @@ insert :: forall e values m.
 insert fs = void $ execute Insert (_insert @e) fs
 
 -- | Update an entity.
--- 
+--
 -- __Examples__
 --
 -- > let newAuthor = oldAuthor{…}
@@ -218,13 +219,13 @@ update fs = void $ execute Update (_update @e) (UpdateRow fs)
 -- | Update rows of an entity matching the given value
 --
 -- @since 0.0.1.0
-updateFieldsBy :: forall e v m.
-           (Entity e, ToField v, MonadIO m)
-           => Vector Field   -- ^ Fields to change
-           -> (Field, v) -- ^ Field on which to match and its value
-           -> Vector v -- ^ New values of those fields
+updateFieldsBy :: forall e v1 v2 m.
+           (Entity e, ToField v1, ToField v2, MonadIO m)
+           => Vector Field -- ^ Fields to change
+           -> (Field, v1)  -- ^ Field on which to match and its value
+           -> Vector v2    -- ^ New values of those fields
            -> DBT m Int64
-updateFieldsBy fs (f, oldValue) newValue = execute Update (_updateFieldsBy @e fs f) (V.toList $ newValue `V.snoc` oldValue)
+updateFieldsBy fs (f, oldValue) newValue = execute Update (_updateFieldsBy @e fs f) (toRow (V.toList newValue) ++ toRow (Only oldValue))
 
 -- | Delete an entity according to its primary key.
 --
@@ -381,7 +382,7 @@ _insert = textToQuery $ "INSERT INTO " <> getTableName @e <> " " <> fs <> " VALU
     ps = inParens (generatePlaceholders $ fields @e)
 
 -- | Produce an UPDATE statement for the given entity by primary key
--- 
+--
 -- __Examples__
 --
 -- >>> _update @Author
@@ -396,7 +397,7 @@ _update :: forall e. Entity e => Query
 _update = _updateBy @e (primaryKey @e)
 
 -- | Produce an UPDATE statement for the given entity by the given field.
--- 
+--
 -- __Examples__
 --
 -- >>> _updateBy @Author "name"
@@ -422,7 +423,7 @@ _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
 --
 -- >>> _updateFieldsBy @BlogPost ["author_id", "title"] "title"
 -- "UPDATE \"blogposts\" SET (\"author_id\", \"title\") = ROW(?, ?) WHERE \"title\" = ?"
--- 
+--
 -- @since 0.0.1.0
 _updateFieldsBy :: forall e. Entity e
                 => Vector Field -- ^ Field names to update

@@ -3,8 +3,8 @@
 
 module EntitySpec where
 
-import qualified Data.Vector as V
 import qualified Data.UUID as UUID
+import qualified Data.Vector as V
 import Database.PostgreSQL.Entity.DBT.Types (QueryNature (Select))
 import Database.PostgreSQL.Simple (Connection, Only (Only))
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
@@ -12,8 +12,8 @@ import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirector
 import Database.PostgreSQL.Transact (DBT)
 import Relude.Unsafe (read)
 import Test.Hspec (Spec)
-import Test.Hspec.Expectations.Lifted (shouldBe, shouldReturn, shouldMatchList)
 import Test.Hspec.DB (describeDB, itDB)
+import Test.Hspec.Expectations.Lifted (shouldBe, shouldMatchList, shouldReturn)
 
 import Database.PostgreSQL.Entity (_crossSelectWithFields, delete, deleteByField, selectById, selectManyByField,
                                    selectOneByField, selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
@@ -125,7 +125,7 @@ spec = describeDB migrate "Entity DB " $ do
       `shouldReturn` [("The Script for my requiem","Hansi Kürsch"),("Mordred's Song","Hansi Kürsch")]
   itDB "Change the name of an author" $ do
     let newAuthor = author2{name = "Hannah Kürsch"}
-    update @Author newAuthor 
+    update @Author newAuthor
     selectById (Only (#authorId author2))
       `shouldReturn` newAuthor
   itDB "Change the name of an author according to their name" $ do
