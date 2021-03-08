@@ -34,15 +34,18 @@ will upload it on Hackage one day. We shall see.
 
 This library aims to be a thin layer between that sits between rigid ORMs and hand-rolled SQL query strings.
 
-Implement the `Entity` typeclass for your data-type:
+Implement the `Entity` typeclass for your data-type, and parametrise the library functions  
+with a [Type Application](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/type_applications.html): 
 
 ```Haskell
 :set -XOverloadedLists
 :set -XOverloadedStrings
+:set -XQuasiQuotes
 
 import Data.UUID (UUID)
 import Data.Vector (Vector)
 import Database.PostgreSQL.Entity
+import Database.PostgreSQL.Simple.SqlQQ
 
 newtype MyTypeId = MyTypeId { getMyTypeId :: UUID }
   deriving newtype (Eq, Show, FromField, ToField)
@@ -68,9 +71,21 @@ instance Entity MyType where
 
 insertMyType :: MyType -> DBT IO ()
 insertMyType = insert @MyType
+
+getNotificationById :: NotificationId -> DBT IO ()
+getNotificationById notificationId = selectById @Notification (Only notificationId)
+
+isJobLocked :: Int -> DBT IO (Only Bool)
+isJobLocked jobId = queryOne Select q (Only jobId)
+  where q = [sql| SELECT
+                    CASE WHEN locked_at IS NULL then false
+                         ELSE true
+                     END
+                   FROM jobs WHERE job_id = ?
+            |]
 ```
 
-See the [BlogPost][BlogPost-module] module for the data-type that is used throughout the tests and doctests.
+For more examples, see the [BlogPost][BlogPost-module] module for the data-type that is used throughout the tests and doctests.
 
 ### Escape hatches
 
