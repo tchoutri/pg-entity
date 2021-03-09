@@ -119,7 +119,7 @@ Do not hesitate to raise an issue if you feel that something is badly explained 
   * [x] DBT.hs
   * [x] DBT.Types.hs
 
-* [ ] Move the helpers to a .Helpers submodule
+* [x] Move the helpers to a .Internal submodule
 * [ ] Write a .Tutorial submodule
 
 ## Acknowledgements 

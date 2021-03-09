@@ -75,6 +75,8 @@ library
     Database.PostgreSQL.Entity.BlogPost
     Database.PostgreSQL.Entity.DBT
     Database.PostgreSQL.Entity.DBT.Types
+    Database.PostgreSQL.Entity.Internal
+    Database.PostgreSQL.Entity.Types
   hs-source-dirs:
       src
   build-depends:

@@ -25,7 +25,8 @@ import Database.PostgreSQL.Simple.ToRow (ToRow)
 import Database.PostgreSQL.Transact (DBT)
 import GHC.Records (HasField (..))
 
-import Database.PostgreSQL.Entity (Entity (..), insert, withType)
+import Database.PostgreSQL.Entity (insert, withType)
+import Database.PostgreSQL.Entity.Types (Entity (..))
 
 -- | Wrapper around the UUID type
 newtype AuthorId
