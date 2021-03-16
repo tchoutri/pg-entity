@@ -17,9 +17,9 @@ import Test.Hspec.Expectations.Lifted (shouldBe, shouldMatchList, shouldReturn)
 
 import Database.PostgreSQL.Entity (_crossSelectWithFields, delete, deleteByField, selectById, selectManyByField,
                                    selectOneByField, selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
-import Database.PostgreSQL.Entity.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
-                                            insertAuthor, insertBlogPost)
 import Database.PostgreSQL.Entity.DBT (query_)
+import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
+                                                     insertAuthor, insertBlogPost)
 
 author1 :: Author
 author1 =

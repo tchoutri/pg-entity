@@ -46,9 +46,9 @@ class Entity e where
 -- @since 0.0.1.0
 data Field
   = Field { fieldName :: Text
-            -- ^ The name of the field in the database schema
+            -- | The name of the field in the database schema
+            -- | An optional postgresql type for which we need to be explicit, like @uuid[]@
           , fieldType :: Maybe Text
-            -- ^ An optional postgresql type for which we need to be explicit, like @uuid[]@
           }
   deriving stock (Eq, Show)
 

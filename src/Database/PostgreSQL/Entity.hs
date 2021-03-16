@@ -11,7 +11,7 @@
   A PostgreSQL database layer that does not get in your way.
 
 
-  See the "Database.PostgreSQL.Entity.BlogPost" module for an example of a data-type implementing the 'Entity' typeclass.
+  See the "Database.PostgreSQL.Entity.Internal.BlogPost" module for an example of a data-type implementing the 'Entity' typeclass.
 -}
 module Database.PostgreSQL.Entity
   (
@@ -81,7 +81,7 @@ import Database.PostgreSQL.Entity.Types
 -- >>> :set -XOverloadedLists
 -- >>> :set -XTypeApplications
 -- >>> import Database.PostgreSQL.Entity
--- >>> import Database.PostgreSQL.Entity.BlogPost
+-- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
 
 -- | A infix helper to declare a table field with an explicit type annotation.
 --

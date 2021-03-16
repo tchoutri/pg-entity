@@ -41,7 +41,7 @@ import Database.PostgreSQL.Entity.Types
 -- >>> :set -XOverloadedLists
 -- >>> :set -XTypeApplications
 -- >>> import Database.PostgreSQL.Entity
--- >>> import Database.PostgreSQL.Entity.BlogPost
+-- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
 
 -- | Wrap the given text between parentheses
 --

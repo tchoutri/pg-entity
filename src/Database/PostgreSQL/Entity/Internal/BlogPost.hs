@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE StrictData #-}
 {-|
-  Module      : Database.PostgreSQL.Entity.BlogPost
+  Module      : Database.PostgreSQL.Entity.Internal.BlogPost
   Copyright   : © Clément Delafargue, 2018
                   Théophile Choutri, 2021
   License     : MIT
@@ -13,7 +13,7 @@
 
   The models described in this module are used throughout the library's tests and docspecs.
 -}
-module Database.PostgreSQL.Entity.BlogPost where
+module Database.PostgreSQL.Entity.Internal.BlogPost where
 
 import Data.Time (UTCTime)
 import Data.UUID (UUID)

@@ -65,7 +65,7 @@ query queryNature q params = do
 
 -- | Query wrapper that returns one result.
 --
--- ⚠ This function may raise a 'DBError':
+-- ⚠ This function may raise the following 'DBError':
 --
 -- * 'NotFound' if the query returns zero results
 -- * 'TooManyResults' if the query returns more than one result
@@ -78,12 +78,9 @@ queryOne queryNature q params = do
   result <- PGT.query q params
   pure $ listToOne result
 
--- | Query wrapper that returns one result and does not take an argument
+-- | Query wrapper that returns a 'Vector' of results and does not take an argument
 --
--- ⚠ This function will raise the following 'DBError':
---
--- * 'NotFound' if the query returns zero results
--- * 'TooManyResults' if the query returns more than one result
+-- ⚠ This function may raise a 'DBError':
 --
 -- @since 0.0.1.0
 query_ :: (FromRow result, MonadIO m)
@@ -110,7 +107,7 @@ logQueryFormat :: (ToRow params, MonadIO m) => QueryNature -> Query -> params ->
 logQueryFormat queryNature q params = do
   msg <- PGT.formatQuery q params
   case queryNature of
-    Select -> liftIO $ cyanMessage $ "[SELECT] " <> decodeUtf8 msg
+    Select -> liftIO $ cyanMessage   $ "[SELECT] " <> decodeUtf8 msg
     Update -> liftIO $ yellowMessage $ "[UPDATE] " <> decodeUtf8 msg
     Insert -> liftIO $ yellowMessage $ "[INSERT] " <> decodeUtf8 msg
-    Delete -> liftIO $ redMessage $ "[DELETE] " <> decodeUtf8 msg
+    Delete -> liftIO $ redMessage    $ "[DELETE] " <> decodeUtf8 msg
