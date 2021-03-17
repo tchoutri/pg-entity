@@ -1,0 +1,10 @@
+site_name: pg-entity
+docs_dir: 'src'
+theme:
+  name: material
+  palette:
+    scheme: preference
+    primary: deep-purple
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences

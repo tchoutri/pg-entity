@@ -2,3 +2,4 @@ dist-newstyle
 .hie
 cabal.project.local
 Session.vim
+docs/site

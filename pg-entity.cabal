@@ -72,10 +72,10 @@ library
   import: common-ghc-options
   exposed-modules:
     Database.PostgreSQL.Entity
-    Database.PostgreSQL.Entity.BlogPost
     Database.PostgreSQL.Entity.DBT
     Database.PostgreSQL.Entity.DBT.Types
     Database.PostgreSQL.Entity.Internal
+    Database.PostgreSQL.Entity.Internal.BlogPost
     Database.PostgreSQL.Entity.Types
   hs-source-dirs:
       src
