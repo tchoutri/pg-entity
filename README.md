@@ -1,4 +1,4 @@
-# PG-Entity [![CI-badge][CI-badge]][CI-url] ![simple-haskell][simple-haskell]
+# PG-Entity [![CI-badge][CI-badge]][CI-url] [![docs][docs]][docs-url] ![simple-haskell][simple-haskell]
 
 This library is a pleasant layer on top of [postgresql-simple][pg-simple]. 
 It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL query strings. Here is its philosophy:
@@ -6,9 +6,9 @@ It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL 
 * The serialisation/deserialisation part is left to the consumer, so you have to go with your own FromRow/ToRow instances.
   You are encouraged to adopt data types that model your business, rather than restrict yourself with the limits of what
   a SQL schema can represent. Use a intermediate data access object (DAO) that can easily be serialised and deserialised
-  in a SQL schema, to and from which you will morph your business data-types.
-* Escape hatches are provided at every level. The types that are manipulated are Query for which an IsString instance exists.
-  Don't force yourself to use the higher-level API if the combinators work for you, and if those don't either, “Just Write SQL“™.
+  to and from a SQL schema, to and from which you will morph your business data-types.
+* Escape hatches are provided at every level. The types that are manipulated are Query for which an `IsString` instance exists.
+  Don't force yourself to use the higher-level API if the combinators work for you, and if those don't either, “Just Write SQL”™.
 
 Its dependency footprint is optimised for my own setups, and as such it makes use of [text][text], [vector][vector],
 [pg-transact][pg-transact] and [relude][relude].
@@ -131,6 +131,8 @@ I wish to thank
 * Koz Ross, for his piercing eyes and his immense patience
 * Joe Kachmar, who enlightened me many times
 
+[docs]: https://img.shields.io/badge/docs-pg--entity-blueviolet?style=flat-square
+[docs-url]: https://tchoutri.github.io/pg-entity/
 [pg-transact-hspec]: https://github.com/jfischoff/pg-transact-hspec.git
 [blogpost]: https://tech.fretlink.com/yet-another-unsafe-db-layer/
 [anorm-pg-entity]: https://github.com/CleverCloud/anorm-pg-entity
@@ -143,3 +145,4 @@ I wish to thank
 [CI-url]: https://github.com/tchoutri/pg-entity/actions
 [simple-haskell]: https://img.shields.io/badge/Simple-Haskell-purple?style=flat-square
 [BlogPost-module]: https://github.com/tchoutri/pg-entity/blob/main/src/Database/PostgreSQL/Entity/BlogPost.hs
+
