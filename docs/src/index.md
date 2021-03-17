@@ -9,6 +9,6 @@ You will find four parts in this documentation:
 - The [Reference][reference]: Where everything is explained.
 
 [pg-entity]: https://github.com/tchoutri/pg-entity
-[tutorial]: /Tutorial
-[how-to]: /How-to-Guides
-[reference]: /Reference
+[tutorial]: /pg-entity/Tutorial
+[how-to]: /pg-entity/How-to-Guides
+[reference]: /pg-entity/Reference
