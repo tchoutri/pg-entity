@@ -13,6 +13,17 @@ It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL 
 Its dependency footprint is optimised for my own setups, and as such it makes use of [text][text], [vector][vector],
 [pg-transact][pg-transact] and [relude][relude].
 
+
+
+Table of Contents
+=================
+
+* [Installation](#installation)
+* [Usage](#usage)
+* [Escape hatches](#escape-hatches)
+* [Documentation](#documentation)
+* [Acknowledgements](#acknowledgements)
+
 ## Installation
 
 To use pg-entity in your project, add it to the `build-depends` stanza of you .cabal file,
@@ -106,21 +117,15 @@ The conclusion is : Test your DB queries. Test the encoding/decoding. Make round
 
 !["Screenshot"](./assets/screencap.png)
 
-## Documentation policy
+## Documentation
 
-Even though this work is mainly for my personal consumption, I encourage you to dive in the code and maybe get the 
-necessary inspiration to build something greater. Therefore, I aim to maintain a decent documentation for this library.
-Do not hesitate to raise an issue if you feel that something is badly explained and should be improved.
+This library aims to be thoroughly tested, by the means of [docspecs](https://github.com/phadej/cabal-extras/blob/master/cabal-docspec/MANUAL.md)
+and more traditional tests for database roundtrips.
 
-## TODO before release 0.0.1.0
+I aim to produce and maintain a decent documentation, therefore do not hesitate to raise an issue if you feel that
+something is badly explained and should be improved.
 
-* [x] Documentation, doctests and `@since` tags
-  * [x] Entity.hs
-  * [x] DBT.hs
-  * [x] DBT.Types.hs
-
-* [x] Move the helpers to a .Internal submodule
-* [ ] Write a .Tutorial submodule
+You will find the Tutorial, How-to Guides and the reference [here][docs-url].
 
 ## Acknowledgements 
 
