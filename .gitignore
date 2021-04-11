@@ -3,3 +3,4 @@ dist-newstyle
 cabal.project.local
 Session.vim
 docs/site
+.hspec-failures
