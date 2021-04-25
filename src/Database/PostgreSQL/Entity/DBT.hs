@@ -20,7 +20,6 @@ module Database.PostgreSQL.Entity.DBT
 
 import Colourista.IO (cyanMessage, redMessage, yellowMessage)
 import Control.Exception (throw)
-import Control.Exception.Safe (MonadCatch, try)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Pool (createPool, withResource)
 import Data.Time (NominalDiffTime)
@@ -37,9 +36,9 @@ import qualified Database.PostgreSQL.Transact as PGT
 -- raised will be converted to the Left branch of the Either.
 --
 -- @since 0.0.1.0
-runDB :: (MonadCatch m, MonadBaseControl IO m)
-      => ConnectionPool -> PGT.DBT m a -> m (Either DBError a)
-runDB pool action = try $ withResource pool $ PGT.runDBTSerializable action
+runDB :: (MonadBaseControl IO m)
+      => ConnectionPool -> PGT.DBT m a -> m a
+runDB pool action = withResource pool $ PGT.runDBTSerializable action
 
 -- | Create a ConnectionPool with the appropriate parameters
 --
