@@ -19,14 +19,13 @@ module Database.PostgreSQL.Entity.DBT
   ) where
 
 import Colourista.IO (cyanMessage, redMessage, yellowMessage)
-import Control.Exception (throw)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Pool (createPool, withResource)
 import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 
-import Database.PostgreSQL.Entity.DBT.Types (ConnectionPool, DBError (..), QueryNature (..))
+import Database.PostgreSQL.Entity.DBT.Types (ConnectionPool, QueryNature (..))
 import Database.PostgreSQL.Simple as PG (ConnectInfo, FromRow, Query, ToRow, close, connect)
 import qualified Database.PostgreSQL.Transact as PGT
 
@@ -71,11 +70,11 @@ query queryNature q params = do
 --
 -- @since 0.0.1.0
 queryOne :: (ToRow params, FromRow result, MonadIO m)
-         => QueryNature -> Query -> params -> PGT.DBT m result
+         => QueryNature -> Query -> params -> PGT.DBT m (Maybe result)
 queryOne queryNature q params = do
   logQueryFormat queryNature q params
   result <- PGT.query q params
-  pure $ listToOne result
+  pure $ listToMaybe result
 
 -- | Query wrapper that returns a 'Vector' of results and does not take an argument
 --
@@ -96,11 +95,6 @@ execute :: (ToRow params, MonadIO m)
 execute queryNature q params = do
   logQueryFormat queryNature q params
   PGT.execute q params
-
-listToOne :: [result] -> result
-listToOne [r] = r
-listToOne []  = throw NotFound
-listToOne _   = throw TooManyResults
 
 logQueryFormat :: (ToRow params, MonadIO m) => QueryNature -> Query -> params -> PGT.DBT m ()
 logQueryFormat queryNature q params = do

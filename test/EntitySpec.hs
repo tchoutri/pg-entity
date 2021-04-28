@@ -98,10 +98,10 @@ spec = describeDB migrate "Entity DB " $ do
     insertBlogPost blogPost3
     insertBlogPost blogPost4
     result <- selectById $ Only (#blogPostId blogPost1)
-    result `shouldBe` blogPost1
+    result `shouldBe` Just blogPost1
   itDB "Select blog post by title" $ do
     selectOneByField @BlogPost "title" (Only ("A Past and Future Secret" :: Text))
-      `shouldReturn` blogPost2
+      `shouldReturn` Just blogPost2
   itDB "Select all blog posts by non-null condition" $ do
     result <- selectWhereNotNull @BlogPost ["author_id", "title"]
     V.toList result `shouldMatchList` [blogPost1, blogPost2, blogPost3, blogPost4]
@@ -127,7 +127,7 @@ spec = describeDB migrate "Entity DB " $ do
     let newAuthor = author2{name = "Hannah Kürsch"}
     update @Author newAuthor
     selectById (Only (#authorId author2))
-      `shouldReturn` newAuthor
+      `shouldReturn` Just newAuthor
   itDB "Change the name of an author according to their name" $ do
     let newName = "Tiberus McElroy" :: Text
     let oldName = "Johnson McElroy" :: Text

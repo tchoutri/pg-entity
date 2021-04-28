@@ -10,8 +10,7 @@
   Associated types provided to the library and users
 -}
 module Database.PostgreSQL.Entity.DBT.Types
-  ( DBError (..)
-  , ConnectionPool
+  ( ConnectionPool
   , QueryNature (..)
   ) where
 
@@ -28,17 +27,3 @@ type ConnectionPool = Pool Connection
 --
 -- @since 0.0.1.0
 data QueryNature = Select | Insert | Update | Delete deriving (Eq, Show)
-
--- | Database-facing errors. Unify them with your business-facing error data-type
--- when reporting.
---
--- @since 0.0.1.0
-data DBError
-  = ConstraintError {-# UNPACK #-}Text
-  | NotFound
-  | TooManyResults
-  | InsertionError
-  | DeserialisationError {-# UNPACK #-}Text
-  deriving stock (Eq, Generic, Show)
-
-instance Exception DBError

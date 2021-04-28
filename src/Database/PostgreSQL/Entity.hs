@@ -99,7 +99,7 @@ withType (Field n _) t = Field n (Just t)
 -- @since 0.0.1.0
 selectById :: forall e value m.
            (Entity e, FromRow e, MonadIO m, ToRow value)
-           => value -> DBT m e
+           => value -> DBT m (Maybe e)
 selectById value = selectOneByField (primaryKey @e) value
 
 -- | Select precisely __one__ entity by a provided field.
@@ -107,7 +107,7 @@ selectById value = selectOneByField (primaryKey @e) value
 -- @since 0.0.1.0
 selectOneByField :: forall e value m.
                  (Entity e, FromRow e, MonadIO m, ToRow value)
-                 => Field -> value -> DBT m e
+                 => Field -> value -> DBT m (Maybe e)
 selectOneByField f value = queryOne Select (_selectWhere @e [f]) value
 
 -- | Select potentially many entities by a provided field.
