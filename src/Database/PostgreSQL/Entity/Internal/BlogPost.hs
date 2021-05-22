@@ -26,7 +26,7 @@ import Database.PostgreSQL.Transact (DBT)
 import GHC.Records (HasField (..))
 
 import Database.PostgreSQL.Entity (insert, withType)
-import Database.PostgreSQL.Entity.Types (Entity (..))
+import Database.PostgreSQL.Entity.Types
 
 -- | Wrapper around the UUID type
 newtype AuthorId
@@ -41,17 +41,18 @@ data Author
            }
   deriving stock (Eq, Generic, Show)
   deriving anyclass (FromRow, ToRow)
+  deriving (Entity) via (GenericEntity '[PrimaryKey "author_id", TableName "authors"] Author)
 
 instance HasField x Author a => IsLabel x (Author -> a) where
   fromLabel = getField @x
 
-instance Entity Author where
-  tableName  = "authors"
-  primaryKey = "author_id"
-  fields     = [ "author_id"
-               , "name"
-               , "created_at"
-               ]
+-- instance Entity Author where
+--   tableName  = "authors"
+--   primaryKey = "author_id"
+--   fields     = [ "author_id"
+--                , "name"
+--                , "created_at"
+--                ]
 
 -- | Wrapper around the UUID type
 newtype BlogPostId

@@ -14,12 +14,12 @@ import Database.PostgreSQL.Simple.ToRow (ToRow)
 import Database.PostgreSQL.Transact (DBT)
 ```
 
-The, let us write down our initial data models for a blog. `Author`, and `BlogPost`.
+Then, let us write down our initial data models for a blog. `Author`, and `BlogPost`.  
 
 ```haskell
 newtype AuthorId
   = AuthorId { getAuthorId :: UUID }
-  deriving newtype (Eq, FromField, Show, ToField)
+  deriving newtype (Eq, Show, FromField, ToField)
 
 data Author
   = Author { authorId  :: AuthorId
@@ -79,6 +79,32 @@ instance Entity BlogPost where
            , "created_at"
            ]
 ```
+
+### Using Generics
+
+But this is a bit tedious, isn't it? Fortunately, there is a derivation mechanism available that allows you to do this:
+
+```haskell
+
+data Author
+  = Author { authorId  :: AuthorId
+           , name      :: Text
+           , createdAt :: UTCTime
+           }
+  deriving stock (Eq, Generic, Show)
+  deriving anyclass (FromRow, ToRow)
+  deriving (Entity)
+    via (GenericEntity '[ TableName "authors"    
+                        , PrimaryKey "author_id"
+                        ] Author)
+```
+
+Those two options, `TableName` and `PrimaryKey` are optional, and the library will adopt the following defaults:
+
+* `tableName` will be the snake_case version of the record's name. No pluralisation will be done.
+* `primaryKey` will be the snake_case version of the first field of the record.
+
+and more generally, field names are the snake_case version of the record fields.
 
 ### Writing the SQL migrations
 

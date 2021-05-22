@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE Strict #-}
 {-|
   Module      : Database.PostgreSQL.Entity.Internal
