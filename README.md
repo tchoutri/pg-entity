@@ -36,10 +36,10 @@ and insert the following in your `cabal.project`:
      tag: <last commit in the GitHub Repo>
 ```
 
-Don't forget to fill the `tag` with the desired commit you desire to pin.
+Don't forget to fill the `tag` with the commit you wish to pin.
 
-Due to the fact that it depends on a non-Hackage version of [pg-transact-hspec][pg-transact-hspec], I doubt that I
-will upload it on Hackage one day. We shall see.
+Due to the fact that it depends on a non-Hackage version of [pg-transact-hspec][pg-transact-hspec],
+Hackage upload will have to wait.
 
 ## Usage
 
@@ -58,33 +58,52 @@ import Data.Vector (Vector)
 import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Simple.SqlQQ
 
-newtype MyTypeId = MyTypeId { getMyTypeId :: UUID }
+-- A straightforward table definition
+
+newtype JobId = JobId { getJobId :: UUID }
   deriving newtype (Eq, Show, FromField, ToField)
 
-data MyType
-  = MyType { myId      :: MyTypeId
-           , someField :: Vector UUID
-           , enums     :: Vector MyEnum
-           }
+data Job
+  = Job { jobId     :: JobId
+        , locked_at :: UTCTime
+        , jobName   :: Text
+        }
+  deriving stock (Eq, Generic, Show)
+  deriving anyclass (FromRow, ToRow)
+  deriving (Entity)
+    via (Generic '[TableName "jobs"] Job)
+
+-- And a richer table definition that needs some type annotations
+
+newtype BagId = BagId { getBagId :: UUID }
+  deriving newtype (Eq, Show, FromField, ToField)
+
+data Properties = P1 | P2 | P3
+
+data Bag
+  = Bag { bagId      :: BagId
+        , someField  :: Vector UUID
+        , properties :: Vector Properties
+        }
   deriving stock (Eq, Generic, Show)
   deriving anyclass (FromRow, ToRow)
 
 
-instance Entity MyType where
-  tableName  = "my_table"
-  primaryKey = "my_id"
-  fields     = [ "my_id"
+instance Entity Bag where
+  tableName  = "bags"
+  primaryKey = "bag_id"
+  fields     = [ "bag_id"
                , "some_field" `withType` "uuid[]"
-               , "enums" `withType` "my_enum[]"
+               , "enums" `withType` "properties[]"
                ]
 
 -- You can write specialised functions to remove the noise
 
-insertMyType :: MyType -> DBT IO ()
-insertMyType = insert @MyType
+insert :: Bag -> DBT IO ()
+insert = insert @Bag
 
-getNotificationById :: NotificationId -> DBT IO ()
-getNotificationById notificationId = selectById @Notification (Only notificationId)
+getById :: BagId -> DBT IO ()
+getById bagId = selectById @Bag (Only bagId)
 
 isJobLocked :: Int -> DBT IO (Only Bool)
 isJobLocked jobId = queryOne Select q (Only jobId)
@@ -114,8 +133,6 @@ Now, that does not mean that we will blindly emit random strings. Each function 
 and the ones that cannot (due to database connections) are tested in the more traditional test-suite.
 
 The conclusion is : Test your DB queries. Test the encoding/decoding. Make roundtrip tests for your data-structures.
-
-!["Screenshot"](./assets/screencap.png)
 
 ## Documentation
 

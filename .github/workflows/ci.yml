@@ -29,22 +29,43 @@ jobs:
     - name: Prepare environment
       run: .github/workflows/setup_ci_env.sh
 
-    - name: Freeze
+    - name: Configure environment
       run: |
-        cabal freeze
+          echo '/usr/lib/postgresql/13/bin/' >> $GITHUB_PATH
+          echo "/nix/var/nix/profiles/per-user/$USER/profile/bin" >> "$GITHUB_PATH"
+          echo "/nix/var/nix/profiles/default/bin" >> "$GITHUB_PATH"
+          echo 'NIX_PATH="nixpkgs=channel:nixos-unstable"' >> "$GITHUB_ENV"
+          echo '$HOME/.ghcup/bin' >> $GITHUB_PATH
+          echo 'HOME/.cabal/bin' >> $GITHUB_PATH
+          echo 'HOME/.local/bin' >> $GITHUB_PATH
+
+    - name: Install Nix
+      run: ./.github/workflows/install-nix.sh
+
+    - name: Configure
+      run: nix-shell --run 'cabal configure --enable-tests --enable-benchmarks --test-show-details=direct --disable-optimization --with-compiler="ghc-${{ matrix.ghc }}"' 
+
+    - name: Freeze
+      run: nix-shell --run 'cabal freeze'
  
     - uses: actions/cache@v2
       name: Cache ~/.cabal/store and .ghcup
       with:
         path: |
           ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
-          .ghcup
         key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
 
+    - name: Installing dependencies 
+      run: nix-shell --run 'make deps'
+
+    - name: Running hlint
+      run: nix-shell --run './.github/workflows/hlint-runner.sh'
+
+    - name: Running stylish-haskell
+      run: nix-shell --run './.github/workflows/stylish-haskell-runner.sh'
+
     - name: Build
-      run: |
-        cabal configure --enable-tests --enable-benchmarks --test-show-details=direct --disable-optimization
-        cabal build -j all
+      run: nix-shell --run 'make build'
 
     - name: Docspecs
       if: matrix.os == 'ubuntu-latest' && matrix.ghc == '8.10.4'
@@ -58,4 +79,4 @@ jobs:
         $HOME/.local/bin/cabal-docspec
 
     - name: Test
-      run: cabal test all
+      run: nix-shell --run 'cabal test all'
