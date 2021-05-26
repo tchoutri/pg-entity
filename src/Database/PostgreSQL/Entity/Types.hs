@@ -54,75 +54,75 @@ import GHC.TypeLits (ErrorMessage (Text), KnownSymbol, Symbol, TypeError, symbol
 class Entity e where
   -- | The name of the table in the PostgreSQL database.
   tableName :: Text
-  default tableName :: (GetTableName' (Rep e)) => Text
-  tableName = getTableName' @(Rep e) defaultEntityOptions
+  default tableName :: (GetTableName (Rep e)) => Text
+  tableName = getTableName @(Rep e) defaultEntityOptions
   -- | The name of the primary key for the table.
   primaryKey :: Field
-  default primaryKey :: (GetFields' (Rep e)) => Field
+  default primaryKey :: (GetFields (Rep e)) => Field
   primaryKey = field{fieldName = primMod $ fieldName field}
     where primMod = primaryKeyModifier defaultEntityOptions
-          field = V.head $ getFields' @(Rep e) defaultEntityOptions
+          field = V.head $ getField @(Rep e) defaultEntityOptions
   -- | The fields of the table.
   fields :: Vector Field
-  default fields :: (GetFields' (Rep e)) => Vector Field
-  fields = getFields' @(Rep e) defaultEntityOptions
+  default fields :: (GetFields (Rep e)) => Vector Field
+  fields = getField @(Rep e) defaultEntityOptions
 
 -- The sub-class that fetches the table name
-class GetTableName' (e :: Type -> Type) where
-  getTableName' :: Options -> Text
+class GetTableName (e :: Type -> Type) where
+  getTableName :: Options -> Text
 
-instance (TypeError ('Text "You can't derive Entity for a void type")) => GetTableName' V1 where
-  getTableName' _opts = error "You can't derive Entity for a void type"
+instance (TypeError ('Text "You can't derive Entity for a void type")) => GetTableName V1 where
+  getTableName _opts = error "You can't derive Entity for a void type"
 
-instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetTableName' U1 where
-  getTableName' _opts = error "You can't derive Entity for a unit type"
+instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetTableName U1 where
+  getTableName _opts = error "You can't derive Entity for a unit type"
 
-instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetTableName' (e :+: f) where
-  getTableName' _opts = error "You can't derive Entity for a sum type"
+instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetTableName (e :+: f) where
+  getTableName _opts = error "You can't derive Entity for a sum type"
 
-instance (TypeError ('Text "You can't derive an Entity for a record field")) => GetTableName' (K1 i c) where
-  getTableName' _opts = error "You can't derive Entity for a type constructor's field"
+instance (TypeError ('Text "You can't derive an Entity for a type constructor's field")) => GetTableName (K1 i c) where
+  getTableName _opts = error "You can't derive Entity for a type constructor's field"
 
-instance (GetTableName' e, GetTableName' f) => GetTableName' (e :*: f) where
-  getTableName' opts = getTableName' @e opts <> getTableName' @f opts
+instance (TypeError ('Text "You don't have to derive GetTableName for a product type")) => GetTableName (e :*: f) where
+  getTableName _opts = error "You don't have to derive GetTableName for a product type"
 
-instance GetTableName' e => GetTableName' (M1 C _1 e) where
-  getTableName' opts = getTableName' @e opts
+instance GetTableName e => GetTableName (M1 C _1 e) where
+  getTableName opts = getTableName @e opts
 
-instance GetTableName' e => GetTableName' (M1 S _1 e) where
-  getTableName' opts = getTableName' @e opts
+instance GetTableName e => GetTableName (M1 S _1 e) where
+  getTableName opts = getTableName @e opts
 
 instance (KnownSymbol name)
-    => GetTableName' (M1 D ('MetaData name _1 _2 _3) e) where
-  getTableName' Options{tableNameModifier} = tableNameModifier $ toText $ symbolVal (Proxy :: Proxy name)
+    => GetTableName (M1 D ('MetaData name _1 _2 _3) e) where
+  getTableName Options{tableNameModifier} = tableNameModifier $ toText $ symbolVal (Proxy :: Proxy name)
 
 -- The sub-class that fetches the table fields
-class GetFields' (e :: Type -> Type) where
-  getFields' :: Options -> Vector Field
+class GetFields (e :: Type -> Type) where
+  getField :: Options -> Vector Field
 
-instance (TypeError ('Text "You can't derive Entity for a void type")) => GetFields' V1 where
-  getFields' _opts = error "You can't derive Entity for a void type"
+instance (TypeError ('Text "You can't derive Entity for a void type")) => GetFields V1 where
+  getField _opts = error "You can't derive Entity for a void type"
 
-instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetFields' U1 where
-  getFields' _opts = error "You can't derive Entity for a unit type"
+instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetFields U1 where
+  getField _opts = error "You can't derive Entity for a unit type"
 
-instance (TypeError ('Text "You can't derive an Entity for a sum type")) => GetFields' (e :+: f) where
-  getFields' _opts = error "You can't derive Entity for a sum type"
+instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetFields (e :+: f) where
+  getField _opts = error "You can't derive Entity for a sum type"
 
-instance (TypeError ('Text "You can't derive an Entity for a record field")) => GetFields' (K1 i c) where
-  getFields' _opts = error "You can't derive Entity for a type constructor's field"
+instance (TypeError ('Text "You can't derive Entity for a a type constructor's field")) => GetFields (K1 i c) where
+  getField _opts = error "You can't derive Entity for a type constructor's field"
 
-instance (GetFields' e, GetFields' f) => GetFields' (e :*: f) where
-  getFields' opts = getFields' @e opts <> getFields' @f opts
+instance (GetFields e, GetFields f) => GetFields (e :*: f) where
+  getField opts = getField @e opts <> getField @f opts
 
-instance GetFields' e => GetFields' (M1 C _1 e) where
-  getFields' opts = getFields' @e opts
+instance GetFields e => GetFields (M1 C _1 e) where
+  getField opts = getField @e opts
 
-instance GetFields' e => GetFields' (M1 D ('MetaData _1 _2 _3 _4) e) where
-  getFields' opts = getFields' @e opts
+instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
+  getField opts = getField @e opts
 
-instance (KnownSymbol name) => GetFields' (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
-  getFields' Options{fieldModifier} = V.singleton $ Field fieldName Nothing
+instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
+  getField Options{fieldModifier} = V.singleton $ Field fieldName Nothing
     where fieldName = fieldModifier $ toText $ symbolVal (Proxy @name)
 
 -- Deriving Via machinery
@@ -130,14 +130,14 @@ instance (KnownSymbol name) => GetFields' (M1 S ('MetaSel ('Just name) _1 _2 _3)
 newtype GenericEntity t e
   = GenericEntity { getGenericEntity :: e }
 
-instance (EntityOptions t, GetTableName' (Rep e), GetFields' (Rep e)) => Entity (GenericEntity t e) where
-  tableName = getTableName' @(Rep e) (entityOptions @t)
+instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (GenericEntity t e) where
+  tableName = getTableName @(Rep e) (entityOptions @t)
 
   primaryKey = field{fieldName = primMod $ fieldName field}
     where primMod = primaryKeyModifier defaultEntityOptions
-          field = V.head $ getFields' @(Rep e) (entityOptions @t)
+          field = V.head $ getField @(Rep e) (entityOptions @t)
 
-  fields = getFields' @(Rep e) (entityOptions @t)
+  fields = getField @(Rep e) (entityOptions @t)
 
 -- | Term-level options
 data Options
