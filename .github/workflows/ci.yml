@@ -67,16 +67,16 @@ jobs:
     - name: Build
       run: nix-shell --run 'make build'
 
-    - name: Docspecs
-      if: matrix.os == 'ubuntu-latest' && matrix.ghc == '8.10.4'
-      run: |
-        mkdir -p $HOME/.local/bin
-        wget https://github.com/phadej/cabal-extras/releases/download/cabal-docspec-0.0.0.20210111/cabal-docspec-0.0.0.20210111.xz -O ./cabal-docspec.xz
-        ls -lah
-        unxz ./cabal-docspec.xz
-        mv cabal-docspec $HOME/.local/bin
-        chmod +x $HOME/.local/bin/cabal-docspec
-        $HOME/.local/bin/cabal-docspec
+    # - name: Docspecs
+    #   if: matrix.os == 'ubuntu-latest' && matrix.ghc == '8.10.4'
+    #   run: |
+    #     mkdir -p $HOME/.local/bin
+    #     wget https://github.com/phadej/cabal-extras/releases/download/cabal-docspec-0.0.0.20210111/cabal-docspec-0.0.0.20210111.xz -O ./cabal-docspec.xz
+    #     ls -lah
+    #     unxz ./cabal-docspec.xz
+    #     mv cabal-docspec $HOME/.local/bin
+    #     chmod +x $HOME/.local/bin/cabal-docspec
+    #     $HOME/.local/bin/cabal-docspec
 
     - name: Test
       run: nix-shell --run 'cabal test all'
