@@ -71,7 +71,7 @@ data Job
   deriving stock (Eq, Generic, Show)
   deriving anyclass (FromRow, ToRow)
   deriving (Entity)
-    via (Generic '[TableName "jobs"] Job)
+    via (GenericEntity '[TableName "jobs"] Job)
 
 -- And a richer table definition that needs some type annotations
 
