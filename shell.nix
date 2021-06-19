@@ -20,7 +20,7 @@ in with pkgs;
       # Extra
       direnv
       parallel
-      mkdocs
+      # mkdocs
       gnumake
     ];
   }

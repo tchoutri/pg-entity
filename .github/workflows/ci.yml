@@ -31,13 +31,14 @@ jobs:
 
     - name: Configure environment
       run: |
-          echo '/usr/lib/postgresql/13/bin/' >> $GITHUB_PATH
+          echo '/usr/lib/postgresql/13/bin/' >> "$GITHUB_PATH"
           echo "/nix/var/nix/profiles/per-user/$USER/profile/bin" >> "$GITHUB_PATH"
           echo "/nix/var/nix/profiles/default/bin" >> "$GITHUB_PATH"
           echo 'NIX_PATH="nixpkgs=channel:nixos-unstable"' >> "$GITHUB_ENV"
-          echo '$HOME/.ghcup/bin' >> $GITHUB_PATH
-          echo 'HOME/.cabal/bin' >> $GITHUB_PATH
-          echo 'HOME/.local/bin' >> $GITHUB_PATH
+          echo 'NIXPKGS_ALLOW_BROKEN=1' >> "$GITHUB_ENV"
+          echo '$HOME/.ghcup/bin' >> "$GITHUB_PATH"
+          echo 'HOME/.cabal/bin' >> "$GITHUB_PATH"
+          echo 'HOME/.local/bin' >> "$GITHUB_PATH"
 
     - name: Install Nix
       run: ./.github/workflows/install-nix.sh
@@ -67,6 +68,7 @@ jobs:
     - name: Build
       run: nix-shell --run 'make build'
 
+    # -- Disabled until docspec can be built easily or integrated into cabal
     # - name: Docspecs
     #   if: matrix.os == 'ubuntu-latest' && matrix.ghc == '8.10.4'
     #   run: |
