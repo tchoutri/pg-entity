@@ -8,7 +8,7 @@ It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL 
   a SQL schema can represent. Use a intermediate data access object (DAO) that can easily be serialised and deserialised
   to and from a SQL schema, to and from which you will morph your business data-types.
 * Escape hatches are provided at every level. The types that are manipulated are Query for which an `IsString` instance exists.
-  Don't force yourself to use the higher-level API if the combinators work for you, and if those don't either, “Just Write SQL”™.
+  Don't force yourself to use the higher-level API if the lower-level combinators work for you, and if those don't either, “Just Write SQL”™.
 
 Its dependency footprint is optimised for my own setups, and as such it makes use of [text][text], [vector][vector],
 [pg-transact][pg-transact] and [relude][relude].
