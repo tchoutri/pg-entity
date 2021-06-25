@@ -2,11 +2,11 @@
 # Originally from:
 # https://github.com/blankpage/e5UNIXBuilder/blob/master/build-akili.sh
 
-# Linux and similar...
-CPUS=$(getconf _NPROCESSORS_ONLN 2>/dev/null)
-# FreeBSD, macOS and similar...
-[ -z "$CPUS" ] && CPUS=$(getconf NPROCESSORS_ONLN)
-# Give up...
-[ -z "$CPUS" ] && CPUS=1
+if [[ "$OSTYPE" =~ "linux-gnu" ]]
+then CPUS=$(nproc)
+elif [[ "$OSTYPE" =~ "darwin" ]]
+then CPUS=2
+else CPUS=$(sysctl -n hw.ncpu)
+fi
 
 export CPUS

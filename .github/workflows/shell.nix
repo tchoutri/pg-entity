@@ -1,12 +1,11 @@
-let pkgs = import (fetchTarball path) {};
-    path = https://github.com/NixOS/nixpkgs/archive/master.tar.gz;
+{ ghcVersion }:
+let pkgs = import <nixpkgs> {};
 in with pkgs;
   mkShell {
     buildInputs = [
       # Haskell Deps
-      haskell.compiler.ghc8104
+      haskell.compiler."ghc${ghcVersion}"
       cabal-install
-      ghcid
       hlint
       haskellPackages.apply-refact
       stylish-haskell
@@ -18,9 +17,13 @@ in with pkgs;
       glibcLocales
 
       # Extra
-      direnv
       parallel
+      git
       # mkdocs
       gnumake
     ];
+    shellHook = ''
+      export LOCALE_ARCHIVE="/nix/store/m53mq2077pfxhqf37gdbj7fkkdc1c8hc-glibc-locales-2.27/lib/locale/locale-archive"
+      export LC_ALL=C.UTF-8
+    '';
   }

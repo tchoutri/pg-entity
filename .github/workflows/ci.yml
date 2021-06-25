@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         cabal: ["3.4.0.0"]
         ghc: ["8.8.4", "8.10.4"]
 
@@ -20,65 +20,64 @@ jobs:
     - uses: actions/checkout@v2
       if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/main'
 
-    - uses: haskell/actions/setup@v1
-      id: setup-haskell-cabal
-      name: Setup Haskell
-      with:
-        ghc-version: ${{ matrix.ghc }}
-        cabal-version: ${{ matrix.cabal }}
     - name: Prepare environment
       run: .github/workflows/setup_ci_env.sh
 
     - name: Configure environment
       run: |
-          echo '/usr/lib/postgresql/13/bin/' >> "$GITHUB_PATH"
+          git config --global http.sslVerify false
           echo "/nix/var/nix/profiles/per-user/$USER/profile/bin" >> "$GITHUB_PATH"
           echo "/nix/var/nix/profiles/default/bin" >> "$GITHUB_PATH"
-          echo 'NIX_PATH="nixpkgs=channel:nixos-unstable"' >> "$GITHUB_ENV"
-          echo 'NIXPKGS_ALLOW_BROKEN=1' >> "$GITHUB_ENV"
-          echo '$HOME/.ghcup/bin' >> "$GITHUB_PATH"
-          echo 'HOME/.cabal/bin' >> "$GITHUB_PATH"
-          echo 'HOME/.local/bin' >> "$GITHUB_PATH"
+          echo "NIX_SSL_CERT_FILE=$cert_file" >> "$GITHUB_ENV"
+          cert_file=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt
+          env
+
+    - name: Configure Darwin Nixpkgs
+      if: matrix.os == 'macos-latest' 
+      run: |
+        echo 'NIX_PATH="nixpkgs=channel:nixpkgs-21.05-darwin"' >> "$GITHUB_ENV"
+
+    - name: Configure Linux Nixpkgs
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        echo 'NIX_PATH="nixpkgs=channel:nixos-21.05"' >> "$GITHUB_ENV"
+
+    - name: Set GHC version for Nix
+      run: |
+        if [[ ${{matrix.ghc}} == '8.8.4' ]]
+        then echo "GHC='884'" >> "$GITHUB_ENV"
+        elif [[ ${{matrix.ghc}} == '8.10.4' ]]
+        then echo "GHC='8104'" >> "$GITHUB_ENV"
+        elif [[ ${{matrix.ghc}} == '9.0.1' ]]
+        then echo "GHC='901'" >> "$GITHUB_ENV"
+        fi
 
     - name: Install Nix
       run: ./.github/workflows/install-nix.sh
 
     - name: Configure
-      run: nix-shell --run 'cabal configure --enable-tests --enable-benchmarks --test-show-details=direct --disable-optimization --with-compiler="ghc-${{ matrix.ghc }}"' 
+      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run 'cabal update && cabal configure --enable-tests --disable-benchmarks --test-show-details=direct --disable-optimization --with-compiler="ghc-${{ matrix.ghc }}"' .github/workflows/shell.nix
 
     - name: Freeze
-      run: nix-shell --run 'cabal freeze'
+      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run 'cabal freeze' .github/workflows/shell.nix
  
     - uses: actions/cache@v2
-      name: Cache ~/.cabal/store and .ghcup
+      name: Cache ~/.cabal/store
       with:
-        path: |
-          ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+        path: ~/.cabal/store
         key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
 
     - name: Installing dependencies 
-      run: nix-shell --run 'make deps'
+      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run 'make deps' .github/workflows/shell.nix
 
     - name: Running hlint
-      run: nix-shell --run './.github/workflows/hlint-runner.sh'
+      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run './.github/workflows/hlint-runner.sh' .github/workflows/shell.nix
 
     - name: Running stylish-haskell
-      run: nix-shell --run './.github/workflows/stylish-haskell-runner.sh'
+      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run './.github/workflows/stylish-haskell-runner.sh' .github/workflows/shell.nix
 
     - name: Build
-      run: nix-shell --run 'make build'
-
-    # -- Disabled until docspec can be built easily or integrated into cabal
-    # - name: Docspecs
-    #   if: matrix.os == 'ubuntu-latest' && matrix.ghc == '8.10.4'
-    #   run: |
-    #     mkdir -p $HOME/.local/bin
-    #     wget https://github.com/phadej/cabal-extras/releases/download/cabal-docspec-0.0.0.20210111/cabal-docspec-0.0.0.20210111.xz -O ./cabal-docspec.xz
-    #     ls -lah
-    #     unxz ./cabal-docspec.xz
-    #     mv cabal-docspec $HOME/.local/bin
-    #     chmod +x $HOME/.local/bin/cabal-docspec
-    #     $HOME/.local/bin/cabal-docspec
+      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run 'make build' .github/workflows/shell.nix
 
     - name: Test
-      run: nix-shell --run 'cabal test all'
+      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run 'cabal test all' .github/workflows/shell.nix
