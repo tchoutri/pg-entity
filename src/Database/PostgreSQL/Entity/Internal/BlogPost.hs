@@ -15,6 +15,7 @@
 -}
 module Database.PostgreSQL.Entity.Internal.BlogPost where
 
+import Data.Text (Text)
 import Data.Time (UTCTime)
 import Data.UUID (UUID)
 import Data.Vector (Vector)
@@ -23,10 +24,12 @@ import Database.PostgreSQL.Simple.FromRow (FromRow)
 import Database.PostgreSQL.Simple.ToField (ToField)
 import Database.PostgreSQL.Simple.ToRow (ToRow)
 import Database.PostgreSQL.Transact (DBT)
+import GHC.Generics (Generic)
+import GHC.OverloadedLabels (IsLabel (..))
 import GHC.Records (HasField (..))
 
 import Database.PostgreSQL.Entity (insert, withType)
-import Database.PostgreSQL.Entity.Types
+import Database.PostgreSQL.Entity.Types (Entity (..), GenericEntity, PrimaryKey, TableName)
 
 -- | Wrapper around the UUID type
 newtype AuthorId

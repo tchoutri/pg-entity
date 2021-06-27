@@ -2,7 +2,8 @@
 module GenericsSpec where
 
 import Test.Hspec
-
+import Data.Text
+import GHC.Generics
 import Database.PostgreSQL.Entity.Types
 
 data TestType

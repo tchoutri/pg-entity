@@ -3,6 +3,9 @@
 
 module EntitySpec where
 
+import Control.Monad.IO.Class
+import Control.Monad (void)
+import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
 import Database.PostgreSQL.Entity.DBT.Types (QueryNature (Select))
@@ -10,7 +13,6 @@ import Database.PostgreSQL.Simple (Connection, Only (Only))
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
                                              runMigrations)
 import Database.PostgreSQL.Transact (DBT)
-import Relude.Unsafe (read)
 import Test.Hspec (Spec)
 import Test.Hspec.DB (describeDB, itDB)
 import Test.Hspec.Expectations.Lifted (shouldBe, shouldMatchList, shouldReturn)

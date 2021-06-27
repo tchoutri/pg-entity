@@ -63,6 +63,11 @@ module Database.PostgreSQL.Entity
   , _deleteWhere
   ) where
 
+import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO)
+import Data.Foldable (fold)
+import Data.Int
+import Data.Text (Text)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple (Only (..))

@@ -29,10 +29,14 @@ module Database.PostgreSQL.Entity.Internal
   , intercalateVector
   ) where
 
+import Data.String (fromString)
+import Data.Text (Text, unpack)
+import Data.Text.Encoding (decodeUtf8)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple.Types (Query (..))
 
+import Data.Foldable (fold)
 import Database.PostgreSQL.Entity.Types
 
 -- $setup
@@ -192,7 +196,7 @@ isNull fs' = fold $ intercalateVector " AND " (fmap process fieldNames)
 --
 -- @since 0.0.1.0
 textToQuery :: Text -> Query
-textToQuery = fromString . toString
+textToQuery = fromString . unpack
 
 -- | For cases where combinator composition is tricky, we can safely get back to a 'Text' string from a 'Query'
 --

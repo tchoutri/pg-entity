@@ -33,12 +33,16 @@ module Database.PostgreSQL.Entity.Types
   , TableName
   ) where
 
+import Data.Kind
+import Data.Proxy
+import Data.String
+import Data.Text (Text, pack)
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
-import GHC.Generics (C, D, Generic (Rep), K1, M1, Meta (MetaData, MetaSel), S, U1, V1, type (:*:), type (:+:))
-import GHC.TypeLits (ErrorMessage (Text), KnownSymbol, Symbol, TypeError, symbolVal)
+import GHC.Generics
+import GHC.TypeLits
 
 -- | An 'Entity' stores the following information about the structure of a database table:
 --
@@ -94,7 +98,7 @@ instance GetTableName e => GetTableName (M1 S _1 e) where
 
 instance (KnownSymbol name)
     => GetTableName (M1 D ('MetaData name _1 _2 _3) e) where
-  getTableName Options{tableNameModifier} = tableNameModifier $ toText $ symbolVal (Proxy :: Proxy name)
+  getTableName Options{tableNameModifier} = tableNameModifier $ pack $ symbolVal (Proxy :: Proxy name)
 
 -- The sub-class that fetches the table fields
 class GetFields (e :: Type -> Type) where
@@ -123,7 +127,7 @@ instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
 
 instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
   getField Options{fieldModifier} = V.singleton $ Field fieldName Nothing
-    where fieldName = fieldModifier $ toText $ symbolVal (Proxy @name)
+    where fieldName = fieldModifier $ pack $ symbolVal (Proxy @name)
 
 -- Deriving Via machinery
 
@@ -170,7 +174,7 @@ class GetName name where
   getName :: Text
 
 instance (KnownSymbol name, NonEmptyText name) => GetName name where
-  getName = toText (symbolVal (Proxy @name))
+  getName = pack (symbolVal (Proxy @name))
 
 type family NonEmptyText (xs :: Symbol) :: Constraint where
   NonEmptyText "" = TypeError ('Text "User-provided string cannot be empty!")
@@ -189,7 +193,7 @@ data Field
 
 -- | @since 0.0.1.0
 instance IsString Field where
-  fromString n = Field (toText n) Nothing
+  fromString n = Field (pack n) Nothing
 
 -- | Wrapper used by the update function in order to have the primary key as the last parameter passed,
 -- since it appears in the WHERE clause.

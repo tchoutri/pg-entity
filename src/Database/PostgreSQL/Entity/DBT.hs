@@ -19,8 +19,12 @@ module Database.PostgreSQL.Entity.DBT
   ) where
 
 import Colourista.IO (cyanMessage, redMessage, yellowMessage)
+import Control.Monad.IO.Class
 import Control.Monad.Trans.Control (MonadBaseControl)
+import Data.Int
+import Data.Maybe (listToMaybe)
 import Data.Pool (createPool, withResource)
+import Data.Text.Encoding (decodeUtf8)
 import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
