@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedLists #-}
 module GenericsSpec where
 
-import Test.Hspec
 import Data.Text
-import GHC.Generics
 import Database.PostgreSQL.Entity.Types
+import GHC.Generics
+import Test.Hspec
 
 data TestType
   = Test { fieldOne   :: Int
