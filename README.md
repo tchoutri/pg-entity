@@ -19,9 +19,9 @@ Table of Contents
 =================
 
 * [Installation](#installation)
-* [Usage](#usage)
-* [Escape hatches](#escape-hatches)
 * [Documentation](#documentation)
+  * [Usage](#usage)
+  * [Escape hatches](#escape-hatches)
 * [Acknowledgements](#acknowledgements)
 
 ## Installation
@@ -41,7 +41,17 @@ Don't forget to fill the `tag` with the commit you wish to pin.
 Due to the fact that it depends on a non-Hackage version of [pg-transact-hspec][pg-transact-hspec],
 Hackage upload will have to wait.
 
-## Usage
+## Documentation
+
+This library aims to be thoroughly tested, by the means of Oleg Grerus' [cabal-docspec][docspec]
+and more traditional tests for database roundtrips.
+
+I aim to produce and maintain a decent documentation, therefore do not hesitate to raise an issue if you feel that
+something is badly explained and should be improved.
+
+You will find the Tutorial [here][docs-url], and you will find below a short showcase of the library.
+
+### Usage
 
 This library aims to be a thin layer between that sits between rigid ORMs and hand-rolled SQL query strings.
 
@@ -59,13 +69,17 @@ import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Simple.SqlQQ
 
 -- A straightforward table definition
+-- In this case, we can use the DerivingVia mechanism,
+-- that allows us to declare some properties of the entity
+-- in the `deriving` clause, and infer the rest.
+-- In particular, the field names will be converted to snake_case.
 
 newtype JobId = JobId { getJobId :: UUID }
   deriving newtype (Eq, Show, FromField, ToField)
 
 data Job
   = Job { jobId     :: JobId
-        , locked_at :: UTCTime
+        , lockedAt :: UTCTime
         , jobName   :: Text
         }
   deriving stock (Eq, Generic, Show)
@@ -73,7 +87,8 @@ data Job
   deriving (Entity)
     via (GenericEntity '[TableName "jobs"] Job)
 
--- And a richer table definition that needs some type annotations
+-- Here is a richer table definition that needs some type annotations.
+-- We will have to write out the full instance by hand
 
 newtype BagId = BagId { getBagId :: UUID }
   deriving newtype (Eq, Show, FromField, ToField)
@@ -97,13 +112,12 @@ instance Entity Bag where
                , "enums" `withType` "properties[]"
                ]
 
--- You can write specialised functions to remove the noise
+-- You can write specialised functions to remove the noise of Type Applications
 
-insert :: Bag -> DBT IO ()
-insert = insert @Bag
+insertBag :: Bag -> DBT IO ()
+insertBag = insert -- `insert` will be specialised to `Bag`
 
-getById :: BagId -> DBT IO ()
-getById bagId = selectById @Bag (Only bagId)
+-- And you can insert raw SQL through postgresql-simple
 
 isJobLocked :: Int -> DBT IO (Only Bool)
 isJobLocked jobId = queryOne Select q (Only jobId)
@@ -134,29 +148,20 @@ and the ones that cannot (due to database connections) are tested in the more tr
 
 The conclusion is : Test your DB queries. Test the encoding/decoding. Make roundtrip tests for your data-structures.
 
-## Documentation
-
-This library aims to be thoroughly tested, by the means of [docspecs](https://github.com/phadej/cabal-extras/blob/master/cabal-docspec/MANUAL.md)
-and more traditional tests for database roundtrips.
-
-I aim to produce and maintain a decent documentation, therefore do not hesitate to raise an issue if you feel that
-something is badly explained and should be improved.
-
-You will find the Tutorial, How-to Guides and the reference [here][docs-url].
-
 ## Acknowledgements 
 
 I wish to thank
 
-* Clément Delafargue, whose [anorm-pg-entity][anorm-pg-entity] library and its [initial port in Haskell][blogpost]
+* Clément Delafargue, whose [anorm-pg-entity][anorm-pg-entity] library and its [initial port in Haskell][entity-blogpost-fretlink]
   are the spiritual parents of this library
 * Koz Ross, for his piercing eyes and his immense patience
 * Joe Kachmar, who enlightened me many times
 
 [docs]: https://img.shields.io/badge/docs-pg--entity-blueviolet?style=flat-square
 [docs-url]: https://tchoutri.github.io/pg-entity/
+[docspec]: https://github.com/phadej/cabal-extras/blob/master/cabal-docspec/MANUAL.md
 [pg-transact-hspec]: https://github.com/jfischoff/pg-transact-hspec.git
-[blogpost]: https://tech.fretlink.com/yet-another-unsafe-db-layer/
+[entity-blogpost-fretlink]: https://tech.fretlink.com/yet-another-unsafe-db-layer/
 [anorm-pg-entity]: https://github.com/CleverCloud/anorm-pg-entity
 [pg-simple]: https://hackage.haskell.org/package/postgresql-simple
 [pg-transact]: https://hackage.haskell.org/package/pg-transact
@@ -166,5 +171,5 @@ I wish to thank
 [CI-badge]: https://img.shields.io/github/workflow/status/tchoutri/pg-entity/CI?style=flat-square
 [CI-url]: https://github.com/tchoutri/pg-entity/actions
 [simple-haskell]: https://img.shields.io/badge/Simple-Haskell-purple?style=flat-square
-[BlogPost-module]: https://github.com/tchoutri/pg-entity/blob/main/src/Database/PostgreSQL/Entity/BlogPost.hs
+[BlogPost-module]: https://github.com/tchoutri/pg-entity/blob/main/src/Database/PostgreSQL/Entity/Internal/BlogPost.hs
 

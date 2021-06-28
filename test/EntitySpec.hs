@@ -3,8 +3,8 @@
 
 module EntitySpec where
 
-import Control.Monad.IO.Class
 import Control.Monad (void)
+import Control.Monad.IO.Class
 import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
