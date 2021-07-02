@@ -19,7 +19,8 @@ data Apple
               , thatField :: Text
               }
   deriving stock (Eq, Generic, Show)
-  deriving (Entity) via (GenericEntity '[TableName "apples"] Apple)
+  deriving (Entity)
+    via (GenericEntity '[TableName "apples"] Apple)
 
 spec :: Spec
 spec = describe "Ensure generically-derived instances with no options are correct" $ do

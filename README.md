@@ -1,6 +1,7 @@
 # PG-Entity [![CI-badge][CI-badge]][CI-url] [![docs][docs]][docs-url] ![simple-haskell][simple-haskell]
 
-This library is a pleasant layer on top of [postgresql-simple][pg-simple]. 
+This library is a pleasant layer on top of [postgresql-simple][pg-simple] to safely expand the fields of a table when
+writing SQL queries.  
 It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL query strings. Here is its philosophy:
 
 * The serialisation/deserialisation part is left to the consumer, so you have to go with your own FromRow/ToRow instances.
@@ -10,8 +11,8 @@ It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL 
 * Escape hatches are provided at every level. The types that are manipulated are Query for which an `IsString` instance exists.
   Don't force yourself to use the higher-level API if the lower-level combinators work for you, and if those don't either, “Just Write SQL”™.
 
-Its dependency footprint is optimised for my own setups, and as such it makes use of [text][text], [vector][vector],
-[pg-transact][pg-transact] and [relude][relude].
+Its dependency footprint is optimised for my own setups, and as such it makes use of [text][text], [vector][vector] and
+[pg-transact][pg-transact].
 
 
 
@@ -26,7 +27,8 @@ Table of Contents
 
 ## Installation
 
-To use pg-entity in your project, add it to the `build-depends` stanza of you .cabal file,
+At ths moment, `pg-entity` is not yet published on Hackage as it is still being tested against real-world usecases.
+To use the library in your project, add it to the `build-depends` stanza of you .cabal file,
 and insert the following in your `cabal.project`:
 
 ```
@@ -36,10 +38,15 @@ and insert the following in your `cabal.project`:
      tag: <last commit in the GitHub Repo>
 ```
 
-Don't forget to fill the `tag` with the commit you wish to pin.
+or in your `stack.yaml` file:
 
-Due to the fact that it depends on a non-Hackage version of [pg-transact-hspec][pg-transact-hspec],
-Hackage upload will have to wait.
+```
+extra-deps:
+  - git: https://github.com/tchoutri/pg-entity.git
+    commit: <last commit in the GitHub Repo>
+```
+
+Don't forget to fill the `tag` or `commit` with the commit you wish to pin.
 
 ## Documentation
 
@@ -59,41 +66,59 @@ Implement the `Entity` typeclass for your data-type, and parametrise the library
 with a [Type Application](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/type_applications.html): 
 
 ```Haskell
-:set -XOverloadedLists
-:set -XOverloadedStrings
-:set -XQuasiQuotes
+-- Traditional list & string syntax
+{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE OverloadedStrings #-}
+-- Quasi-quoter to construct SQL expressions
+{-# LANGUAGE QuasiQuotes #-}
+-- Deriving machinery
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingVia #-}
 
 import Data.UUID (UUID)
 import Data.Vector (Vector)
 import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Simple.SqlQQ
 
--- A straightforward table definition
--- In this case, we can use the DerivingVia mechanism,
--- that allows us to declare some properties of the entity
+-- This is our Primary Key newtype. It is wrapped in a newtype to make
+-- it impossible to mitake with a plain `UUID`, but we still want to
+-- benefit from the pre-existing typeclass instances that exist for
+-- `UUID`. You can read the last two lines as:
+-- > We use the definitions posessed by `UUID` for our own newtype.
+newtype JobId = JobId { getJobId :: UUID }
+  deriving (Eq, Show, FromField, ToField)
+    via UUID
+
+-- A straightforward table definition, which lets us use
+-- the DerivingVia mechanism to declare some properties of the entity
 -- in the `deriving` clause, and infer the rest.
 -- In particular, the field names will be converted to snake_case.
 
-newtype JobId = JobId { getJobId :: UUID }
-  deriving newtype (Eq, Show, FromField, ToField)
-
 data Job
-  = Job { jobId     :: JobId
+  = Job { jobId    :: JobId
         , lockedAt :: UTCTime
-        , jobName   :: Text
+        , jobName  :: Text
         }
   deriving stock (Eq, Generic, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving (Entity)
+  deriving Entity
     via (GenericEntity '[TableName "jobs"] Job)
 
--- Here is a richer table definition that needs some type annotations.
+-- In the above deriving clause, we only had to specify the table name in order to pluralise it,
+-- leaving the guessing of the primary key and the table names to the library.
+
+-- Below is a richer table definition that needs some type annotations to help PostgreSQL.
 -- We will have to write out the full instance by hand
 
 newtype BagId = BagId { getBagId :: UUID }
-  deriving newtype (Eq, Show, FromField, ToField)
+  deriving (Eq, Show, FromField, ToField)
+    via UUID
 
+-- | This is a PostgreSQL Enum, which needs to be marked as such in SQL type annotations.
 data Properties = P1 | P2 | P3
+  deriving stock (Eq, Generic, Show)
+  deriving anyclass (FromRow, ToRow)
 
 data Bag
   = Bag { bagId      :: BagId
@@ -109,7 +134,7 @@ instance Entity Bag where
   primaryKey = "bag_id"
   fields     = [ "bag_id"
                , "some_field" `withType` "uuid[]"
-               , "enums" `withType` "properties[]"
+               , "properties" `withType` "properties[]"
                ]
 
 -- You can write specialised functions to remove the noise of Type Applications

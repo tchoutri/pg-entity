@@ -1,4 +1,5 @@
 site_name: pg-entity
+site_url: https://tchoutri.github.io/pg-entity
 docs_dir: 'src'
 theme:
   name: material
