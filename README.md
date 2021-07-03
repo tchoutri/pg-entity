@@ -60,10 +60,7 @@ You will find the Tutorial [here][docs-url], and you will find below a short sho
 
 ### Usage
 
-This library aims to be a thin layer between that sits between rigid ORMs and hand-rolled SQL query strings.
-
-Implement the `Entity` typeclass for your data-type, and parametrise the library functions  
-with a [Type Application](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/type_applications.html): 
+The idea is to implement the `Entity` typeclass for the datatypes that represent your PostgreSQL table. 
 
 ```Haskell
 -- Traditional list & string syntax
@@ -78,8 +75,9 @@ with a [Type Application](https://downloads.haskell.org/~ghc/latest/docs/html/us
 
 import Data.UUID (UUID)
 import Data.Vector (Vector)
-import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Simple.SqlQQ
+
+import Database.PostgreSQL.Entity
 
 -- This is our Primary Key newtype. It is wrapped in a newtype to make
 -- it impossible to mitake with a plain `UUID`, but we still want to
@@ -91,9 +89,9 @@ newtype JobId = JobId { getJobId :: UUID }
     via UUID
 
 -- A straightforward table definition, which lets us use
--- the DerivingVia mechanism to declare some properties of the entity
--- in the `deriving` clause, and infer the rest.
--- In particular, the field names will be converted to snake_case.
+-- the DerivingVia mechanism to declare the table name
+-- in the `deriving` clause, and infer the fields and primary key.
+-- The field names will be converted to snake_case.
 
 data Job
   = Job { jobId    :: JobId
