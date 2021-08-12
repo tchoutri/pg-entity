@@ -17,13 +17,13 @@ module Database.PostgreSQL.Entity
   (
     -- * The /Entity/ Typeclass
     Entity (..)
-  , withType
 
     -- * Associated Types
   , Field (..)
-  , UpdateRow(..)
+  , withType
 
     -- * High-level API
+    -- $highlevel
     -- ** Selection
   , selectById
   , selectOneByField
@@ -98,6 +98,16 @@ import Database.PostgreSQL.Entity.Types
 -- @since 0.0.1.0
 withType :: Field -> Text -> Field
 withType (Field n _) t = Field n (Just t)
+
+-- $highlevel
+-- Glossary / Tips’n’Tricks
+--
+-- * @e@, @e1@, @e2@: Represents an @Entity@
+-- * @value@: Represnts a Haskell value that can be serialised to PostgreSQL
+-- * @Field@: Parameters of type @Field@ can most often be passed in their textual form, like "author_id". Use the Record form when you need to specify the
+-- type to PostgreSQL.
+--
+-- Consult the [test suite](https://github.com/tchoutri/pg-entity/tree/main/test) to see those functions in action.
 
 -- | Select an entity by its primary key.
 --
@@ -416,4 +426,3 @@ _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryK
 -- @since 0.0.1.0
 _deleteWhere :: forall e. Entity e => Vector Field -> Query
 _deleteWhere fs = textToQuery ("DELETE FROM " <> (tableName @e)) <> _where @e fs
-

@@ -6,7 +6,7 @@
   Maintainer  : theophile@choutri.eu
   Stability   : stable
 
-  Typeclasses and types
+  Types and classes
 
 -}
 {-# LANGUAGE DefaultSignatures #-}
@@ -182,12 +182,25 @@ type family NonEmptyText (xs :: Symbol) :: Constraint where
 
 -- | A wrapper for table fields, with a very convenient 'IsString' instance.
 --
+-- === __Example:__
+--
+-- > instance Entity BlogPost where
+-- >   tableName  = "blogposts"
+-- >   primaryKey = "blogpost_id"
+-- >   fields = [ "blogpost_id"
+-- >            , "author_id"
+-- >            , "uuid_list" `withType` "uuid[]" -- ← This is where we specify an optional PostgreSQL type annotation
+-- >            , "title"
+-- >            , "content"
+-- >            , "created_at"
+-- >            ]
+--
 -- @since 0.0.1.0
 data Field
   = Field { fieldName :: Text
-            -- | The name of the field in the database schema
-            -- | An optional postgresql type for which we need to be explicit, like @uuid[]@
+            -- ^ The name of the field in the database schema
           , fieldType :: Maybe Text
+            -- ^ An optional postgresql type for which we need to be explicit, like @Just "uuid[]"@
           }
   deriving stock (Eq, Generic, Show)
 
