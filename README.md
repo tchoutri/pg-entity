@@ -5,8 +5,8 @@ writing SQL queries.
 It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL query strings. Here is its philosophy:
 
 * The serialisation/deserialisation part is left to the consumer, so you have to go with your own FromRow/ToRow instances.
-  You are encouraged to adopt data types that model your business, rather than restrict yourself with the limits of what
-  a SQL schema can represent. Use a intermediate data access object (DAO) that can easily be serialised and deserialised
+  You are encouraged to adopt data types that model your business, rather than restrict yourself within the limits of what
+  an SQL schema can represent. Use an intermediate Data Access Object (DAO) that can easily be serialised and deserialised
   to and from a SQL schema, to and from which you will morph your business data-types.
 * Escape hatches are provided at every level. The types that are manipulated are Query for which an `IsString` instance exists.
   Don't force yourself to use the higher-level API if the lower-level combinators work for you, and if those don't either, “Just Write SQL”™.
@@ -166,8 +166,8 @@ ergonomic. As such, this library makes no effort to produce semantically valid S
 encode the semantics of SQL in the type system (or in a rule engine of some sort), and this is clearly not the kind of
 things I want to spend my youth on.
 
-Now, that does not mean that we will blindly emit random strings. Each function is tested for its output with doctests,
-and the ones that cannot (due to database connections) are tested in the more traditional test-suite.
+Each function is tested for its output with doctests, and the ones that cannot (due to database connections) are tested
+in the more traditional test-suite.
 
 The conclusion is : Test your DB queries. Test the encoding/decoding. Make roundtrip tests for your data-structures.
 

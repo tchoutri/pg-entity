@@ -1,11 +1,6 @@
 packages: ./
 
-index-state: 2021-06-27T20:25:25Z
-
-source-repository-package
-    type: git
-    location: https://github.com/jfischoff/pg-transact-hspec.git
-    tag: 5d49e76ed891a687742f4e8770f47b7089d2e018
-
 tests: True
 documentation: True
+
+index-state: 2021-09-02T20:02:58Z
