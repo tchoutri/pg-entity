@@ -27,26 +27,19 @@ Table of Contents
 
 ## Installation
 
-At ths moment, `pg-entity` is not yet published on Hackage as it is still being tested against real-world usecases.
-To use the library in your project, add it to the `build-depends` stanza of you .cabal file,
-and insert the following in your `cabal.project`:
+At present time, `pg-entity` is published on Hackage but not on Stackage. To use it in your projects, add it in your
+cabal file like this:
 
 ```
- source-repository-package
-     type: git
-     location: https://github.com/tchoutri/pg-entity.git
-     tag: <last commit in the GitHub Repo>
+pg-entity ^>= 0.0
 ```
 
 or in your `stack.yaml` file:
 
 ```
 extra-deps:
-  - git: https://github.com/tchoutri/pg-entity.git
-    commit: <last commit in the GitHub Repo>
+  - pg-entity-0.0.1.0
 ```
-
-Don't forget to fill the `tag` or `commit` with the commit you wish to pin.
 
 ## Documentation
 
@@ -190,7 +183,6 @@ I wish to thank
 [pg-transact]: https://hackage.haskell.org/package/pg-transact
 [text]: https://hackage.haskell.org/package/text
 [vector]: https://hackage.haskell.org/package/vector
-[relude]: https://hackage.haskell.org/package/relude
 [CI-badge]: https://img.shields.io/github/workflow/status/tchoutri/pg-entity/CI?style=flat-square
 [CI-url]: https://github.com/tchoutri/pg-entity/actions
 [simple-haskell]: https://img.shields.io/badge/Simple-Haskell-purple?style=flat-square
