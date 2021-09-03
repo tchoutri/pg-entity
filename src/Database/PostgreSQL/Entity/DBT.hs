@@ -10,6 +10,7 @@
 -}
 module Database.PostgreSQL.Entity.DBT
   ( mkPool
+  , withPool
   , runDB
   , execute
   , query
@@ -29,16 +30,28 @@ import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 
+import Control.Monad.Catch (Exception, MonadCatch, try)
 import Database.PostgreSQL.Entity.DBT.Types (ConnectionPool, QueryNature (..))
 import Database.PostgreSQL.Simple as PG (ConnectInfo, FromRow, Query, ToRow, close, connect)
 import qualified Database.PostgreSQL.Transact as PGT
 
--- | Execute a DBT action.
+-- | Run a DBT action.
 --
--- This function wraps the DBT actions in a 'try', so that the 'DBError' exceptions
+-- This function wraps the DBT actions in a 'try', so that exceptions
 -- raised will be converted to the Left branch of the Either.
 --
 -- @since 0.0.1.0
+withPool :: forall errorType result m
+          . (Exception errorType, MonadCatch m, MonadBaseControl IO m)
+         => ConnectionPool
+         -> PGT.DBT m result
+         -> m (Either errorType result)
+withPool pool action = try $ runDB pool action
+
+-- | Run a DBT action.
+--
+-- This function is a more barebones version of 'withPool'.
+-- You would be
 runDB :: (MonadBaseControl IO m)
       => ConnectionPool -> PGT.DBT m a -> m a
 runDB pool action = withResource pool $ PGT.runDBTSerializable action
@@ -56,8 +69,6 @@ mkPool connectInfo subPools timeout connections =
 
 -- | Query wrapper that returns a 'Vector' of results
 --
--- ⚠ This function may raise a 'DBError'
---
 -- @since 0.0.1.0
 query :: (ToRow params, FromRow result, MonadIO m)
           => QueryNature -> Query -> params -> PGT.DBT m (Vector result)
@@ -66,11 +77,6 @@ query queryNature q params = do
   V.fromList <$> PGT.query q params
 
 -- | Query wrapper that returns one result.
---
--- ⚠ This function may raise the following 'DBError':
---
--- * 'NotFound' if the query returns zero results
--- * 'TooManyResults' if the query returns more than one result
 --
 -- @since 0.0.1.0
 queryOne :: (ToRow params, FromRow result, MonadIO m)
@@ -81,8 +87,6 @@ queryOne queryNature q params = do
   pure $ listToMaybe result
 
 -- | Query wrapper that returns a 'Vector' of results and does not take an argument
---
--- ⚠ This function may raise a 'DBError':
 --
 -- @since 0.0.1.0
 query_ :: (FromRow result, MonadIO m)

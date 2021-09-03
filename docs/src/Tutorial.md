@@ -186,17 +186,14 @@ insertAuthor :: Author -> DBT IO ()
 insertAuthor = insert
 ```
 
-<!--
-TODO: Link to runDB in Hackage when the library is published
--->
-The result of this function, which is called a “DBT action”, is then passed to `Database.PostgreSQL.Entity.DBT.runDB`
+<!-- Replace the usage of runDB by withPool -->
+The result of this function, which we call a “DBT action”, is then passed to [`runDB`](https://hackage.haskell.org/package/pg-entity-0.0.1.0/docs/Database-PostgreSQL-Entity-DBT.html#v:runDB).
 
 ```haskell
 runDB :: (MonadCatch m, MonadBaseControl IO m)
-      => ConnectionPool         -- The connection pool,
-                                -- ideally taken from an environment ReaderT
-      -> DBT m a                -- The DB action, like `insert`
-      -> m (Either DBError a)   -- The return value
+      => ConnectionPool  -- The connection pool, ideally taken from a ReaderT
+      -> DBT m a         -- The DB action, like `insert`
+      -> m a             -- The return value
 ```
 
 You can then build a higher-level API endpoint or route controller like that:

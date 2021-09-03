@@ -103,9 +103,9 @@ withType (Field n _) t = Field n (Just t)
 -- Glossary / Tips’n’Tricks
 --
 -- * @e@, @e1@, @e2@: Represents an @Entity@
--- * @value@: Represnts a Haskell value that can be serialised to PostgreSQL
+-- * @value@: Represents a Haskell value that can be serialised to PostgreSQL
 -- * @Field@: Parameters of type @Field@ can most often be passed in their textual form, like "author_id". Use the Record form when you need to specify the
--- type to PostgreSQL.
+-- type in the query.
 --
 -- Consult the [test suite](https://github.com/tchoutri/pg-entity/tree/main/test) to see those functions in action.
 

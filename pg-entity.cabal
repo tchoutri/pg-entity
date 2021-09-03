@@ -87,6 +87,7 @@ library
     , pg-transact       ^>= 0.3
     , postgresql-simple ^>= 0.6
     , resource-pool     ^>= 0.2
+    , exceptions        ^>= 0.10
     , safe-exceptions   ^>= 0.1
     , text              ^>= 1.2
     , text-manipulate   ^>= 0.3
