@@ -19,7 +19,9 @@ module Database.PostgreSQL.Entity.Types
     Entity (..)
 
     -- * Associated Types
-  , Field (..)
+  , Field
+  , fieldName
+  , fieldType
   , UpdateRow(..)
 
     -- * Generics
@@ -39,6 +41,7 @@ import Data.Text (Text, pack)
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import Database.PostgreSQL.Entity.Types.Unsafe (Field (Field))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import GHC.Generics
 import GHC.TypeLits
@@ -73,9 +76,9 @@ class Entity e where
   -- | The name of the primary key for the table.
   primaryKey :: Field
   default primaryKey :: (GetFields (Rep e)) => Field
-  primaryKey = field{fieldName = primMod $ fieldName field}
+  primaryKey = Field (primMod name) typ
     where primMod = primaryKeyModifier defaultEntityOptions
-          field = V.head $ getField @(Rep e) defaultEntityOptions
+          Field name typ = V.head $ getField @(Rep e) defaultEntityOptions
   -- | The fields of the table.
   fields :: Vector Field
   default fields :: (GetFields (Rep e)) => Vector Field
@@ -136,8 +139,8 @@ instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
   getField opts = getField @e opts
 
 instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
-  getField Options{fieldModifier} = V.singleton $ Field fieldName Nothing
-    where fieldName = fieldModifier $ pack $ symbolVal (Proxy @name)
+  getField Options{fieldModifier} = V.singleton $ Field fieldName' Nothing
+    where fieldName' = fieldModifier $ pack $ symbolVal (Proxy @name)
 
 -- Deriving Via machinery
 
@@ -147,9 +150,9 @@ newtype GenericEntity t e
 instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (GenericEntity t e) where
   tableName = getTableName @(Rep e) (entityOptions @t)
 
-  primaryKey = field{fieldName = primMod $ fieldName field}
+  primaryKey = Field (primMod name) typ
     where primMod = primaryKeyModifier defaultEntityOptions
-          field = V.head $ getField @(Rep e) (entityOptions @t)
+          Field name typ = V.head $ getField @(Rep e) (entityOptions @t)
 
   fields = getField @(Rep e) (entityOptions @t)
 
@@ -190,29 +193,17 @@ type family NonEmptyText (xs :: Symbol) :: Constraint where
   NonEmptyText "" = TypeError ('Text "User-provided string cannot be empty!")
   NonEmptyText _  = ()
 
--- | A wrapper for table fields, with a very convenient 'IsString' instance.
+-- | Get the name of a field.
 --
--- === __Example:__
+-- @since 0.1.0.0
+fieldName :: Field -> Text
+fieldName (Field name _) = name
+
+-- | Get the type of a field, if any.
 --
--- > instance Entity BlogPost where
--- >   tableName  = "blogposts"
--- >   primaryKey = "blogpost_id"
--- >   fields = [ "blogpost_id"
--- >            , "author_id"
--- >            , "uuid_list" `withType` "uuid[]" -- ← This is where we specify an optional PostgreSQL type annotation
--- >            , "title"
--- >            , "content"
--- >            , "created_at"
--- >            ]
---
--- @since 0.0.1.0
-data Field
-  = Field { fieldName :: Text
-            -- ^ The name of the field in the database schema
-          , fieldType :: Maybe Text
-            -- ^ An optional postgresql type for which we need to be explicit, like @Just "uuid[]"@
-          }
-  deriving stock (Eq, Generic, Show)
+-- @since 0.1.0.0
+fieldType :: Field -> Maybe Text
+fieldType (Field _ typ) = typ
 
 -- | Wrapper used by the update function in order to have the primary key as the last parameter passed,
 -- since it appears in the WHERE clause.

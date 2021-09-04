@@ -19,8 +19,7 @@ module Database.PostgreSQL.Entity
     Entity (..)
 
     -- * Associated Types
-  , Field (..)
-  , withType
+  , Field
 
     -- * High-level API
     -- $highlevel
@@ -67,7 +66,6 @@ import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Int
-import Data.Text (Text)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple (Only (..))
@@ -87,17 +85,6 @@ import Database.PostgreSQL.Entity.Types
 -- >>> :set -XTypeApplications
 -- >>> import Database.PostgreSQL.Entity
 -- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
-
--- | A infix helper to declare a table field with an explicit type annotation.
---
--- __Examples__
---
--- >>> "author_id" `withType` "uuid[]"
--- Field {fieldName = "author_id", fieldType = Just "uuid[]"}
---
--- @since 0.0.1.0
-withType :: Field -> Text -> Field
-withType (Field n _) t = Field n (Just t)
 
 -- $highlevel
 -- Glossary / Tips’n’Tricks

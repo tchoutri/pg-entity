@@ -80,6 +80,7 @@ library
     Database.PostgreSQL.Entity.Internal.BlogPost
     Database.PostgreSQL.Entity.QQ
     Database.PostgreSQL.Entity.Types
+    Database.PostgreSQL.Entity.Types.Unsafe
   hs-source-dirs:
       src
   build-depends:

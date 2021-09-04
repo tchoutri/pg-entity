@@ -15,7 +15,7 @@
 module Database.PostgreSQL.Entity.QQ (field) where
 
 import Data.Text (Text, pack)
-import Database.PostgreSQL.Entity.Types (Field (Field))
+import Database.PostgreSQL.Entity.Types.Unsafe (Field (Field))
 import Language.Haskell.TH (Dec, Exp, Pat, Q, Type)
 import Language.Haskell.TH.Quote (QuasiQuoter (QuasiQuoter))
 import Language.Haskell.TH.Syntax (lift)
