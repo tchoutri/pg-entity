@@ -1,0 +1,93 @@
+cabal-version:    3.0
+name:             entity-processing
+version:          0.0.1.0
+homepage:         https://github.com/tchoutri/entity-processing#readme
+bug-reports:      https://github.com/tchoutri/entity-processing/issues
+author:           Théophile Choutri
+maintainer:       Théophile Choutri
+license:          MIT
+build-type:       Simple
+extra-source-files:
+    CHANGELOG.md
+    LICENSE.md
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/tchoutri/entity-processing
+
+common common-extensions
+  default-extensions: ConstraintKinds
+                      DataKinds
+                      DeriveAnyClass
+                      DeriveGeneric
+                      DerivingStrategies
+                      DerivingVia
+                      DuplicateRecordFields
+                      FlexibleContexts
+                      FlexibleInstances
+                      GeneralizedNewtypeDeriving
+                      InstanceSigs
+                      KindSignatures
+                      MultiParamTypeClasses
+                      NamedFieldPuns
+                      OverloadedStrings
+                      RankNTypes
+                      RecordWildCards
+                      ScopedTypeVariables
+                      StandaloneDeriving
+                      TypeApplications
+                      TypeOperators
+  default-language: Haskell2010
+
+common common-ghc-options
+  ghc-options: -Wall
+               -Wcompat
+               -Werror
+               -Widentities
+               -Wincomplete-record-updates
+               -Wincomplete-uni-patterns
+               -Wpartial-fields
+               -Wredundant-constraints
+               -fhide-source-paths
+               -Wno-unused-do-bind
+               -fwrite-ide-info
+               -hiedir=.hie
+               -haddock
+               -j
+
+common common-rts-options
+  ghc-options: -rtsopts
+               -threaded
+               -with-rtsopts=-N
+
+library
+  import: common-extensions
+  import: common-ghc-options
+  hs-source-dirs:
+    src
+  exposed-modules:
+    Processing.Entity
+  build-depends:
+    base                        ^>= 4.14,
+    mtl                         ^>= 2.2.2,
+    vector                      ^>= 0.12,
+    pg-transact                 ^>= 0.3,
+    pg-entity,
+    text,
+    postgresql-simple,
+    resource-pool,
+
+executable processing
+  import: common-extensions
+  import: common-ghc-options
+  import: common-rts-options
+  main-is: Main.hs
+  hs-source-dirs:
+      app
+  build-depends:
+      base
+    , entity-processing
+    , pg-entity
+    , postgresql-simple
+    , mtl
