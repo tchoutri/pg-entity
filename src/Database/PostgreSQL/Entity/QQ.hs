@@ -21,6 +21,21 @@ import Language.Haskell.TH.Quote (QuasiQuoter (QuasiQuoter))
 import Language.Haskell.TH.Syntax (lift)
 import Text.Parsec (Parsec, anyChar, manyTill, parse, space, spaces, string, try, (<|>))
 
+-- A quasi-quoter for constructing 'Field's.
+--
+--- === __Example:__
+--
+-- > instance Entity BlogPost where
+-- >   tableName  = "blogposts"
+-- >   primaryKey = [field| blogpost_id |]
+-- >   fields = [ [field| blogpost_id |]
+-- >            , [field| author_id |]
+-- >            , [field| uuid_list :: uuid[] |] -- ← This is where we specify an optional PostgreSQL type annotation
+-- >            , [field| title |]
+-- >            , [field| content |]
+-- >            , [field| created_at |]
+-- >            ]
+--
 -- | @since 0.1.0.0
 field :: QuasiQuoter
 field = QuasiQuoter fieldExp errorFieldPat errorFieldType errorFieldDec
