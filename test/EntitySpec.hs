@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module EntitySpec where
 
@@ -9,6 +10,7 @@ import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
 import Database.PostgreSQL.Entity.DBT.Types (QueryNature (Select))
+import Database.PostgreSQL.Entity.QQ (field)
 import Database.PostgreSQL.Simple (Connection, Only (Only))
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
                                              runMigrations)
@@ -102,27 +104,27 @@ spec = describeDB migrate "Entity DB " $ do
     result <- selectById $ Only (#blogPostId blogPost1)
     result `shouldBe` Just blogPost1
   itDB "Select blog post by title" $ do
-    selectOneByField @BlogPost "title" (Only ("A Past and Future Secret" :: Text))
+    selectOneByField @BlogPost [field| title |] (Only ("A Past and Future Secret" :: Text))
       `shouldReturn` Just blogPost2
   itDB "Select all blog posts by non-null condition" $ do
-    result <- selectWhereNotNull @BlogPost ["author_id", "title"]
+    result <- selectWhereNotNull @BlogPost [[field| author_id |], [field| title |]]
     V.toList result `shouldMatchList` [blogPost1, blogPost2, blogPost3, blogPost4]
   itDB "Select no blog post by null condition" $ do
-    result <- selectWhereNull @BlogPost ["author_id", "content"]
+    result <- selectWhereNull @BlogPost [[field| author_id |], [field| content |]]
     V.length result `shouldBe` 0
   itDB "Select multiple blog posts by author id" $ do
-    result <- selectManyByField @BlogPost "author_id" $ Only (#authorId blogPost4)
+    result <- selectManyByField @BlogPost [field| author_id |] $ Only (#authorId blogPost4)
     V.toList result `shouldMatchList` [blogPost2, blogPost3, blogPost4]
   itDB "Delete a blog post" $ do
     delete @BlogPost (Only (blogPostId blogPost2))
-    result <- selectManyByField @BlogPost "blogpost_id" $ Only (#blogPostId blogPost2)
+    result <- selectManyByField @BlogPost [field| blogpost_id |] $ Only (#blogPostId blogPost2)
     V.length result `shouldBe` 0
   itDB "Delete a blog post by title" $ do
-    deleteByField @BlogPost ["title"] (Only @Text "Echoes from the other world")
-    result <- selectManyByField @BlogPost "title" $ Only (#title blogPost1)
+    deleteByField @BlogPost [[field| title |]] (Only @Text "Echoes from the other world")
+    result <- selectManyByField @BlogPost [field| title |] $ Only (#title blogPost1)
     V.length result `shouldBe` 0
   itDB "Get all the article titles by author name" $ do
-    let q = _joinSelectWithFields @BlogPost @Author ["title"] ["name"]
+    let q = _joinSelectWithFields @BlogPost @Author [[field| title |]] [[field| name |]]
     (query_ Select q :: (MonadIO m) => DBT m (V.Vector (Text, Text)))
       `shouldReturn` [("The Script for my requiem","Hansi Kürsch"),("Mordred's Song","Hansi Kürsch")]
   itDB "Change the name of an author" $ do
@@ -133,11 +135,11 @@ spec = describeDB migrate "Entity DB " $ do
   itDB "Change the name of an author according to their name" $ do
     let newName = "Tiberus McElroy" :: Text
     let oldName = "Johnson McElroy" :: Text
-    updateFieldsBy @Author ["name"] ("name", oldName) (Only newName)
+    updateFieldsBy @Author [[field| name |]] ([field| name |], oldName) (Only newName)
      `shouldReturn` 1
   itDB "Change the author and title of a blogpost" $ do
     let newAuthorId =  UUID.toText $ getAuthorId $ #authorId author3 :: Text
     let newTitle    = "Something Entirely New" :: Text
-    modifiedRows <- updateFieldsBy @BlogPost ["author_id", "title"] ("title", #title blogPost4) (newAuthorId, newTitle)
-    result <- selectManyByField @BlogPost "author_id" (Only (#authorId author3))
+    modifiedRows <- updateFieldsBy @BlogPost [[field| author_id |], [field| title |]] ([field| title |], #title blogPost4) (newAuthorId, newTitle)
+    result <- selectManyByField @BlogPost [field| author_id |] (Only (#authorId author3))
     V.length result `shouldBe` fromIntegral modifiedRows

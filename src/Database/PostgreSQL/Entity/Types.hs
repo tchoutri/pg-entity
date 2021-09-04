@@ -35,7 +35,6 @@ module Database.PostgreSQL.Entity.Types
 
 import Data.Kind
 import Data.Proxy
-import Data.String
 import Data.Text (Text, pack)
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
@@ -214,10 +213,6 @@ data Field
             -- ^ An optional postgresql type for which we need to be explicit, like @Just "uuid[]"@
           }
   deriving stock (Eq, Generic, Show)
-
--- | @since 0.0.1.0
-instance IsString Field where
-  fromString n = Field (pack n) Nothing
 
 -- | Wrapper used by the update function in order to have the primary key as the last parameter passed,
 -- since it appears in the WHERE clause.

@@ -1,9 +1,11 @@
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE StrictData #-}
 {-|
   Module      : Database.PostgreSQL.Entity.Internal.BlogPost
   Copyright   : © Clément Delafargue, 2018
                   Théophile Choutri, 2021
+                  Koz Ross, 2021
   License     : MIT
   Maintainer  : theophile@choutri.eu
   Stability   : stable
@@ -28,7 +30,8 @@ import GHC.Generics (Generic)
 import GHC.OverloadedLabels (IsLabel (..))
 import GHC.Records (HasField (..))
 
-import Database.PostgreSQL.Entity (insert, withType)
+import Database.PostgreSQL.Entity (insert)
+import Database.PostgreSQL.Entity.QQ (field)
 import Database.PostgreSQL.Entity.Types (Entity (..), GenericEntity, PrimaryKey, TableName)
 
 -- | Wrapper around the UUID type
@@ -78,13 +81,13 @@ instance HasField x BlogPost a => IsLabel x (BlogPost -> a) where
 
 instance Entity BlogPost where
   tableName  = "blogposts"
-  primaryKey = "blogpost_id"
-  fields = [ "blogpost_id"
-           , "author_id"
-           , "uuid_list" `withType` "uuid[]"
-           , "title"
-           , "content"
-           , "created_at"
+  primaryKey = [field| blogpost_id |]
+  fields = [ [field| blogpost_id |]
+           , [field| author_id |]
+           , [field| uuid_list :: uuid[] |]
+           , [field| title |]
+           , [field| content |]
+           , [field| created_at |]
            ]
 
 -- | A specialisation of the 'Database.PostgreSQL.Entity.insert' function.

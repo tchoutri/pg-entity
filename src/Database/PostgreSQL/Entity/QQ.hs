@@ -39,7 +39,7 @@ errorFieldPat _ = fail "Cannot use 'field' in a pattern context."
 fieldParser :: Parsec String () (Text, Maybe Text)
 fieldParser = do
   spaces
-  res <- (try withType) <|> noType
+  res <- try withType <|> noType
   spaces
   pure res
   where
