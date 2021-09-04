@@ -12,6 +12,7 @@ maintainer:       Théophile Choutri
 category:         Database
 license:          MIT
 build-type:       Simple
+tested-with:      GHC ==8.8.4 || ==8.10.7 || ==9.0.1
 extra-source-files:
     CHANGELOG.md
     LICENSE.md
@@ -77,6 +78,7 @@ library
     Database.PostgreSQL.Entity.DBT.Types
     Database.PostgreSQL.Entity.Internal
     Database.PostgreSQL.Entity.Internal.BlogPost
+    Database.PostgreSQL.Entity.QQ
     Database.PostgreSQL.Entity.Types
   hs-source-dirs:
       src
@@ -89,9 +91,11 @@ library
     , postgresql-simple ^>= 0.6
     , resource-pool     ^>= 0.2
     , exceptions        ^>= 0.10
+    , parsec            ^>= 3.1.14.0
     , safe-exceptions   ^>= 0.1
     , text              ^>= 1.2
     , text-manipulate   ^>= 0.3
+    , template-haskell   >= 2.15.0.0 && <= 2.17.0.0
     , time              ^>= 1.9
     , uuid              ^>= 1.3
     , vector            ^>= 0.12

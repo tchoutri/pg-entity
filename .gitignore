@@ -1,6 +1,6 @@
 dist-newstyle
 .hie
-cabal.project.local
+cabal.project.local*
 Session.vim
 docs/site
 .hspec-failures
