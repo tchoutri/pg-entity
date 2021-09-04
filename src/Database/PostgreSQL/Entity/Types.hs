@@ -50,9 +50,20 @@ import GHC.TypeLits
 -- * Its primary key
 -- * The fields it contains
 --
--- When using the functions provided by this library, you will need to provide
--- [Type Applications](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/type_applications.html)
--- in order to tell the compiler which 'Entity' you are referring to.
+-- == Example
+--
+-- > data ExampleEntity = E
+-- >   { key :: Key
+-- >   , field1 :: Int
+-- >   , field2 :: Bool
+-- >   }
+-- >   deriving stock (Eq, Show, Generic)
+-- >   deriving anyclass (FromRow, ToRow)
+-- >   deriving Entity
+-- >      via (GenericEntity '[TableName "entities"] ExampleEntity)
+--
+-- When using the functions provided by this library, you will sometimes need to be explicit about the Entity you are
+-- referring to.
 --
 -- @since 0.0.1.0
 class Entity e where

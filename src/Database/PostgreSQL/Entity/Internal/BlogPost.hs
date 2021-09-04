@@ -88,11 +88,11 @@ instance Entity BlogPost where
            ]
 
 -- | A specialisation of the 'Database.PostgreSQL.Entity.insert' function.
--- insertBlogPost = insert @BlogPost
+-- @insertBlogPost = insert \@BlogPost@
 insertBlogPost :: BlogPost -> DBT IO ()
 insertBlogPost = insert @BlogPost
 
 -- | A specialisation of the 'Database.PostgreSQL.Entity.insert function.
--- insertAuthor = insert @Author
+-- @insertAuthor = insert \@Author@
 insertAuthor :: Author -> DBT IO ()
 insertAuthor = insert @Author

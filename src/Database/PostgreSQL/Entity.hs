@@ -30,7 +30,7 @@ module Database.PostgreSQL.Entity
   , selectManyByField
   , selectWhereNotNull
   , selectWhereNull
-  , crossSelectById
+  , joinSelectById
     -- ** Insertion
   , insert
     -- ** Update
@@ -48,9 +48,9 @@ module Database.PostgreSQL.Entity
   , _selectWhere
   , _selectWhereNotNull
   , _selectWhereNull
-  , _crossSelect
+  , _joinSelect
   , _innerJoin
-  , _crossSelectWithFields
+  , _joinSelectWithFields
     -- ** Insertion
   , _insert
     -- ** Update
@@ -104,8 +104,8 @@ withType (Field n _) t = Field n (Just t)
 --
 -- * @e@, @e1@, @e2@: Represents an @Entity@
 -- * @value@: Represents a Haskell value that can be serialised to PostgreSQL
--- * @Field@: Parameters of type @Field@ can most often be passed in their textual form, like "author_id". Use the Record form when you need to specify the
--- type in the query.
+-- * @Field@: Parameters of type @Field@ can most often be passed in their textual form, like "author_id". Use the function 'withType' to specify a type in
+-- the instance declaration.
 --
 -- Consult the [test suite](https://github.com/tchoutri/pg-entity/tree/main/test) to see those functions in action.
 
@@ -119,6 +119,9 @@ selectById value = selectOneByField (primaryKey @e) value
 
 -- | Select precisely __one__ entity by a provided field.
 --
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
+--
 -- @since 0.0.1.0
 selectOneByField :: forall e value m.
                  (Entity e, FromRow e, MonadIO m, ToRow value)
@@ -126,6 +129,9 @@ selectOneByField :: forall e value m.
 selectOneByField f value = queryOne Select (_selectWhere @e [f]) value
 
 -- | Select potentially many entities by a provided field.
+--
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
 --
 -- @since 0.0.1.0
 selectManyByField :: forall e value m.
@@ -156,10 +162,10 @@ selectWhereNull fs = query_ Select (_selectWhereNull @e fs)
 -- | Perform a INNER JOIN between two entities
 --
 -- @since 0.0.1.0
-crossSelectById :: forall e1 e2 m.
+joinSelectById :: forall e1 e2 m.
                 (Entity e1, Entity e2, FromRow e1, MonadIO m)
                 => DBT m (Vector e1)
-crossSelectById = query_ Select (_crossSelect @e1 @e2)
+joinSelectById = query_ Select (_joinSelect @e1 @e2)
 
 -- | Insert an entity.
 --
@@ -171,10 +177,14 @@ insert fs = void $ execute Insert (_insert @e) fs
 
 -- | Update an entity.
 --
+-- The Id of the entity is put at the end of the query automatically through the use of 'UpdateRow'.
 -- __Examples__
 --
 -- > let newAuthor = oldAuthor{…}
 -- > update @Author newAuthor
+--
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
 --
 -- @since 0.0.1.0
 update :: forall e newValue m.
@@ -183,6 +193,12 @@ update :: forall e newValue m.
 update fs = void $ execute Update (_update @e) (UpdateRow fs)
 
 -- | Update rows of an entity matching the given value
+--
+-- == Example
+--
+-- > let newName = "Tiberus McElroy" :: Text
+-- > let oldName = "Johnson McElroy" :: Text
+-- > updateFieldsBy @Author ["name"] ("name", oldName) (Only newName)
 --
 -- @since 0.0.1.0
 updateFieldsBy :: forall e v1 v2 m.
@@ -201,7 +217,11 @@ delete :: forall e value m.
        => value -> DBT m ()
 delete value = deleteByField @e [primaryKey @e] value
 
--- | Delete an entity according to a vector of fields
+-- | Delete rows according to the given fields
+--
+-- == Example
+--
+-- > deleteByField @BlogPost ["title"] (Only "Echoes from the other world")
 --
 -- @since 0.0.1.0
 deleteByField :: forall e values m.
@@ -231,7 +251,7 @@ _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> get
 --
 -- @since 0.0.1.0
 _selectWithFields :: forall e. Entity e => Vector Field -> Query
-_selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields_ fs tn <> " FROM " <> quoteName tn
+_selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <> " FROM " <> quoteName tn
   where tn = tableName @e
 
 -- | Produce a WHERE clause, given a vector of fields.
@@ -241,6 +261,9 @@ _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields_ fs tn <
 --
 -- The 'Entity' constraint is required for '_where' in order to get any type annotation that was given in the schema, as well as to
 -- filter out unexisting fields.
+--
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
 --
 -- __Examples__
 --
@@ -259,6 +282,9 @@ _where fs' = textToQuery $ " WHERE " <> clauseFields
     clauseFields = fold $ intercalateVector " AND " (fmap placeholder fs)
 
 -- | Produce a SELECT statement for a given entity and fields.
+--
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
 --
 -- __Examples__
 --
@@ -292,12 +318,12 @@ _selectWhereNull fs = _select @e <> textToQuery (" WHERE " <> isNull fs)
 --
 -- __Examples__
 --
--- >>> _crossSelect @BlogPost @Author
+-- >>> _joinSelect @BlogPost @Author
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\", authors.\"author_id\", authors.\"name\", authors.\"created_at\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
 --
 -- @since 0.0.1.0
-_crossSelect :: forall e1 e2. (Entity e1, Entity e2) => Query
-_crossSelect = textToQuery $ "SELECT " <> expandQualifiedFields @e1 <> ", "
+_joinSelect :: forall e1 e2. (Entity e1, Entity e2) => Query
+_joinSelect = textToQuery $ "SELECT " <> expandQualifiedFields @e1 <> ", "
                                     <> expandQualifiedFields @e2 <>
                            " FROM " <> getTableName @e1
                            <> queryToText (_innerJoin @e2 (primaryKey @e2))
@@ -314,19 +340,23 @@ _innerJoin :: forall e. (Entity e) => Field -> Query
 _innerJoin f = textToQuery $ " INNER JOIN " <> getTableName @e
                           <> " USING(" <> fieldName f <> ")"
 
--- | Produce a "SELECT [table1_fields, table2_fields] FROM table1 INNER JOIN table2 USING(table2_pk)"
+-- | Produce a "SELECT [table1_fields, table2_fields] FROM table1 INNER JOIN table2 USING(table2_pk)" statement.
+-- The primary is used as the join point between the two tables.
+--
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
 --
 -- __Examples__
 --
--- >>> _crossSelectWithFields @BlogPost @Author ["title"] ["name"]
+-- >>> _joinSelectWithFields @BlogPost @Author ["title"] ["name"]
 -- "SELECT blogposts.\"title\", authors.\"name\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
 --
 -- @since 0.0.1.0
-_crossSelectWithFields :: forall e1 e2. (Entity e1, Entity e2)
+_joinSelectWithFields :: forall e1 e2. (Entity e1, Entity e2)
                    => Vector Field -> Vector Field -> Query
-_crossSelectWithFields fs1 fs2 =
-  textToQuery $ "SELECT " <> expandQualifiedFields_ fs1 tn1
-    <> ", " <> expandQualifiedFields_ fs2 tn2
+_joinSelectWithFields fs1 fs2 =
+  textToQuery $ "SELECT " <> expandQualifiedFields' fs1 tn1
+    <> ", " <> expandQualifiedFields' fs2 tn2
     <> " FROM " <> getTableName @e1
     <> queryToText (_innerJoin @e2 (primaryKey @e2))
   where
@@ -364,6 +394,9 @@ _update = _updateBy @e (primaryKey @e)
 
 -- | Produce an UPDATE statement for the given entity by the given field.
 --
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
+--
 -- __Examples__
 --
 -- >>> _updateBy @Author "name"
@@ -375,6 +408,9 @@ _updateBy f = _updateFieldsBy @e (fields @e) f
 
 -- | Produce an UPDATE statement for the given entity and fields, by primary key.
 --
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
+--
 -- >>> _updateFields @Author ["name"]
 -- "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"author_id\" = ?"
 --
@@ -383,6 +419,9 @@ _updateFields :: forall e. Entity e => Vector Field -> Query
 _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
 
 -- | Produce an UPDATE statement for the given entity and fields, by the specified field.
+--
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
 --
 -- >>> _updateFieldsBy @Author ["name"] "name"
 -- "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"name\" = ?"
@@ -417,6 +456,9 @@ _delete :: forall e. Entity e => Query
 _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryKey @e]
 
 -- | Produce a DELETE statement for the given entity and fields
+--
+-- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
+-- as 'Field'.
 --
 -- __Examples__
 --

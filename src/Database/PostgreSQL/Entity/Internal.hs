@@ -20,8 +20,8 @@ module Database.PostgreSQL.Entity.Internal
   , getTableName
   , expandFields
   , expandQualifiedFields
-  , expandQualifiedFields_
-  , prefixFields
+  , expandQualifiedFields'
+  , qualifyFields
   , placeholder
   , generatePlaceholders
   , textToQuery
@@ -100,7 +100,7 @@ expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (getFieldName 
 --
 -- @since 0.0.1.0
 expandQualifiedFields :: forall e. Entity e => Text
-expandQualifiedFields = expandQualifiedFields_ (fields @e) prefix
+expandQualifiedFields = expandQualifiedFields' (fields @e) prefix
   where
     prefix = tableName @e
 
@@ -112,21 +112,21 @@ expandQualifiedFields = expandQualifiedFields_ (fields @e) prefix
 -- "legacy.\"blogpost_id\", legacy.\"author_id\", legacy.\"uuid_list\", legacy.\"title\", legacy.\"content\", legacy.\"created_at\""
 --
 -- @since 0.0.1.0
-expandQualifiedFields_ :: Vector Field -> Text -> Text
-expandQualifiedFields_ fs prefix = V.foldl1' (\element acc -> element <> ", " <> acc) fs'
+expandQualifiedFields' :: Vector Field -> Text -> Text
+expandQualifiedFields' fs prefix = V.foldl1' (\element acc -> element <> ", " <> acc) fs'
   where
-    fs' = fieldName <$> prefixFields prefix fs
+    fs' = fieldName <$> qualifyFields prefix fs
 
 -- | Take a prefix and a vector of fields, and qualifies each field with the prefix
 --
 -- __Examples__
 --
--- >>> prefixFields "legacy" (fields @BlogPost)
+-- >>> qualifyFields "legacy" (fields @BlogPost)
 -- [Field {fieldName = "legacy.\"blogpost_id\"", fieldType = Nothing},Field {fieldName = "legacy.\"author_id\"", fieldType = Nothing},Field {fieldName = "legacy.\"uuid_list\"", fieldType = Just "uuid[]"},Field {fieldName = "legacy.\"title\"", fieldType = Nothing},Field {fieldName = "legacy.\"content\"", fieldType = Nothing},Field {fieldName = "legacy.\"created_at\"", fieldType = Nothing}]
 --
 -- @since 0.0.1.0
-prefixFields :: Text -> Vector Field -> Vector Field
-prefixFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
+qualifyFields :: Text -> Vector Field -> Vector Field
+qualifyFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 
 -- | Produce a placeholder of the form @\"field\" = ?@ with an optional type annotation.
 --
@@ -194,12 +194,14 @@ isNull fs' = fold $ intercalateVector " AND " (fmap process fieldNames)
 -- | Since the 'Query' type has an 'IsString' instance, the process of converting from 'Text' to 'String' to 'Query' is
 -- factored into this function
 --
+-- ⚠ This may be dangerous and an unregulated usage of this function may expose to you SQL injection attacks
 -- @since 0.0.1.0
 textToQuery :: Text -> Query
 textToQuery = fromString . unpack
 
 -- | For cases where combinator composition is tricky, we can safely get back to a 'Text' string from a 'Query'
 --
+-- ⚠ This may be dangerous and an unregulated usage of this function may expose to you SQL injection attacks
 -- @since 0.0.1.0
 queryToText :: Query -> Text
 queryToText = decodeUtf8 . fromQuery

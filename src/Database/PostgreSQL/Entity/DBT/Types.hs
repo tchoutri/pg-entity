@@ -13,7 +13,7 @@ module Database.PostgreSQL.Entity.DBT.Types
   ( QueryNature (..)
   ) where
 
--- | This sum type is given to the query, queryOne and execute functions to help
+-- | This sum type is given to the 'query', 'queryOne' and 'execute' functions to help
 -- with logging.
 --
 -- @since 0.0.1.0

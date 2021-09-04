@@ -3,8 +3,9 @@ name:             pg-entity
 synopsis:         A pleasant PostgreSQL layer
 description:
   A PostgreSQL layer to safely expand your SQL queries with a lightweight eDSL.
+  Read the tutorial at https://tchoutri.github.io/pg-entity/Tutorial
 version:          0.0.1.0
-homepage:         https://github.com/tchoutri/pg-entity#readme
+homepage:         https://tchoutri.github.io/pg-entity
 bug-reports:      https://github.com/tchoutri/pg-entity/issues
 author:           Théophile Choutri
 maintainer:       Théophile Choutri

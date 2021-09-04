@@ -2,7 +2,9 @@
 
 Welcome to [`pg-entity`][pg-entity]'s documentation.
 
-Read the Tutorial to learn how to use the library
+Read the Tutorial to learn how to use the library.
+
+Read the Guides to learn more about specific usecases and patterns.
 
 See also these resources to understand the library's underlying mechanisms:
 

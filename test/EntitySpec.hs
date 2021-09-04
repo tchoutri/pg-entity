@@ -17,7 +17,7 @@ import Test.Hspec (Spec)
 import Test.Hspec.DB (describeDB, itDB)
 import Test.Hspec.Expectations.Lifted (shouldBe, shouldMatchList, shouldReturn)
 
-import Database.PostgreSQL.Entity (_crossSelectWithFields, delete, deleteByField, selectById, selectManyByField,
+import Database.PostgreSQL.Entity (_joinSelectWithFields, delete, deleteByField, selectById, selectManyByField,
                                    selectOneByField, selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
 import Database.PostgreSQL.Entity.DBT (query_)
 import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
@@ -122,7 +122,7 @@ spec = describeDB migrate "Entity DB " $ do
     result <- selectManyByField @BlogPost "title" $ Only (#title blogPost1)
     V.length result `shouldBe` 0
   itDB "Get all the article titles by author name" $ do
-    let q = _crossSelectWithFields @BlogPost @Author ["title"] ["name"]
+    let q = _joinSelectWithFields @BlogPost @Author ["title"] ["name"]
     (query_ Select q :: (MonadIO m) => DBT m (V.Vector (Text, Text)))
       `shouldReturn` [("The Script for my requiem","Hansi Kürsch"),("Mordred's Song","Hansi Kürsch")]
   itDB "Change the name of an author" $ do

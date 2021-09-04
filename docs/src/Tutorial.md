@@ -33,6 +33,7 @@ import Data.Time (UTCTime)
 import Data.UUID (UUID)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Transact (DBT)
+import Data.Pool
 
 import Database.PostgreSQL.Entity
 ```
@@ -187,22 +188,18 @@ insertAuthor = insert
 ```
 
 <!-- Replace the usage of runDB by withPool -->
-The result of this function, which we call a “DBT action”, is then passed to [`runDB`](https://hackage.haskell.org/package/pg-entity-0.0.1.0/docs/Database-PostgreSQL-Entity-DBT.html#v:runDB).
+The result of this function, which we call a “DBT action”, is then passed to [`runDB`](https://hackage.haskell.org/package/pg-entity-0.0.1.0/docs/Database-PostgreSQL-Entity-DBT.html#v:withPool).
 
 ```haskell
-runDB :: (MonadCatch m, MonadBaseControl IO m)
-      => ConnectionPool  -- The connection pool, ideally taken from a ReaderT
-      -> DBT m a         -- The DB action, like `insert`
-      -> m a             -- The return value
 ```
 
 You can then build a higher-level API endpoint or route controller like that:
 
 ```haskell
-addAuthor :: ConnectionPool -> AuthorInfo -> IO ()
+addAuthor :: Pool Connection -> AuthorInfo -> IO ()
 addAuthor pool info = do
   newAuthor <- mkAuthor info -- This functions is left to you
-  result <- runDB pool $ insertAuthor newAuthor
+  result <- withPool pool $ insertAuthor newAuthor
   case result of
     Left err -> error "Could not insert author! Error " <> show err
     Right _ -> putTextLn "Author " <> (name newAuthor) <> " added!"
@@ -211,7 +208,7 @@ addAuthor pool info = do
 And if you want to later select an `Author` based on its `AuthorId`:
 
 ```haskell
-getAuthor :: ConnectionPool -> AuthorId -> IO (Either DBError Author)
+getAuthor :: Pool Connection -> AuthorId -> IO (Either DBError Author)
 getAuthor pool authorId = runDB pool $ selectOneById (Only authorId)
 ```
 

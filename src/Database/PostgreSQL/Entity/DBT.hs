@@ -11,7 +11,7 @@
 module Database.PostgreSQL.Entity.DBT
   ( mkPool
   , withPool
-  , runDB
+  , withPool'
   , execute
   , query
   , query_
@@ -24,48 +24,61 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Int
 import Data.Maybe (listToMaybe)
-import Data.Pool (createPool, withResource)
+import Data.Pool (Pool, createPool, withResource)
 import Data.Text.Encoding (decodeUtf8)
 import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 
 import Control.Monad.Catch (Exception, MonadCatch, try)
-import Database.PostgreSQL.Entity.DBT.Types (ConnectionPool, QueryNature (..))
-import Database.PostgreSQL.Simple as PG (ConnectInfo, FromRow, Query, ToRow, close, connect)
+import Database.PostgreSQL.Entity.DBT.Types (QueryNature (..))
+import Database.PostgreSQL.Simple as PG (ConnectInfo, Connection, FromRow, Query, ToRow, close, connect)
 import qualified Database.PostgreSQL.Transact as PGT
 
--- | Run a DBT action.
---
--- This function wraps the DBT actions in a 'try', so that exceptions
--- raised will be converted to the Left branch of the Either.
---
--- @since 0.0.1.0
-withPool :: forall errorType result m
-          . (Exception errorType, MonadCatch m, MonadBaseControl IO m)
-         => ConnectionPool
-         -> PGT.DBT m result
-         -> m (Either errorType result)
-withPool pool action = try $ runDB pool action
-
--- | Run a DBT action.
---
--- This function is a more barebones version of 'withPool'.
--- You would be
-runDB :: (MonadBaseControl IO m)
-      => ConnectionPool -> PGT.DBT m a -> m a
-runDB pool action = withResource pool $ PGT.runDBTSerializable action
-
--- | Create a ConnectionPool with the appropriate parameters
+-- | Create a Pool Connection with the appropriate parameters
 --
 -- @since 0.0.1.0
 mkPool :: ConnectInfo     -- Database access information
        -> Int             -- Number of sub-pools
        -> NominalDiffTime -- Allowed timeout
        -> Int             -- Number of connections
-       -> IO ConnectionPool
+       -> IO (Pool Connection)
 mkPool connectInfo subPools timeout connections =
   createPool (connect connectInfo) close subPools timeout connections
+
+-- | Run a DBT action with no explicit error handling.
+--
+-- This functions is suited for using 'MonadError' error handling.
+--
+-- === __Example__
+--
+-- > let e1 = E 1 True True
+-- > result <- runExceptT @EntityError $ do
+-- >   withPool pool $ insertEntity e1
+-- >   withPool pool $ markForProcessing 1
+-- > case result of
+-- >   Left err -> print err
+-- >   Right _  -> putStrLn "Everything went well"
+--
+-- See the code in the @example/@ directory on GitHub
+--
+-- @since 0.0.1.0
+withPool :: (MonadBaseControl IO m)
+         => Pool Connection -> PGT.DBT m a -> m a
+withPool pool action = withResource pool $ PGT.runDBTSerializable action
+
+-- | Run a DBT action while handling errors as Exceptions.
+--
+-- This function wraps the DBT actions in a 'try', so that exceptions
+-- raised will be converted to the Left branch of the Either.
+--
+-- @since 0.0.1.0
+withPool' :: forall errorType result m
+          . (Exception errorType, MonadCatch m, MonadBaseControl IO m)
+         => Pool Connection
+         -> PGT.DBT m result
+         -> m (Either errorType result)
+withPool' pool action = try $ withPool pool action
 
 -- | Query wrapper that returns a 'Vector' of results
 --
