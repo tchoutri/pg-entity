@@ -21,9 +21,9 @@ import Language.Haskell.TH.Quote (QuasiQuoter (QuasiQuoter))
 import Language.Haskell.TH.Syntax (lift)
 import Text.Parsec (Parsec, anyChar, manyTill, parse, space, spaces, string, try, (<|>))
 
--- A quasi-quoter for constructing 'Field's.
+-- | A quasi-quoter for safely constructing 'Field's.
 --
---- === __Example:__
+-- == Example:
 --
 -- > instance Entity BlogPost where
 -- >   tableName  = "blogposts"
@@ -36,7 +36,7 @@ import Text.Parsec (Parsec, anyChar, manyTill, parse, space, spaces, string, try
 -- >            , [field| created_at |]
 -- >            ]
 --
--- | @since 0.1.0.0
+-- @since 0.1.0.0
 field :: QuasiQuoter
 field = QuasiQuoter fieldExp errorFieldPat errorFieldType errorFieldDec
 

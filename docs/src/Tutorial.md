@@ -4,7 +4,7 @@ In this tutorial, you will learn how to implement the Entity typeclass for your 
 queries against the database.
 
 ### Setting up our data-types
-First, let us enable a couple of extensions 
+First, let us enable a couple of extension
 
 ```haskell
 -- Traditional list & string syntax
@@ -18,12 +18,11 @@ First, let us enable a couple of extensions
 {-# LANGUAGE DerivingVia #-}
 ```
 
-* `OverloadedLists` and `OverloadedStrings` allow us to use the `[list]` and `"string"`
-syntaxes for datatypes other than Lists and Strings (in our case, Vector and Text).
+* `OverloadedLists` allow us to use the `[list]` syntax for datatypes other than List, like Vector.
 
-* `QuasiQuotes` enable us to write plain SQL in a `[|quasi-quoter block|]`. 
+* `QuasiQuotes` enable us to write plain SQL and field names in a `[|quasi-quoter block|]`.
 
-* The Deriving extensions give us more powerful typeclass derivation. 
+* The Deriving extensions give us more powerful typeclass derivation.
 
 
 Then, let's import some data-types and modules:
@@ -38,7 +37,7 @@ import Data.Pool
 import Database.PostgreSQL.Entity
 ```
 
-And let's write down our initial data models for a blog. `Author`, and `BlogPost`.  
+And let's write down our initial data models for a blog. `Author`, and `BlogPost`.
 
 ```haskell
 -- | It is good practice to wrap your primary key in a newtype to gain more
@@ -54,9 +53,9 @@ data Author
            , name      :: Text
            , createdAt :: UTCTime
            }
-  deriving stock (Eq, Generic, Show) 
+  deriving stock (Eq, Generic, Show)
   -- ^ Instances that are provided by the Haskell Report are known as `stock` classes.
-  deriving anyclass (FromRow, ToRow) 
+  deriving anyclass (FromRow, ToRow)
   -- ^ Other instances are marked derived using the `anyclass` strategy
 ```
 
@@ -85,14 +84,14 @@ Let us write the `Entity` instances now:
 ```Haskell
 instance Entity Author where
   tableName  = "authors"
-  primaryKey = "author_id"
-  fields     = [ "author_id"
-               , "name"
-               , "created_at"
+  primaryKey = [field| author_id |]
+  fields     = [ [field| author_id |]
+               , [field| name |]
+               , [field| created_at |]
                ]
 ```
 
-The above instance declaration reads as:  
+The above instance declaration reads as:
 > My table's name is _authors_, its primary key is _author\_id_, and the fields are _author\_id_, _name_, and _created\_at_.
 
 The order matters for the declarations, so make sure that each field is at the correct position.
@@ -102,16 +101,16 @@ Let's do the same for `BlogPost`:
 ```Haskell
 instance Entity BlogPost where
   tableName  = "blogposts"
-  primaryKey = "blogpost_id"
-  fields = [ "blogpost_id"
-           , "author_id"
-           , "title"
-           , "content"
-           , "created_at"
+  primaryKey = [field| blogpost_id |]
+  fields = [  [field| blogpost_id |]
+           ,  [field| author_id |]
+           ,  [field| title |]
+           ,  [field| content |]
+           ,  [field| created_at |]
            ]
 ```
 
-And these instances will give you access to the Entity functions to query your tables. 
+And these instances will give you access to the Entity functions to query your tables
 
 ### Using Generics
 
@@ -129,7 +128,7 @@ data Author
   deriving stock (Eq, Generic, Show)
   deriving anyclass (FromRow, ToRow)
   deriving (Entity)
-    via (GenericEntity '[ TableName "authors"    
+    via (GenericEntity '[ TableName "authors"
                         , PrimaryKey "author_id"
                         ] Author)
 ```
@@ -140,14 +139,17 @@ Those two options, `TableName` and `PrimaryKey` are optional, and the library wi
 * `primaryKey` will be the snake\_case version of the first field of the record.
 * `field` names will be the snake\_case version of the record fields.
 
-The advantages brought by this technique are that it reduces the surface for errors when implementing the `Entity` typeclass,
-and that the instance and the type are 
+The advantages brought by this technique are that the error surface is reduced when implementing the `Entity` typeclass.
 
-⚠ While all these deriving parameters are optional, I advise you to write down the table name (with the `TableName` option).  
+⚠ While all these deriving parameters are optional, I advise you to write down the table name (with the `TableName` option).
 In the PostgreSQL world, it is customary to pluralise the name of the table containing your data, and
 `pg-entity` does not automatically do this.
 
-<TODO> write the fact that if you declare the pk name, you don't do linear search in the fields list (O(n) -> O(1)).
+
+⚠ For performance reasons, you are advised to write the primary key in the options. If you do not, the generic deriving mechanism will have to do a linear
+search in the fields list (of complexity 𝛰(n) whereas the lookup will take 𝛰(1) if the primary key is given in your code. Do this especially if you have
+long tables.
+
 Do it if you have long tables.
 
 ### Writing the SQL migrations
@@ -176,7 +178,7 @@ create table blogposts (
 ### Making queries
 
 By implementing the `Entity` Typeclass, your data-type has access to a variety of functions, combinators and helpers that serve the one true purpose of
-this library: 
+this library:
 
 > Provide a safe mechanism to expand the fields of a table while writing a query.
 
@@ -187,8 +189,7 @@ insertAuthor :: Author -> DBT IO ()
 insertAuthor = insert
 ```
 
-<!-- Replace the usage of runDB by withPool -->
-The result of this function, which we call a “DBT action”, is then passed to [`runDB`](https://hackage.haskell.org/package/pg-entity-0.0.1.0/docs/Database-PostgreSQL-Entity-DBT.html#v:withPool).
+The result of this function, which we call a “DBT action”, is then passed to [`withPool`](https://hackage.haskell.org/package/pg-entity-0.0.1.0/docs/Database-PostgreSQL-Entity-DBT.html#v:withPool).
 
 ```haskell
 ```
@@ -196,22 +197,23 @@ The result of this function, which we call a “DBT action”, is then passed to
 You can then build a higher-level API endpoint or route controller like that:
 
 ```haskell
-addAuthor :: Pool Connection -> AuthorInfo -> IO ()
+addAuthor :: (MonadBaseControl IO m)
+          => Pool Connection -> AuthorInfo -> m ()
 addAuthor pool info = do
-  newAuthor <- mkAuthor info -- This functions is left to you
-  result <- withPool pool $ insertAuthor newAuthor
-  case result of
-    Left err -> error "Could not insert author! Error " <> show err
-    Right _ -> putTextLn "Author " <> (name newAuthor) <> " added!"
+  newAuthor <- mkAuthor info -- The implementation of this function is left to you
+  withPool pool $ insertAuthor newAuthor
 ```
 
 And if you want to later select an `Author` based on its `AuthorId`:
 
 ```haskell
-getAuthor :: Pool Connection -> AuthorId -> IO (Either DBError Author)
-getAuthor pool authorId = runDB pool $ selectOneById (Only authorId)
+getAuthor :: (MonadError MyCustomError, MonadBaseControl IO m)
+          => Pool Connection -> AuthorId -> m Author
+getAuthor pool authorId = withPool pool $ selectOneById (Only authorId)
 ```
 
 This is the end of this tutorial. There are many more functions to discover that will help you write your queries.
 While you shouldn't have to explore the source code to gain understanding of how to use the library, feel free to
 navigate it to see how the underlying mechanisms work. :)
+
+Next, you can consult our Guides section to see how to do error handling.

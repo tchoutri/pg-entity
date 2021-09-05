@@ -75,7 +75,6 @@ library
   exposed-modules:
     Database.PostgreSQL.Entity
     Database.PostgreSQL.Entity.DBT
-    Database.PostgreSQL.Entity.DBT.Types
     Database.PostgreSQL.Entity.Internal
     Database.PostgreSQL.Entity.Internal.BlogPost
     Database.PostgreSQL.Entity.Internal.QQ

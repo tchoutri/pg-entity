@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-|
   Module      : Database.PostgreSQL.Entity.Internal.Unsafe
@@ -26,6 +27,7 @@ module Database.PostgreSQL.Entity.Internal.Unsafe
     Field (..)
   ) where
 
+import Data.Kind
 import Data.String
 import Data.Text (Text)
 import GHC.TypeLits
@@ -37,7 +39,13 @@ data Field
   = Field Text (Maybe Text)
   deriving stock (Eq, Show)
 
-instance TypeError ('Text "🚫 You cannot pass a Field name as a string." ':$$:
-                    'Text "Please use the `field` quasi-quoter instead.")
-      => IsString Field where
+{-| Using the Overloaded String syntax for Field names is forbidden.
+-}
+instance ForbiddenIsString => IsString Field where
   fromString = error "You cannot pass a field as a string. Please use the `field` quasi-quoter instead."
+
+type family ForbiddenIsString :: Constraint where
+  ForbiddenIsString = TypeError
+    ( 'Text "🚫 You cannot pass a Field name as a string." ':$$:
+      'Text "Please use the `field` quasi-quoter instead."
+    )

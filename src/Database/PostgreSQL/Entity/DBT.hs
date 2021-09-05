@@ -16,7 +16,7 @@ module Database.PostgreSQL.Entity.DBT
   , query
   , query_
   , queryOne
-  , module Database.PostgreSQL.Entity.DBT.Types
+  , QueryNature(..)
   ) where
 
 import Colourista.IO (cyanMessage, redMessage, yellowMessage)
@@ -31,7 +31,6 @@ import Data.Vector (Vector)
 import qualified Data.Vector as V
 
 import Control.Monad.Catch (Exception, MonadCatch, try)
-import Database.PostgreSQL.Entity.DBT.Types (QueryNature (..))
 import Database.PostgreSQL.Simple as PG (ConnectInfo, Connection, FromRow, Query, ToRow, close, connect)
 import qualified Database.PostgreSQL.Transact as PGT
 
@@ -125,3 +124,9 @@ logQueryFormat queryNature q params = do
     Update -> liftIO $ yellowMessage $ "[UPDATE] " <> decodeUtf8 msg
     Insert -> liftIO $ yellowMessage $ "[INSERT] " <> decodeUtf8 msg
     Delete -> liftIO $ redMessage    $ "[DELETE] " <> decodeUtf8 msg
+
+-- | This sum type is given to the 'query', 'queryOne' and 'execute' functions to help
+-- with logging.
+--
+-- @since 0.0.1.0
+data QueryNature = Select | Insert | Update | Delete deriving (Eq, Show)

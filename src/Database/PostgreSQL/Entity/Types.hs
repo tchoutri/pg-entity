@@ -20,6 +20,7 @@ module Database.PostgreSQL.Entity.Types
 
     -- * Associated Types
   , Field
+  , field
   , fieldName
   , fieldType
   , UpdateRow(..)
@@ -41,6 +42,7 @@ import Data.Text (Text, pack)
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import GHC.Generics
@@ -55,7 +57,7 @@ import GHC.TypeLits
 -- == Example
 --
 -- > data ExampleEntity = E
--- >   { key :: Key
+-- >   { key    :: Key
 -- >   , field1 :: Int
 -- >   , field2 :: Bool
 -- >   }
