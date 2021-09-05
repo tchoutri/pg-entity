@@ -43,6 +43,12 @@ extra-deps:
   - pg-entity-0.0.1.0
 ```
 
+The following GHC versions are supported:
+
+* 8.8
+* 8.10
+* 9.0
+
 ## Documentation
 
 This library aims to be thoroughly tested, by the means of Oleg Grerus' [cabal-docspec][docspec]
@@ -175,7 +181,7 @@ I wish to thank
 * Koz Ross, for his piercing eyes and his immense patience
 * Joe Kachmar, who enlightened me many times
 
-[docs]: https://img.shields.io/badge/docs-pg--entity-blueviolet?style=flat-square
+[docs]: https://img.shields.io/badge/Tutorial%20and%20Guides-pg--entity-blueviolet
 [docs-url]: https://tchoutri.github.io/pg-entity/
 [docspec]: https://github.com/phadej/cabal-extras/blob/master/cabal-docspec/MANUAL.md
 [pg-transact-hspec]: https://github.com/jfischoff/pg-transact-hspec.git
