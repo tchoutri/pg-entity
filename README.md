@@ -8,6 +8,8 @@ It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL 
   You are encouraged to adopt data types that model your business, rather than restrict yourself within the limits of what
   an SQL schema can represent. Use an intermediate Data Access Object (DAO) that can easily be serialised and deserialised
   to and from a SQL schema, to and from which you will morph your business data-types.
+* Illegal states are made harder (but not impossible) to represent. Generic deriving of entities is encouraged, and
+  quasi-quoters are provided to denote fields in a safer way. 
 * Escape hatches are provided at every level. The types that are manipulated are Query for which an `IsString` instance exists.
   Don't force yourself to use the higher-level API if the lower-level combinators work for you, and if those don't either, “Just Write SQL”™.
 
