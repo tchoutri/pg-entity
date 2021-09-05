@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-|
   Module      : Database.PostgreSQL.Entity.Internal.Unsafe
   Copyright   : © Clément Delafargue, 2018
@@ -24,7 +26,9 @@ module Database.PostgreSQL.Entity.Internal.Unsafe
     Field (..)
   ) where
 
+import Data.String
 import Data.Text (Text)
+import GHC.TypeLits
 
 -- | A wrapper for table fields.
 --
@@ -33,3 +37,7 @@ data Field
   = Field Text (Maybe Text)
   deriving stock (Eq, Show)
 
+instance TypeError ('Text "🚫 You cannot pass a Field name as a string." ':$$:
+                    'Text "Please use the `field` quasi-quoter instead.")
+      => IsString Field where
+  fromString = error "You cannot pass a field as a string. Please use the `field` quasi-quoter instead."
