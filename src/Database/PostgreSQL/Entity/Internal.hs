@@ -37,8 +37,8 @@ import qualified Data.Vector as V
 import Database.PostgreSQL.Simple.Types (Query (..))
 
 import Data.Foldable (fold)
+import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
-import Database.PostgreSQL.Entity.Types.Unsafe (Field (Field))
 
 -- $setup
 -- >>> :set -XOverloadedStrings

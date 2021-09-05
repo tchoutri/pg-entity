@@ -91,8 +91,9 @@ import Database.PostgreSQL.Entity.Types
 --
 -- * @e@, @e1@, @e2@: Represents an @Entity@
 -- * @value@: Represents a Haskell value that can be serialised to PostgreSQL
--- * @Field@: Parameters of type @Field@ can most often be passed in their textual form, like "author_id". Use the function 'withType' to specify a type in
--- the instance declaration.
+-- * @Field@: Parameters of type @Field@ can most often be passed in their textual form inside the 'field' quasi-quoter,
+--   like @[field| author_id :: uuid|]@. This metaprogramming technique is here to better prevent empty fields from being passed.
+--   The PostgreSQL type annotation is optional, but necessary for arrays of UUIDs and of custom enums.
 --
 -- Consult the [test suite](https://github.com/tchoutri/pg-entity/tree/main/test) to see those functions in action.
 

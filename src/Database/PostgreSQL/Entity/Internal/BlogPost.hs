@@ -31,7 +31,7 @@ import GHC.OverloadedLabels (IsLabel (..))
 import GHC.Records (HasField (..))
 
 import Database.PostgreSQL.Entity (insert)
-import Database.PostgreSQL.Entity.QQ (field)
+import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Types (Entity (..), GenericEntity, PrimaryKey, TableName)
 
 -- | Wrapper around the UUID type

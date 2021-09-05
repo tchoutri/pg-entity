@@ -124,10 +124,10 @@ data Bag
 
 instance Entity Bag where
   tableName  = "bags"
-  primaryKey = "bag_id"
-  fields     = [ "bag_id"
-               , "some_field" `withType` "uuid[]"
-               , "properties" `withType` "properties[]"
+  primaryKey = [field| bag_id |]
+  fields     = [ [field| bag_id |]
+               , [field| some_field :: uuid[] |]
+               , [field| properties :: properties[] |]
                ]
 
 -- You can write specialised functions to remove the noise of Type Applications

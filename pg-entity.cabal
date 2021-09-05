@@ -78,9 +78,9 @@ library
     Database.PostgreSQL.Entity.DBT.Types
     Database.PostgreSQL.Entity.Internal
     Database.PostgreSQL.Entity.Internal.BlogPost
-    Database.PostgreSQL.Entity.QQ
+    Database.PostgreSQL.Entity.Internal.QQ
+    Database.PostgreSQL.Entity.Internal.Unsafe
     Database.PostgreSQL.Entity.Types
-    Database.PostgreSQL.Entity.Types.Unsafe
   hs-source-dirs:
       src
   build-depends:

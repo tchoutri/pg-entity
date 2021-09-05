@@ -41,7 +41,7 @@ import Data.Text (Text, pack)
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
-import Database.PostgreSQL.Entity.Types.Unsafe (Field (Field))
+import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import GHC.Generics
 import GHC.TypeLits

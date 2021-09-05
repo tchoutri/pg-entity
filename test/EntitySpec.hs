@@ -9,8 +9,6 @@ import Control.Monad.IO.Class
 import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
-import Database.PostgreSQL.Entity.DBT.Types (QueryNature (Select))
-import Database.PostgreSQL.Entity.QQ (field)
 import Database.PostgreSQL.Simple (Connection, Only (Only))
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
                                              runMigrations)
@@ -22,8 +20,10 @@ import Test.Hspec.Expectations.Lifted (shouldBe, shouldMatchList, shouldReturn)
 import Database.PostgreSQL.Entity (_joinSelectWithFields, delete, deleteByField, selectById, selectManyByField,
                                    selectOneByField, selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
 import Database.PostgreSQL.Entity.DBT (query_)
+import Database.PostgreSQL.Entity.DBT.Types (QueryNature (Select))
 import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
                                                      insertAuthor, insertBlogPost)
+import Database.PostgreSQL.Entity.Internal.QQ (field)
 
 author1 :: Author
 author1 =

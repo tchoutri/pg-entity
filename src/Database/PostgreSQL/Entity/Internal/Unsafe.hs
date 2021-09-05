@@ -1,5 +1,5 @@
 {-|
-  Module      : Database.PostgreSQL.Entity.Types.Unsafe
+  Module      : Database.PostgreSQL.Entity.Internal.Unsafe
   Copyright   : © Clément Delafargue, 2018
                   Théophile Choutri, 2021
                   Koz Ross, 2021
@@ -19,7 +19,7 @@
   'Database.PostgreSQL.Entity.Types'.
 
 -}
-module Database.PostgreSQL.Entity.Types.Unsafe
+module Database.PostgreSQL.Entity.Internal.Unsafe
   (
     Field (..)
   ) where

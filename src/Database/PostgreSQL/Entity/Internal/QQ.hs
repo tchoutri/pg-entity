@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 {-|
- Module     : Database.PostgreSQL.Entity.QQ
+ Module     : Database.PostgreSQL.Entity.Internal.QQ
  Copyright  : © Koz Ross, 2021
  License    : MIT
  Maintainer : koz.ross@retro-freedom.nz
@@ -12,10 +12,10 @@
  There is little reason to import this module directly; instead, import
  'Database.PostgreSQL.Entity', which re-exports the 'field' quasiquoter.
 -}
-module Database.PostgreSQL.Entity.QQ (field) where
+module Database.PostgreSQL.Entity.Internal.QQ (field) where
 
 import Data.Text (Text, pack)
-import Database.PostgreSQL.Entity.Types.Unsafe (Field (Field))
+import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Language.Haskell.TH (Dec, Exp, Pat, Q, Type)
 import Language.Haskell.TH.Quote (QuasiQuoter (QuasiQuoter))
 import Language.Haskell.TH.Syntax (lift)
