@@ -38,6 +38,7 @@ import Database.PostgreSQL.Simple.Types (Query (..))
 
 import Data.Foldable (fold)
 import Database.PostgreSQL.Entity.Types
+import Database.PostgreSQL.Entity.Types.Unsafe (Field (Field))
 
 -- $setup
 -- >>> :set -XOverloadedStrings

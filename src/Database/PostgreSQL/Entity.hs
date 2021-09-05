@@ -19,8 +19,7 @@ module Database.PostgreSQL.Entity
     Entity (..)
 
     -- * Associated Types
-  , Field (..)
-  , withType
+  , Field
 
     -- * High-level API
     -- $highlevel
@@ -67,7 +66,6 @@ import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
 import Data.Int
-import Data.Text (Text)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple (Only (..))
@@ -87,17 +85,6 @@ import Database.PostgreSQL.Entity.Types
 -- >>> :set -XTypeApplications
 -- >>> import Database.PostgreSQL.Entity
 -- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
-
--- | A infix helper to declare a table field with an explicit type annotation.
---
--- __Examples__
---
--- >>> "author_id" `withType` "uuid[]"
--- Field {fieldName = "author_id", fieldType = Just "uuid[]"}
---
--- @since 0.0.1.0
-withType :: Field -> Text -> Field
-withType (Field n _) t = Field n (Just t)
 
 -- $highlevel
 -- Glossary / Tips’n’Tricks
@@ -119,9 +106,6 @@ selectById value = selectOneByField (primaryKey @e) value
 
 -- | Select precisely __one__ entity by a provided field.
 --
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
---
 -- @since 0.0.1.0
 selectOneByField :: forall e value m.
                  (Entity e, FromRow e, MonadIO m, ToRow value)
@@ -129,9 +113,6 @@ selectOneByField :: forall e value m.
 selectOneByField f value = queryOne Select (_selectWhere @e [f]) value
 
 -- | Select potentially many entities by a provided field.
---
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
 --
 -- @since 0.0.1.0
 selectManyByField :: forall e value m.
@@ -182,9 +163,6 @@ insert fs = void $ execute Insert (_insert @e) fs
 --
 -- > let newAuthor = oldAuthor{…}
 -- > update @Author newAuthor
---
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
 --
 -- @since 0.0.1.0
 update :: forall e newValue m.
@@ -262,9 +240,6 @@ _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <
 -- The 'Entity' constraint is required for '_where' in order to get any type annotation that was given in the schema, as well as to
 -- filter out unexisting fields.
 --
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
---
 -- __Examples__
 --
 -- >>> _select @BlogPost <> _where @BlogPost ["blogpost_id"]
@@ -282,9 +257,6 @@ _where fs' = textToQuery $ " WHERE " <> clauseFields
     clauseFields = fold $ intercalateVector " AND " (fmap placeholder fs)
 
 -- | Produce a SELECT statement for a given entity and fields.
---
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
 --
 -- __Examples__
 --
@@ -343,9 +315,6 @@ _innerJoin f = textToQuery $ " INNER JOIN " <> getTableName @e
 -- | Produce a "SELECT [table1_fields, table2_fields] FROM table1 INNER JOIN table2 USING(table2_pk)" statement.
 -- The primary is used as the join point between the two tables.
 --
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
---
 -- __Examples__
 --
 -- >>> _joinSelectWithFields @BlogPost @Author ["title"] ["name"]
@@ -394,9 +363,6 @@ _update = _updateBy @e (primaryKey @e)
 
 -- | Produce an UPDATE statement for the given entity by the given field.
 --
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
---
 -- __Examples__
 --
 -- >>> _updateBy @Author "name"
@@ -408,9 +374,6 @@ _updateBy f = _updateFieldsBy @e (fields @e) f
 
 -- | Produce an UPDATE statement for the given entity and fields, by primary key.
 --
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
---
 -- >>> _updateFields @Author ["name"]
 -- "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"author_id\" = ?"
 --
@@ -419,9 +382,6 @@ _updateFields :: forall e. Entity e => Vector Field -> Query
 _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
 
 -- | Produce an UPDATE statement for the given entity and fields, by the specified field.
---
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
 --
 -- >>> _updateFieldsBy @Author ["name"] "name"
 -- "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"name\" = ?"
@@ -456,9 +416,6 @@ _delete :: forall e. Entity e => Query
 _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryKey @e]
 
 -- | Produce a DELETE statement for the given entity and fields
---
--- ⚠ This function will throw a 'FormatError' exception if an empty string is passed
--- as 'Field'.
 --
 -- __Examples__
 --
