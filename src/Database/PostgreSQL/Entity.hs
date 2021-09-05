@@ -80,11 +80,13 @@ import Database.PostgreSQL.Entity.Internal
 import Database.PostgreSQL.Entity.Types
 
 -- $setup
+-- >>> :set -XQuasiQuotes
 -- >>> :set -XOverloadedStrings
 -- >>> :set -XOverloadedLists
 -- >>> :set -XTypeApplications
 -- >>> import Database.PostgreSQL.Entity
 -- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
+-- >>> import Database.PostgreSQL.Entity.Internal.QQ
 
 -- $highlevel
 -- Glossary / Tips’n’Tricks
@@ -177,7 +179,7 @@ update fs = void $ execute Update (_update @e) (UpdateRow fs)
 --
 -- > let newName = "Tiberus McElroy" :: Text
 -- > let oldName = "Johnson McElroy" :: Text
--- > updateFieldsBy @Author ["name"] ("name", oldName) (Only newName)
+-- > updateFieldsBy @Author [[field| name |]] ([field| name |], oldName) (Only newName)
 --
 -- @since 0.0.1.0
 updateFieldsBy :: forall e v1 v2 m.
@@ -200,7 +202,7 @@ delete value = deleteByField @e [primaryKey @e] value
 --
 -- == Example
 --
--- > deleteByField @BlogPost ["title"] (Only "Echoes from the other world")
+-- > deleteByField @BlogPost [[field| title |]] (Only "Echoes from the other world")
 --
 -- @since 0.0.1.0
 deleteByField :: forall e values m.
@@ -225,7 +227,7 @@ _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> get
 --
 -- __Examples__
 --
--- >>> _selectWithFields @BlogPost ["blogpost_id", "created_at"]
+-- >>> _selectWithFields @BlogPost [ [field| blogpost_id |], [field| created_at |] ]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"created_at\" FROM \"blogposts\""
 --
 -- @since 0.0.1.0
@@ -243,10 +245,10 @@ _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <
 --
 -- __Examples__
 --
--- >>> _select @BlogPost <> _where @BlogPost ["blogpost_id"]
+-- >>> _select @BlogPost <> _where @BlogPost [[field| blogpost_id |]]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
 --
--- >>> _select @BlogPost <> _where @BlogPost ["uuid_list"]
+-- >>> _select @BlogPost <> _where @BlogPost [ [field| uuid_list |] ]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"uuid_list\" = ?::uuid[]"
 --
 -- @since 0.0.1.0
@@ -261,7 +263,7 @@ _where fs' = textToQuery $ " WHERE " <> clauseFields
 --
 -- __Examples__
 --
--- >>> _selectWhere @BlogPost ["author_id"]
+-- >>> _selectWhere @BlogPost [ [field| author_id |] ]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" = ?"
 --
 -- @since 0.0.1.0
@@ -271,7 +273,7 @@ _selectWhere fs = _select @e <> _where @e fs
 -- | Produce a SELECT statement where the provided fields are checked for being non-null.
 -- r
 --
--- >>> _selectWhereNotNull @BlogPost ["author_id"]
+-- >>> _selectWhereNotNull @BlogPost [ [field| author_id |] ]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" IS NOT NULL"
 --
 -- @since 0.0.1.0
@@ -280,7 +282,7 @@ _selectWhereNotNull fs = _select @e <> textToQuery (" WHERE " <> isNotNull fs)
 
 -- | Produce a SELECT statement where the provided fields are checked for being null.
 --
--- >>> _selectWhereNull @BlogPost ["author_id"]
+-- >>> _selectWhereNull @BlogPost [ [field| author_id |] ]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" IS NULL"
 --
 -- @since 0.0.1.0
@@ -305,7 +307,7 @@ _joinSelect = textToQuery $ "SELECT " <> expandQualifiedFields @e1 <> ", "
 --
 -- __Examples__
 --
--- >>> _innerJoin @BlogPost "author_id"
+-- >>> _innerJoin @BlogPost [field| author_id |]
 -- " INNER JOIN \"blogposts\" USING(author_id)"
 --
 -- @since 0.0.1.0
@@ -318,7 +320,7 @@ _innerJoin f = textToQuery $ " INNER JOIN " <> getTableName @e
 --
 -- __Examples__
 --
--- >>> _joinSelectWithFields @BlogPost @Author ["title"] ["name"]
+-- >>> _joinSelectWithFields @BlogPost @Author [ [field| title |] ] [ [field| name |] ]
 -- "SELECT blogposts.\"title\", authors.\"name\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
 --
 -- @since 0.0.1.0
@@ -366,7 +368,7 @@ _update = _updateBy @e (primaryKey @e)
 --
 -- __Examples__
 --
--- >>> _updateBy @Author "name"
+-- >>> _updateBy @Author [field| name |]
 -- "UPDATE \"authors\" SET (\"name\", \"created_at\") = ROW(?, ?) WHERE \"name\" = ?"
 --
 -- @since 0.0.1.0
@@ -375,7 +377,7 @@ _updateBy f = _updateFieldsBy @e (fields @e) f
 
 -- | Produce an UPDATE statement for the given entity and fields, by primary key.
 --
--- >>> _updateFields @Author ["name"]
+-- >>> _updateFields @Author [ [field| name |] ]
 -- "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"author_id\" = ?"
 --
 -- @since 0.0.1.0
@@ -384,10 +386,10 @@ _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
 
 -- | Produce an UPDATE statement for the given entity and fields, by the specified field.
 --
--- >>> _updateFieldsBy @Author ["name"] "name"
+-- >>> _updateFieldsBy @Author [ [field| name |] ] [field| name |]
 -- "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"name\" = ?"
 --
--- >>> _updateFieldsBy @BlogPost ["author_id", "title"] "title"
+-- >>> _updateFieldsBy @BlogPost [[field| author_id |], [field| title |]] [field| title |]
 -- "UPDATE \"blogposts\" SET (\"author_id\", \"title\") = ROW(?, ?) WHERE \"title\" = ?"
 --
 -- @since 0.0.1.0
@@ -420,7 +422,7 @@ _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryK
 --
 -- __Examples__
 --
--- >>> _deleteWhere @BlogPost ["title", "created_at"]
+-- >>> _deleteWhere @BlogPost [[field| title |], [field| created_at |]]
 -- "DELETE FROM blogposts WHERE \"title\" = ? AND \"created_at\" = ?"
 --
 -- @since 0.0.1.0

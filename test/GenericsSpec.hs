@@ -5,8 +5,8 @@ module GenericsSpec where
 
 import Data.Text
 import Database.PostgreSQL.Entity.Internal.QQ (field)
-import Database.PostgreSQL.Entity.Types
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
+import Database.PostgreSQL.Entity.Types
 import GHC.Generics
 import Test.Hspec
 

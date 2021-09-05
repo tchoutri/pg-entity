@@ -41,11 +41,13 @@ import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 
 -- $setup
--- >>> :set -XOverloadedStrings
+-- >>> :set -XQuasiQuotes
 -- >>> :set -XOverloadedLists
 -- >>> :set -XTypeApplications
 -- >>> import Database.PostgreSQL.Entity
 -- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
+-- >>> import Database.PostgreSQL.Entity.Internal.QQ
+-- >>> import Database.PostgreSQL.Entity.Internal.Unsafe
 
 -- | Wrap the given text between parentheses
 --
@@ -109,7 +111,7 @@ expandQualifiedFields = expandQualifiedFields' (fields @e) prefix
 --
 -- __Examples__
 --
--- >>> expandQualifiedFields_ (fields @BlogPost) "legacy"
+-- >>> expandQualifiedFields' (fields @BlogPost) "legacy"
 -- "legacy.\"blogpost_id\", legacy.\"author_id\", legacy.\"uuid_list\", legacy.\"title\", legacy.\"content\", legacy.\"created_at\""
 --
 -- @since 0.0.1.0
@@ -123,7 +125,7 @@ expandQualifiedFields' fs prefix = V.foldl1' (\element acc -> element <> ", " <>
 -- __Examples__
 --
 -- >>> qualifyFields "legacy" (fields @BlogPost)
--- [Field {fieldName = "legacy.\"blogpost_id\"", fieldType = Nothing},Field {fieldName = "legacy.\"author_id\"", fieldType = Nothing},Field {fieldName = "legacy.\"uuid_list\"", fieldType = Just "uuid[]"},Field {fieldName = "legacy.\"title\"", fieldType = Nothing},Field {fieldName = "legacy.\"content\"", fieldType = Nothing},Field {fieldName = "legacy.\"created_at\"", fieldType = Nothing}]
+-- [Field "legacy.\"blogpost_id\"" Nothing,Field "legacy.\"author_id\"" Nothing,Field "legacy.\"uuid_list\"" (Just "uuid[]"),Field "legacy.\"title\"" Nothing,Field "legacy.\"content\"" Nothing,Field "legacy.\"created_at\"" Nothing]
 --
 -- @since 0.0.1.0
 qualifyFields :: Text -> Vector Field -> Vector Field
@@ -133,10 +135,10 @@ qualifyFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 --
 -- __Examples__
 --
--- >>> placeholder "id"
+-- >>> placeholder [field| id |]
 -- "\"id\" = ?"
 --
--- >>> placeholder $ Field "ids" (Just "uuid[]")
+-- >>> placeholder $ [field| ids :: uuid[] |]
 -- "\"ids\" = ?::uuid[]"
 --
 -- >>> fmap placeholder $ fields @BlogPost
@@ -164,10 +166,10 @@ generatePlaceholders vf = fold $ intercalateVector ", " $ fmap ph vf
 
 -- | Produce an IS NOT NULL statement given a vector of fields
 --
--- >>> isNotNull ["possibly_empty"]
+-- >>> isNotNull [ [field| possibly_empty |] ]
 -- "\"possibly_empty\" IS NOT NULL"
 --
--- >>> isNotNull ["possibly_empty", "that_one_too"]
+-- >>> isNotNull [[field| possibly_empty |], [field| that_one_too |]]
 -- "\"possibly_empty\" IS NOT NULL AND \"that_one_too\" IS NOT NULL"
 --
 -- @since 0.0.1.0
@@ -179,10 +181,10 @@ isNotNull fs' = fold $ intercalateVector " AND " (fmap process fieldNames)
 
 -- | Produce an IS NULL statement given a vector of fields
 --
--- >>> isNull ["possibly_empty"]
+-- >>> isNull [ [field| possibly_empty |] ]
 -- "\"possibly_empty\" IS NULL"
 --
--- >>> isNull ["possibly_empty", "that_one_too"]
+-- >>> isNull [[field| possibly_empty |], [field| that_one_too |]]
 -- "\"possibly_empty\" IS NULL AND \"that_one_too\" IS NULL"
 --
 -- @since 0.0.1.0

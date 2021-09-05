@@ -1,4 +1,4 @@
-dist-newstyle
+dist*
 .hie
 cabal.project.local*
 Session.vim
