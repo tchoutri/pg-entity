@@ -8,13 +8,13 @@ on:
 
 jobs:
   cabal:
-    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }} (${{ matrix.cabal }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-        cabal: ["3.4.0.0"]
-        ghc: ["8.8.4", "8.10.4", "9.0.1"]
+        cabal: ["3.4.0.0", "3.6.2.0"]
+        ghc: ["8.8.4", "8.10.7", "9.0.1", "9.2.1"]
 
     steps:
     - uses: actions/checkout@v2
@@ -35,21 +35,23 @@ jobs:
     - name: Configure Darwin Nixpkgs
       if: matrix.os == 'macos-latest' 
       run: |
-        echo 'NIX_PATH="nixpkgs=channel:nixpkgs-21.05-darwin"' >> "$GITHUB_ENV"
+        echo 'NIX_PATH="nixpkgs=channel:nixpkgs-unstable-darwin"' >> "$GITHUB_ENV"
 
     - name: Configure Linux Nixpkgs
       if: matrix.os == 'ubuntu-latest'
       run: |
-        echo 'NIX_PATH="nixpkgs=channel:nixos-21.05"' >> "$GITHUB_ENV"
+        echo 'NIX_PATH="nixpkgs=channel:nixpkgs-unstable"' >> "$GITHUB_ENV"
 
     - name: Set GHC version for Nix
       run: |
         if [[ ${{matrix.ghc}} == '8.8.4' ]]
         then echo "GHC='884'" >> "$GITHUB_ENV"
-        elif [[ ${{matrix.ghc}} == '8.10.4' ]]
-        then echo "GHC='8104'" >> "$GITHUB_ENV"
+        elif [[ ${{matrix.ghc}} == '8.10.7' ]]
+        then echo "GHC='8107'" >> "$GITHUB_ENV"
         elif [[ ${{matrix.ghc}} == '9.0.1' ]]
         then echo "GHC='901'" >> "$GITHUB_ENV"
+        elif [[ ${{matrix.ghc}} == '9.2.1' ]]
+        then echo "GHC='921'" >> "$GITHUB_ENV"
         fi
 
     - name: Install Nix
