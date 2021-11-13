@@ -11,7 +11,7 @@ in with pkgs;
       stylish-haskell
 
       # DB Deps
-      postgresql_13
+      postgresql_12
       gmp
       zlib
       glibcLocales

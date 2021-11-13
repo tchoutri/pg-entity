@@ -7,13 +7,13 @@ CI_OS=$(uname -s)
 install_deps_linux() {
   echo "Setting up the environment for linux"
   sudo apt-get update
-  sudo apt install -y postgresql-13 libpq-dev 
+  sudo apt install -y postgresql-12 libpq-dev 
 }
 
 install_deps_darwin() {
   echo "Setting up the environment for macOS"
   brew update
-  brew install postgresql@13
+  brew install postgresql@12
 }
 
 case $CI_OS in
