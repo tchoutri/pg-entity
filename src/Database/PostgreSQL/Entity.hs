@@ -266,6 +266,9 @@ _where fs' = textToQuery $ " WHERE " <> clauseFields
 -- >>> _selectWhere @BlogPost [ [field| author_id |] ]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" = ?"
 --
+-- >>> _selectWhere @BlogPost [ [field| author_id |], [field| title |]]
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" = ? AND \"title\" = ?"
+--
 -- @since 0.0.1.0
 _selectWhere :: forall e. Entity e => Vector Field -> Query
 _selectWhere fs = _select @e <> _where @e fs
