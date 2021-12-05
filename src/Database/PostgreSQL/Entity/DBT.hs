@@ -16,6 +16,7 @@ module Database.PostgreSQL.Entity.DBT
   , query
   , query_
   , queryOne
+  , queryOne_
   , QueryNature(..)
   ) where
 
@@ -88,16 +89,6 @@ query queryNature q params = do
   logQueryFormat queryNature q params
   V.fromList <$> PGT.query q params
 
--- | Query wrapper that returns one result.
---
--- @since 0.0.1.0
-queryOne :: (ToRow params, FromRow result, MonadIO m)
-         => QueryNature -> Query -> params -> PGT.DBT m (Maybe result)
-queryOne queryNature q params = do
-  logQueryFormat queryNature q params
-  result <- PGT.query q params
-  pure $ listToMaybe result
-
 -- | Query wrapper that returns a 'Vector' of results and does not take an argument
 --
 -- @since 0.0.1.0
@@ -106,6 +97,25 @@ query_ :: (FromRow result, MonadIO m)
 query_ queryNature q = do
   logQueryFormat queryNature q ()
   V.fromList <$> PGT.query_ q
+
+-- | Query wrapper that returns one result.
+--
+-- @since 0.0.1.0
+queryOne :: (ToRow params, FromRow result, MonadIO m)
+         => QueryNature -> Query -> params -> PGT.DBT m (Maybe result)
+queryOne queryNature q params = do
+  logQueryFormat queryNature q params
+  listToMaybe <$> PGT.query q params
+  
+--
+-- | Query wrapper that returns one result and does not take an argument
+--
+-- @since 0.0.2.0
+queryOne_ :: (FromRow result, MonadIO m)
+         => QueryNature -> Query -> PGT.DBT m (Maybe result)
+queryOne_ queryNature q = do
+  logQueryFormat queryNature q ()
+  listToMaybe <$> PGT.query_ q 
 
 -- | Query wrapper for SQL statements which do not return.
 --
