@@ -34,11 +34,20 @@ module Database.PostgreSQL.Entity.Types
   , EntityOptions(..)
   , PrimaryKey
   , TableName
+  , FieldModifiers
+  , TextModifier(..)
+  , StripPrefix
+  , CamelTo
+  , CamelToSnake
+  , CamelToKebab
   ) where
 
+import Data.Char
 import Data.Kind
+import Data.Maybe
 import Data.Proxy
-import Data.Text (Text, pack)
+import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
@@ -79,7 +88,7 @@ class Entity e where
   primaryKey :: Field
   default primaryKey :: (GetFields (Rep e)) => Field
   primaryKey = Field (primMod name) typ
-    where primMod = primaryKeyModifier defaultEntityOptions
+    where primMod = primaryKeyModifiers defaultEntityOptions
           Field name typ = V.head $ getField @(Rep e) defaultEntityOptions
   -- | The fields of the table.
   fields :: Vector Field
@@ -113,7 +122,7 @@ instance GetTableName e => GetTableName (M1 S _1 e) where
 
 instance (KnownSymbol name)
     => GetTableName (M1 D ('MetaData name _1 _2 _3) e) where
-  getTableName Options{tableNameModifier} = tableNameModifier $ pack $ symbolVal (Proxy :: Proxy name)
+  getTableName Options{tableNameModifiers, fieldModifiers} = tableNameModifiers $ fieldModifiers $ T.pack $ symbolVal (Proxy :: Proxy name)
 
 -- The sub-class that fetches the table fields
 class GetFields (e :: Type -> Type) where
@@ -141,8 +150,9 @@ instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
   getField opts = getField @e opts
 
 instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
-  getField Options{fieldModifier} = V.singleton $ Field fieldName' Nothing
-    where fieldName' = fieldModifier $ pack $ symbolVal (Proxy @name)
+  getField Options{fieldModifiers} = V.singleton $ Field fieldName' Nothing
+    where
+      fieldName' = fieldModifiers $ T.pack $ symbolVal (Proxy @name)
 
 -- Deriving Via machinery
 
@@ -153,16 +163,16 @@ instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (G
   tableName = getTableName @(Rep e) (entityOptions @t)
 
   primaryKey = Field (primMod name) typ
-    where primMod = primaryKeyModifier defaultEntityOptions
+    where primMod = primaryKeyModifiers defaultEntityOptions
           Field name typ = V.head $ getField @(Rep e) (entityOptions @t)
 
   fields = getField @(Rep e) (entityOptions @t)
 
 -- | Term-level options
 data Options
-  = Options { tableNameModifier  :: Text -> Text
-            , primaryKeyModifier :: Text -> Text
-            , fieldModifier      :: Text -> Text
+  = Options { tableNameModifiers  :: Text -> Text
+            , primaryKeyModifiers :: Text -> Text
+            , fieldModifiers      :: Text -> Text
             }
 
 defaultEntityOptions :: Options
@@ -176,20 +186,75 @@ instance EntityOptions '[] where
   entityOptions = defaultEntityOptions
 
 instance (GetName name, EntityOptions xs) => EntityOptions (TableName name ': xs) where
-  entityOptions = (entityOptions @xs){tableNameModifier = const (getName @name)}
+  entityOptions = (entityOptions @xs){tableNameModifiers = const (getName @name)}
 
 instance (GetName name, EntityOptions xs) => EntityOptions (PrimaryKey name ': xs) where
-  entityOptions = (entityOptions @xs){primaryKeyModifier = const (getName @name)}
+  entityOptions = (entityOptions @xs){primaryKeyModifiers = const (getName @name)}
+
+instance (TextModifier mods, EntityOptions xs) => EntityOptions (FieldModifiers mods ': xs) where
+  entityOptions = (entityOptions @xs){fieldModifiers = getTextModifier @mods}
 
 data TableName t
 
 data PrimaryKey t
 
+-- | Contains a list of 'TextModifiers' modifiers
+data FieldModifiers ms
+
+-- | 'TextModifier' to remove a certain prefix from the fields
+data StripPrefix (prefix :: Symbol)
+
+-- | 'FieldModifier' taking a separator Char when transforming from CamelCase.
+data CamelTo (separator :: Symbol)
+
+-- | CamelCase to snake_case
+type CamelToSnake = CamelTo "_"
+
+-- | CamelCase to kebab-case
+type CamelToKebab = CamelTo "-"
+
+-- | The modifiers that you can apply to the fields:
+--
+-- * 'StripPrefix'
+-- * 'CamelTo', and its variations
+--   * 'CamelToSnake'
+--   * 'CamelToKebab'
+class TextModifier t where
+  getTextModifier :: Text -> Text
+
+--  No modifier
+instance TextModifier '[] where
+  getTextModifier = id
+
+-- How we can have multiple modifiers chained
+instance (TextModifier x, TextModifier xs) => TextModifier (x ': xs) where
+  getTextModifier = getTextModifier @xs . getTextModifier @x
+
+instance (KnownSymbol prefix) => TextModifier (StripPrefix prefix) where
+  getTextModifier fld = fromMaybe fld (T.stripPrefix prefixToStrip fld)
+    where
+      prefixToStrip =  T.pack $ symbolVal (Proxy @prefix)
+
+instance (KnownSymbol separator, NonEmptyText separator) => TextModifier (CamelTo separator) where
+  getTextModifier fld = T.pack $ camelTo2 char (T.unpack fld)
+    where
+      char :: Char
+      char = head $ symbolVal (Proxy @separator)
+      camelTo2 :: Char -> String -> String
+      camelTo2 c text = map toLower . go2 $ go1 text
+          where go1 "" = ""
+                go1 (x:u:l:xs) | isUpper u && isLower l = x : c : u : l : go1 xs
+                go1 (x:xs) = x : go1 xs
+                go2 "" = ""
+                go2 (l:u:xs) | isLower l && isUpper u = l : c : u : go2 xs
+                go2 (x:xs) = x : go2 xs
+
+
 class GetName name where
   getName :: Text
 
 instance (KnownSymbol name, NonEmptyText name) => GetName name where
-  getName = pack (symbolVal (Proxy @name))
+  getName = T.pack (symbolVal (Proxy @name))
 
 type family NonEmptyText (xs :: Symbol) :: Constraint where
   NonEmptyText "" = TypeError ('Text "User-provided string cannot be empty!")
@@ -218,4 +283,3 @@ newtype UpdateRow a
 
 instance ToRow a => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
-

@@ -4,7 +4,8 @@
 module GenericsSpec where
 
 import Data.Text
-import Database.PostgreSQL.Entity.Internal.QQ (field)
+import Data.UUID
+import Data.Vector
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 import GHC.Generics
@@ -26,6 +27,15 @@ data Apple
   deriving (Entity)
     via (GenericEntity '[TableName "apples"] Apple)
 
+data Endpoint
+  = Endpoint { enpID            :: UUID
+             , enpProjectId     :: UUID
+             , enpRequestHashes :: Vector Text
+             }
+  deriving (Generic, Show)
+  deriving (Entity)
+    via (GenericEntity '[TableName "apis.endpoints", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
+
 spec :: Spec
 spec = describe "Ensure generically-derived instances with no options are correct" $ do
   it "TestType has the expected table name" $ do
@@ -40,3 +50,5 @@ spec = describe "Ensure generically-derived instances with no options are correc
     tableName @Apple `shouldBe` "apples"
   it "Apple has the expected fields" $ do
     fields @Apple `shouldBe` [[field| this_field |], [field| that_field |]]
+  it "Prefix stripping works" $ do
+    fields @Endpoint `shouldBe` [[field| id |], [field| project_id |], [field| request_hashes |]]
