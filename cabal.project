@@ -4,3 +4,10 @@ tests: True
 documentation: True
 
 index-state: 2021-09-02T20:02:58Z
+
+extra-lib-dirs:
+  /usr/pgsql-14/lib
+
+package pg-entity
+  ghc-options:
+    "-L /usr/pgsql-14/lib" 

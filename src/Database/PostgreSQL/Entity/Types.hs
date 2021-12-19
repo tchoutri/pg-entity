@@ -34,19 +34,22 @@ module Database.PostgreSQL.Entity.Types
   , EntityOptions(..)
   , PrimaryKey
   , TableName
+  , StripPrefix
   ) where
 
 import Data.Kind
+import Data.Maybe
 import Data.Proxy
-import Data.Text (Text, pack)
-import qualified Data.Text.Manipulate as T
+import Data.Text (Text)
 import Data.Vector (Vector)
-import qualified Data.Vector as V
 import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import GHC.Generics
 import GHC.TypeLits
+import qualified Data.Text as T
+import qualified Data.Text.Manipulate as T
+import qualified Data.Vector as V
 
 -- | An 'Entity' stores the following information about the structure of a database table:
 --
@@ -113,7 +116,9 @@ instance GetTableName e => GetTableName (M1 S _1 e) where
 
 instance (KnownSymbol name)
     => GetTableName (M1 D ('MetaData name _1 _2 _3) e) where
-  getTableName Options{tableNameModifier} = tableNameModifier $ pack $ symbolVal (Proxy :: Proxy name)
+  getTableName Options{tableNameModifier, prefixToStrip} = tableNameModifier $ stripPrefix $ T.pack $ symbolVal (Proxy :: Proxy name)
+    where
+      stripPrefix text = fromMaybe text (T.stripPrefix prefixToStrip text)
 
 -- The sub-class that fetches the table fields
 class GetFields (e :: Type -> Type) where
@@ -141,8 +146,10 @@ instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
   getField opts = getField @e opts
 
 instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
-  getField Options{fieldModifier} = V.singleton $ Field fieldName' Nothing
-    where fieldName' = fieldModifier $ pack $ symbolVal (Proxy @name)
+  getField Options{fieldModifier, prefixToStrip} = V.singleton $ Field fieldName' Nothing
+    where
+      fieldName' = fieldModifier $ stripPrefix $ T.pack $ symbolVal (Proxy @name)
+      stripPrefix text = fromMaybe text (T.stripPrefix prefixToStrip text)
 
 -- Deriving Via machinery
 
@@ -162,11 +169,12 @@ instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (G
 data Options
   = Options { tableNameModifier  :: Text -> Text
             , primaryKeyModifier :: Text -> Text
+            , prefixToStrip      :: Text
             , fieldModifier      :: Text -> Text
             }
 
 defaultEntityOptions :: Options
-defaultEntityOptions = Options T.toSnake T.toSnake T.toSnake
+defaultEntityOptions = Options T.toSnake T.toSnake "" T.toSnake
 
 -- | Type-level options for Deriving Via
 class EntityOptions xs where
@@ -181,15 +189,20 @@ instance (GetName name, EntityOptions xs) => EntityOptions (TableName name ': xs
 instance (GetName name, EntityOptions xs) => EntityOptions (PrimaryKey name ': xs) where
   entityOptions = (entityOptions @xs){primaryKeyModifier = const (getName @name)}
 
+instance (GetName prefix, EntityOptions xs) => EntityOptions (StripPrefix prefix ': xs) where
+  entityOptions = (entityOptions @xs){prefixToStrip = getName @prefix }
+
 data TableName t
 
 data PrimaryKey t
+
+data StripPrefix (prefix :: Symbol)
 
 class GetName name where
   getName :: Text
 
 instance (KnownSymbol name, NonEmptyText name) => GetName name where
-  getName = pack (symbolVal (Proxy @name))
+  getName = T.pack (symbolVal (Proxy @name))
 
 type family NonEmptyText (xs :: Symbol) :: Constraint where
   NonEmptyText "" = TypeError ('Text "User-provided string cannot be empty!")
@@ -218,4 +231,3 @@ newtype UpdateRow a
 
 instance ToRow a => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
-
