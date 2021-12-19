@@ -219,6 +219,9 @@ type CamelToKebab = CamelTo "-"
 -- * 'CamelTo', and its variations
 --   * 'CamelToSnake'
 --   * 'CamelToKebab'
+--
+--  NOTE: Once you apply field modifiers, the automatic snake_case conversion is not done anymore.
+--  You need to manually specify 'CamelToSnake' in the 'FieldModifiers' options.
 class TextModifier t where
   getTextModifier :: Text -> Text
 
@@ -248,7 +251,6 @@ instance (KnownSymbol separator, NonEmptyText separator) => TextModifier (CamelT
                 go2 "" = ""
                 go2 (l:u:xs) | isLower l && isUpper u = l : c : u : go2 xs
                 go2 (x:xs) = x : go2 xs
-
 
 class GetName name where
   getName :: Text
