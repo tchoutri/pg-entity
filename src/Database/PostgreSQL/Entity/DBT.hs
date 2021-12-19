@@ -106,7 +106,7 @@ queryOne :: (ToRow params, FromRow result, MonadIO m)
 queryOne queryNature q params = do
   logQueryFormat queryNature q params
   listToMaybe <$> PGT.query q params
-  
+
 --
 -- | Query wrapper that returns one result and does not take an argument
 --
@@ -115,7 +115,7 @@ queryOne_ :: (FromRow result, MonadIO m)
          => QueryNature -> Query -> PGT.DBT m (Maybe result)
 queryOne_ queryNature q = do
   logQueryFormat queryNature q ()
-  listToMaybe <$> PGT.query_ q 
+  listToMaybe <$> PGT.query_ q
 
 -- | Query wrapper for SQL statements which do not return.
 --

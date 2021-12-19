@@ -6,7 +6,6 @@ module GenericsSpec where
 import Data.Text
 import Data.UUID
 import Data.Vector
-import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 import GHC.Generics
@@ -28,14 +27,14 @@ data Apple
   deriving (Entity)
     via (GenericEntity '[TableName "apples"] Apple)
 
-data Endpoint = Endpoint
-  { enpID :: UUID,
-    enpProjectId :: UUID,
-    enpRequestHashes :: Vector Text
-  }
-  deriving (Show, Generic)
+data Endpoint
+  = Endpoint { enpID            :: UUID
+             , enpProjectId     :: UUID
+             , enpRequestHashes :: Vector Text
+             }
+  deriving (Generic, Show)
   deriving (Entity)
-    via (GenericEntity '[TableName "apis.endpoints", PrimaryKey "id", StripPrefix "enp"] Endpoint)
+    via (GenericEntity '[TableName "apis.endpoints", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
 
 spec :: Spec
 spec = describe "Ensure generically-derived instances with no options are correct" $ do

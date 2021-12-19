@@ -11,3 +11,6 @@ extra-lib-dirs:
 package pg-entity
   ghc-options:
     "-L /usr/pgsql-14/lib" 
+  haddock-options:
+    "--optghc=-L /usr/pgsql-14/lib" 
+
