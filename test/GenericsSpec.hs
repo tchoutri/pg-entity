@@ -31,7 +31,7 @@ data Apple
 data Endpoint = Endpoint
   { enpID :: UUID,
     enpProjectId :: UUID,
-    endRequestHashes :: Vector Text
+    enpRequestHashes :: Vector Text
   }
   deriving (Show, Generic)
   deriving (Entity)
