@@ -46,6 +46,7 @@ import Data.Char
 import Data.Kind
 import Data.Maybe
 import Data.Proxy
+import Data.String (fromString)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Manipulate as T
@@ -54,6 +55,7 @@ import qualified Data.Vector as V
 import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
+import Database.PostgreSQL.Simple.Types (Query (..))
 import GHC.Generics
 import GHC.TypeLits
 
@@ -84,6 +86,9 @@ class Entity e where
   tableName :: Text
   default tableName :: (GetTableName (Rep e)) => Text
   tableName = getTableName @(Rep e) defaultEntityOptions
+  -- | The name of the schema; will be appended to the table name: schema."tablename"
+  schema :: Maybe Text
+  schema = Nothing
   -- | The name of the primary key for the table.
   primaryKey :: Field
   default primaryKey :: (GetFields (Rep e)) => Field
@@ -283,3 +288,6 @@ newtype UpdateRow a
 
 instance ToRow a => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
+
+prefix :: Maybe Text -> Query
+prefix = maybe mempty (fromString . T.unpack . (<> "."))
