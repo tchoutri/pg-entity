@@ -36,7 +36,7 @@ data Endpoint
              }
   deriving (Generic, Show)
   deriving (Entity)
-    via (GenericEntity '[TableName "apis.endpoints", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
+    via (GenericEntity '[TableName "endpoints", Schema "apis", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
 
 spec :: Spec
 spec = describe "Ensure generically-derived instances with no options are correct" $ do
@@ -56,3 +56,5 @@ spec = describe "Ensure generically-derived instances with no options are correc
     fields @Endpoint `shouldBe` [[field| id |], [field| project_id |], [field| request_hashes |]]
   it "Explicit schema works" $ do
     getTableName @Tags `shouldBe` "public.\"tags\""
+  it "Generically derived schema works" $ do
+    getTableName @Endpoint `shouldBe` "apis.\"endpoints\""
