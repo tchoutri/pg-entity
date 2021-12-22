@@ -6,3 +6,7 @@ docs/site
 .hspec-failures
 <
 .nvimrc
+.direnv/
+.envrc
+.vscode/
+hie.yaml

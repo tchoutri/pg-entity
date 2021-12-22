@@ -18,6 +18,7 @@ module Database.PostgreSQL.Entity.Internal
   , inParens
   , quoteName
   , getTableName
+  , prefix
   , expandFields
   , expandQualifiedFields
   , expandQualifiedFields'
@@ -77,8 +78,13 @@ quoteName n = "\"" <> n <> "\""
 --
 -- >>> getTableName @Author
 -- "\"authors\""
+-- >>> getTableName @Tags
+-- "public.\"tags\""
 getTableName :: forall e. Entity e => Text
-getTableName = quoteName (tableName @e)
+getTableName = prefix (schema @e) <> quoteName (tableName @e)
+
+prefix :: Maybe Text -> Text
+prefix = maybe "" (<> ".")
 
 getFieldName :: Field -> Text
 getFieldName = quoteName . fieldName
@@ -103,9 +109,9 @@ expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (getFieldName 
 --
 -- @since 0.0.1.0
 expandQualifiedFields :: forall e. Entity e => Text
-expandQualifiedFields = expandQualifiedFields' (fields @e) prefix
+expandQualifiedFields = expandQualifiedFields' (fields @e) prefixName
   where
-    prefix = tableName @e
+    prefixName = tableName @e
 
 -- | Produce a comma-separated list of an entity's 'fields', qualified with an arbitrary prefix
 --
@@ -116,9 +122,9 @@ expandQualifiedFields = expandQualifiedFields' (fields @e) prefix
 --
 -- @since 0.0.1.0
 expandQualifiedFields' :: Vector Field -> Text -> Text
-expandQualifiedFields' fs prefix = V.foldl1' (\element acc -> element <> ", " <> acc) fs'
+expandQualifiedFields' fs prefixName = V.foldl1' (\element acc -> element <> ", " <> acc) fs'
   where
-    fs' = fieldName <$> qualifyFields prefix fs
+    fs' = fieldName <$> qualifyFields prefixName fs
 
 -- | Take a prefix and a vector of fields, and qualifies each field with the prefix
 --

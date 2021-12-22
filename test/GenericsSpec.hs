@@ -6,6 +6,8 @@ module GenericsSpec where
 import Data.Text
 import Data.UUID
 import Data.Vector
+import Database.PostgreSQL.Entity.Internal (getTableName)
+import Database.PostgreSQL.Entity.Internal.BlogPost
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 import GHC.Generics
@@ -52,3 +54,5 @@ spec = describe "Ensure generically-derived instances with no options are correc
     fields @Apple `shouldBe` [[field| this_field |], [field| that_field |]]
   it "Prefix stripping works" $ do
     fields @Endpoint `shouldBe` [[field| id |], [field| project_id |], [field| request_hashes |]]
+  it "Explicit schema works" $ do
+    getTableName @Tags `shouldBe` "public.\"tags\""

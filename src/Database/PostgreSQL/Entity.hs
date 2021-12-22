@@ -233,7 +233,7 @@ _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> get
 -- @since 0.0.1.0
 _selectWithFields :: forall e. Entity e => Vector Field -> Query
 _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <> " FROM " <> quoteName tn
-  where tn = tableName @e
+  where tn = getTableName @e
 
 -- | Produce a WHERE clause, given a vector of fields.
 --
@@ -335,8 +335,8 @@ _joinSelectWithFields fs1 fs2 =
     <> " FROM " <> getTableName @e1
     <> queryToText (_innerJoin @e2 (primaryKey @e2))
   where
-    tn1 = tableName @e1
-    tn2 = tableName @e2
+    tn1 = getTableName @e1
+    tn2 = getTableName @e2
 
 -- | Produce an INSERT statement for the given entity.
 --
@@ -430,4 +430,4 @@ _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryK
 --
 -- @since 0.0.1.0
 _deleteWhere :: forall e. Entity e => Vector Field -> Query
-_deleteWhere fs = textToQuery ("DELETE FROM " <> (tableName @e)) <> _where @e fs
+_deleteWhere fs = textToQuery ("DELETE FROM " <> (getTableName @e)) <> _where @e fs
