@@ -99,3 +99,16 @@ insertBlogPost = insert @BlogPost
 -- @insertAuthor = insert \@Author@
 insertAuthor :: Author -> DBT IO ()
 insertAuthor = insert @Author
+
+data Tags
+  = Tags { category :: Text
+         , labels   :: [Text]
+         }
+
+instance Entity Tags where
+  tableName = "tags"
+  schema = Just "public"
+  primaryKey = [field| category |]
+  fields = [ [field| category |]
+    , [field| labels |]
+    ]

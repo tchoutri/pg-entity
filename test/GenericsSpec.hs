@@ -6,6 +6,8 @@ module GenericsSpec where
 import Data.Text
 import Data.UUID
 import Data.Vector
+import Database.PostgreSQL.Entity.Internal (getTableName)
+import Database.PostgreSQL.Entity.Internal.BlogPost
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 import GHC.Generics
@@ -34,7 +36,7 @@ data Endpoint
              }
   deriving (Generic, Show)
   deriving (Entity)
-    via (GenericEntity '[TableName "apis.endpoints", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
+    via (GenericEntity '[TableName "endpoints", Schema "apis", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
 
 spec :: Spec
 spec = describe "Ensure generically-derived instances with no options are correct" $ do
@@ -52,3 +54,7 @@ spec = describe "Ensure generically-derived instances with no options are correc
     fields @Apple `shouldBe` [[field| this_field |], [field| that_field |]]
   it "Prefix stripping works" $ do
     fields @Endpoint `shouldBe` [[field| id |], [field| project_id |], [field| request_hashes |]]
+  it "Explicit schema works" $ do
+    getTableName @Tags `shouldBe` "public.\"tags\""
+  it "Generically derived schema works" $ do
+    getTableName @Endpoint `shouldBe` "apis.\"endpoints\""

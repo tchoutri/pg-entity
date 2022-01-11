@@ -33,6 +33,7 @@ module Database.PostgreSQL.Entity.Types
   , GenericEntity(..)
   , EntityOptions(..)
   , PrimaryKey
+  , Schema
   , TableName
   , FieldModifiers
   , TextModifier(..)
@@ -84,6 +85,9 @@ class Entity e where
   tableName :: Text
   default tableName :: (GetTableName (Rep e)) => Text
   tableName = getTableName @(Rep e) defaultEntityOptions
+  -- | The name of the schema; will be appended to the table name: schema."tablename"
+  schema :: Maybe Text
+  schema = Nothing
   -- | The name of the primary key for the table.
   primaryKey :: Field
   default primaryKey :: (GetFields (Rep e)) => Field
@@ -162,6 +166,8 @@ newtype GenericEntity t e
 instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (GenericEntity t e) where
   tableName = getTableName @(Rep e) (entityOptions @t)
 
+  schema = schemaModifier (entityOptions @t)
+
   primaryKey = Field (primMod name) typ
     where primMod = primaryKeyModifiers defaultEntityOptions
           Field name typ = V.head $ getField @(Rep e) (entityOptions @t)
@@ -171,12 +177,13 @@ instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (G
 -- | Term-level options
 data Options
   = Options { tableNameModifiers  :: Text -> Text
+            , schemaModifier      :: Maybe Text
             , primaryKeyModifiers :: Text -> Text
             , fieldModifiers      :: Text -> Text
             }
 
 defaultEntityOptions :: Options
-defaultEntityOptions = Options T.toSnake T.toSnake T.toSnake
+defaultEntityOptions = Options T.toSnake Nothing T.toSnake T.toSnake
 
 -- | Type-level options for Deriving Via
 class EntityOptions xs where
@@ -194,9 +201,14 @@ instance (GetName name, EntityOptions xs) => EntityOptions (PrimaryKey name ': x
 instance (TextModifier mods, EntityOptions xs) => EntityOptions (FieldModifiers mods ': xs) where
   entityOptions = (entityOptions @xs){fieldModifiers = getTextModifier @mods}
 
-data TableName t
+instance (GetName name, EntityOptions xs) => EntityOptions (Schema name ': xs) where
+  entityOptions = (entityOptions @xs){schemaModifier = Just $ getName @name}
 
-data PrimaryKey t
+data TableName (t :: Symbol)
+
+data PrimaryKey (t :: Symbol)
+
+data Schema (t :: Symbol)
 
 -- | Contains a list of 'TextModifiers' modifiers
 data FieldModifiers ms
