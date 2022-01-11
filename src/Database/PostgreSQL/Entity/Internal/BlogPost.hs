@@ -100,10 +100,10 @@ insertBlogPost = insert @BlogPost
 insertAuthor :: Author -> DBT IO ()
 insertAuthor = insert @Author
 
-data Tags = Tags {
-  category :: Text,
-  labels :: [Text]
-}
+data Tags
+  = Tags { category :: Text
+         , labels   :: [Text]
+         }
 
 instance Entity Tags where
   tableName = "tags"
