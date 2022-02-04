@@ -5,7 +5,7 @@ writing SQL queries.
 It aims to be a convenient middle-ground between rigid ORMs and hand-rolled SQL query strings. Here is its philosophy:
 
 * The serialisation/deserialisation part is left to the consumer, so you have to go with your own FromRow/ToRow instances.
-  You are encouraged to adopt data types that model your business, rather than restrict yourself within the limits of what
+  You are encouraged to adopt data types in your application that model your business domain, rather than restrict yourself within the limits of what
   an SQL schema can represent. Use an intermediate Data Access Object (DAO) that can easily be serialised and deserialised
   to and from a SQL schema, to and from which you will morph your business data-types.
 * Illegal states are made harder (but not impossible) to represent. Generic deriving of entities is encouraged, and
