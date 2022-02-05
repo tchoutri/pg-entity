@@ -15,8 +15,10 @@ module Database.PostgreSQL.Entity.Internal
   ( -- * Helpers
     isNotNull
   , isNull
+  , isIn
   , inParens
   , quoteName
+  , literal
   , getTableName
   , prefix
   , expandFields
@@ -38,6 +40,7 @@ import qualified Data.Vector as V
 import Database.PostgreSQL.Simple.Types (Query (..))
 
 import Data.Foldable (fold)
+import qualified Data.Text as T
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 
@@ -71,6 +74,19 @@ inParens t = "(" <> t <> ")"
 -- @since 0.0.1.0
 quoteName :: Text -> Text
 quoteName n = "\"" <> n <> "\""
+
+-- | Wrap the given text between single quotes, for literal text in an SQL query.
+--
+-- __Examples__
+--
+-- >>> literal "meow."
+-- "\'meow.\'"
+--
+-- @since 0.0.2.0
+literal :: Text -> Text
+literal n = "\'" <> escapeSingleQuotes n <> "\'"
+  where
+    escapeSingleQuotes x = T.replace "'" "''" x
 
 -- | Safe getter that quotes a table name
 --
@@ -199,6 +215,12 @@ isNull fs' = fold $ intercalateVector " AND " (fmap process fieldNames)
   where
     fieldNames = fmap fieldName fs'
     process f = quoteName f <> " IS NULL"
+
+isIn :: Field -> Vector Text -> Text
+isIn f values = process f <> " IN (" <> fold (intercalateVector ", " vals) <> ")"
+  where
+    vals = fmap literal values
+    process f' = quoteName $ fieldName f'
 
 -- | Since the 'Query' type has an 'IsString' instance, the process of converting from 'Text' to 'String' to 'Query' is
 -- factored into this function

@@ -29,6 +29,7 @@ module Database.PostgreSQL.Entity
   , selectManyByField
   , selectWhereNotNull
   , selectWhereNull
+  , selectOneWhereIn
   , joinSelectById
     -- ** Insertion
   , insert
@@ -47,6 +48,7 @@ module Database.PostgreSQL.Entity
   , _selectWhere
   , _selectWhereNotNull
   , _selectWhereNull
+  , _selectWhereIn
   , _joinSelect
   , _innerJoin
   , _joinSelectWithFields
@@ -75,7 +77,8 @@ import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (Query (..))
 import Database.PostgreSQL.Transact (DBT)
 
-import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOne, query_)
+import Data.Text (Text)
+import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOne, queryOne_, query_)
 import Database.PostgreSQL.Entity.Internal
 import Database.PostgreSQL.Entity.Types
 
@@ -139,9 +142,18 @@ selectWhereNotNull fs = query_ Select (_selectWhereNotNull @e fs)
 --
 -- @since 0.0.1.0
 selectWhereNull :: forall e m.
-                   (Entity e, FromRow e, MonadIO m)
-                   => Vector Field -> DBT m (Vector e)
+                (Entity e, FromRow e, MonadIO m)
+                => Vector Field -> DBT m (Vector e)
 selectWhereNull fs = query_ Select (_selectWhereNull @e fs)
+
+-- | Select statement when for an entity where the field is one of the options passed
+--
+-- @since 0.0.2.0
+selectOneWhereIn :: forall e m.
+                 (Entity e, FromRow e, MonadIO m)
+                 => Field -> Vector Text -> DBT m (Maybe e)
+selectOneWhereIn f values = queryOne_ Select (_selectWhereIn @e f values)
+
 
 -- | Perform a INNER JOIN between two entities
 --
@@ -291,6 +303,16 @@ _selectWhereNotNull fs = _select @e <> textToQuery (" WHERE " <> isNotNull fs)
 -- @since 0.0.1.0
 _selectWhereNull :: forall e. Entity e => Vector Field -> Query
 _selectWhereNull fs = _select @e <> textToQuery (" WHERE " <> isNull fs)
+
+-- | Produce a SELECT statement where the given field is checked aginst the provided array of values .
+--
+-- >>> _selectWhereIn @BlogPost [field| title |] [ "Unnamed", "Mordred's Song" ]
+-- SELECT blogposts."blogpost_id", blogposts."author_id", blogposts."uuid_list", blogposts."title", blogposts."content", blogposts."created_at" FROM "blogposts" WHERE "title" IN ('Unnamed', 'Mordred''s Song')
+--
+-- @since 0.0.2.0
+
+_selectWhereIn :: forall e. Entity e => Field -> Vector Text -> Query
+_selectWhereIn f values = _select @e <> textToQuery (" WHERE " <> isIn f values)
 
 -- | Produce a "SELECT FROM" over two entities.
 --
