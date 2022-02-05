@@ -130,10 +130,10 @@ logQueryFormat :: (ToRow params, MonadIO m) => QueryNature -> Query -> params ->
 logQueryFormat queryNature q params = do
   msg <- PGT.formatQuery q params
   case queryNature of
-    Select -> liftIO $ cyanMessage   $ "[SELECT] " <> decodeUtf8 msg
-    Update -> liftIO $ yellowMessage $ "[UPDATE] " <> decodeUtf8 msg
-    Insert -> liftIO $ yellowMessage $ "[INSERT] " <> decodeUtf8 msg
-    Delete -> liftIO $ redMessage    $ "[DELETE] " <> decodeUtf8 msg
+    Select -> liftIO $ cyanMessage   $ decodeUtf8 msg
+    Update -> liftIO $ yellowMessage $ decodeUtf8 msg
+    Insert -> liftIO $ yellowMessage $ decodeUtf8 msg
+    Delete -> liftIO $ redMessage    $ decodeUtf8 msg
 
 -- | This sum type is given to the 'query', 'queryOne' and 'execute' functions to help
 -- with logging.
