@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module EntitySpec where
 
@@ -18,7 +19,8 @@ import Test.Hspec.DB (describeDB, itDB)
 import Test.Hspec.Expectations.Lifted (shouldBe, shouldMatchList, shouldReturn)
 
 import Database.PostgreSQL.Entity (_joinSelectWithFields, delete, deleteByField, selectById, selectManyByField,
-                                   selectOneByField, selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
+                                   selectOneByField, selectOneWhereIn, selectWhereNotNull, selectWhereNull, update,
+                                   updateFieldsBy)
 import Database.PostgreSQL.Entity.DBT (QueryNature (..), query_)
 import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
                                                      insertAuthor, insertBlogPost)
@@ -85,6 +87,16 @@ blogPost4 =
       createdAt  = read "2021-02-28 21:24:35 UTC"
   in BlogPost{..}
 
+blogPost5 :: BlogPost
+blogPost5 =
+  let blogPostId = BlogPostId (read "b0533b7b-0073-4663-a717-6e126eeb4f58")
+      authorId   = #authorId author3
+      uuidList   = [read "4401d848-7b40-11eb-b148-5405db82c3cd", read "4bbf0786-7b40-11eb-b1d9-5405db82c3cd"]
+      title      = "Testing unescaped single quotes ' :)"
+      content    = "[…]"
+      createdAt  = read "2021-02-28 21:24:35 UTC"
+  in BlogPost{..}
+
 
 migrate :: Connection -> IO ()
 migrate conn = void $ runMigrations False conn [MigrationInitialization, MigrationDirectory "./test/migrations"]
@@ -138,7 +150,11 @@ spec = describeDB migrate "Entity DB " $ do
      `shouldReturn` 1
   itDB "Change the author and title of a blogpost" $ do
     let newAuthorId =  UUID.toText $ getAuthorId $ #authorId author3 :: Text
-    let newTitle    = "Something Entirely New" :: Text
+    let newTitle    = "Something Entirely New with a lone quote '" :: Text
     modifiedRows <- updateFieldsBy @BlogPost [[field| author_id |], [field| title |]] ([field| title |], #title blogPost4) (newAuthorId, newTitle)
     result <- selectManyByField @BlogPost [field| author_id |] (Only (#authorId author3))
     V.length result `shouldBe` fromIntegral modifiedRows
+  itDB "Select a row when the value of title is in an array of possible values " $ do
+    insertBlogPost blogPost5
+    selectOneWhereIn @BlogPost [field| title |] ["Testing unescaped single quotes ' :)", "Doesn't exist lol"]
+      `shouldReturn` Just blogPost5
