@@ -10,151 +10,130 @@ import Control.Monad.IO.Class
 import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
+import Database.PostgreSQL.Entity (_joinSelectWithFields, _where, delete, deleteByField, selectById, selectManyByField,
+                                   selectOneByField, selectOneWhereIn, selectWhereNotNull, selectWhereNull, update,
+                                   updateFieldsBy)
+import Database.PostgreSQL.Entity.DBT (QueryNature (..), query, query_)
+import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
+                                                     insertAuthor, insertBlogPost)
+import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Simple (Connection, Only (Only))
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
                                              runMigrations)
 import Database.PostgreSQL.Transact (DBT)
-import Test.Hspec (Spec)
-import Test.Hspec.DB (describeDB, itDB)
-import Test.Hspec.Expectations.Lifted (shouldBe, shouldMatchList, shouldReturn)
 
-import Database.PostgreSQL.Entity (_joinSelectWithFields, delete, deleteByField, selectById, selectManyByField,
-                                   selectOneByField, selectOneWhereIn, selectWhereNotNull, selectWhereNull, update,
-                                   updateFieldsBy)
-import Database.PostgreSQL.Entity.DBT (QueryNature (..), query_)
-import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
-                                                     insertAuthor, insertBlogPost)
-import Database.PostgreSQL.Entity.Internal.QQ (field)
+import qualified Data.Set as Set
+import Optics.Core
+import Test.Tasty
+import Test.Tasty.HUnit
+import Utils
+import qualified Utils as U
 
-author1 :: Author
-author1 =
-  let authorId = AuthorId (read "74c3fa0e-79e4-11eb-8792-5405db82c3cd")
-      name = "Jamie Reynolds"
-      createdAt = read "2021-02-28 17:30:13 UTC"
-   in Author{..}
+spec :: TestM TestTree
+spec = testThese "Entity Tests"
+  [ testThis "Select blog post by title" selectBlogPostByTitle
+  , testThis "Select blog posts by null and non-null condition" selectByNullAndNonNull
+  , testThis "Select multiple blog posts by author id" selectManyByAuthorId
+  , testThis "Delete blog posts" deleteBlogPosts
+  , testThis "Get all the article titles by author name" getAllTitlesByAuthorName
+  , testThis "Change the name of an author" changeAuthorName
+  , testThis "Select a row when the value of title is in an array of possible values" selectWhereIn
+  ]
 
-author2 :: Author
-author2 =
-  let authorId = AuthorId (read "bc97c16c-7b83-11eb-83e5-5405db82c3cd")
-      name = "Hansi Kürsch"
-      createdAt = read "2021-02-28 17:30:17 UTC"
-   in Author{..}
+selectBlogPostByTitle :: TestM ()
+selectBlogPostByTitle = do
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate
+  blogPost <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  result <- liftDB $ selectOneByField @BlogPost [field| title |] (Only (blogPost ^. #title))
+  U.assertEqual result (Just blogPost)
 
-author3 :: Author
-author3 =
-  let authorId = AuthorId (read "3aa9232e-7f6d-11eb-823f-5405db82c3cd")
-      name = "Johnson McElroy"
-      createdAt = read "2021-02-28 17:31:39 UTC"
-   in Author{..}
+selectByNullAndNonNull :: TestM ()
+selectByNullAndNonNull = do
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate
 
-blogPost1 :: BlogPost
-blogPost1 =
-  let blogPostId = BlogPostId (read "55b3821a-79e4-11eb-ad18-5405db82c3cd")
-      authorId   = #authorId author1
-      uuidList   = [read "4401d848-7b40-11eb-b148-5405db82c3cd", read "4bbf0786-7b40-11eb-b1d9-5405db82c3cd"]
-      title      = "Echoes from the other world"
-      content    = "Send out a sound\nFor the wood between the worlds\nGently repeat\nAs the boundaries start to swirl"
-      createdAt  = read "2021-02-28 17:48:15 UTC"
-  in BlogPost{..}
+  liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
 
-blogPost2 :: BlogPost
-blogPost2 =
-  let blogPostId = BlogPostId (read "a8df9980-79fb-11eb-a061-5405db82c3cd")
-      authorId   = #authorId author2
-      uuidList   = [read "4401d848-7b40-11eb-b148-5405db82c3cd", read "4bbf0786-7b40-11eb-b1d9-5405db82c3cd"]
-      title      = "A Past and Future Secret"
-      content    = "Oh, I haven't been here for a while\nIn blindness and decay\nThe circle's been closed, now"
-      createdAt  = read "2021-02-28 20:33:25 UTC"
-  in BlogPost{..}
+  result <- liftDB $ selectWhereNotNull @BlogPost [[field| author_id |], [field| title |]]
+  U.assertEqual True (not . null $ result)
+  result1 <- liftDB $ selectWhereNull @BlogPost [[field| author_id |], [field| content |]]
+  U.assertEqual 0 (V.length result1)
 
-blogPost3 :: BlogPost
-blogPost3 =
-  let blogPostId = BlogPostId (read "1a032938-79fc-11eb-b1ec-5405db82c3cd")
-      authorId   = #authorId author2
-      uuidList   = [read "4401d848-7b40-11eb-b148-5405db82c3cd", read "4bbf0786-7b40-11eb-b1d9-5405db82c3cd"]
-      title      = "The Script for my requiem"
-      content    = "[…]"
-      createdAt  = read "2021-02-28 21:23:25 UTC"
-  in BlogPost{..}
+selectManyByAuthorId :: TestM ()
+selectManyByAuthorId = do
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate
 
-blogPost4 :: BlogPost
-blogPost4 =
-  let blogPostId = BlogPostId (read "1e1e6dac-79fc-11eb-b6a6-5405db82c3cd")
-      authorId   = #authorId author2
-      uuidList   = [read "4401d848-7b40-11eb-b148-5405db82c3cd", read "4bbf0786-7b40-11eb-b1d9-5405db82c3cd"]
-      title      = "Mordred's Song"
-      content    = "[…]"
-      createdAt  = read "2021-02-28 21:24:35 UTC"
-  in BlogPost{..}
+  blogPost4 <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  blogPost2 <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  blogPost3 <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  result <- liftDB $ selectManyByField @BlogPost [field| author_id |] $ Only (#authorId blogPost4)
+  U.assertEqual (Set.fromList [blogPost2, blogPost3, blogPost4]) (Set.fromList $ V.toList result)
 
-blogPost5 :: BlogPost
-blogPost5 =
-  let blogPostId = BlogPostId (read "b0533b7b-0073-4663-a717-6e126eeb4f58")
-      authorId   = #authorId author3
-      uuidList   = [read "4401d848-7b40-11eb-b148-5405db82c3cd", read "4bbf0786-7b40-11eb-b1d9-5405db82c3cd"]
-      title      = "Testing unescaped single quotes ' :)"
-      content    = "[…]"
-      createdAt  = read "2021-02-28 21:24:35 UTC"
-  in BlogPost{..}
+deleteBlogPosts :: TestM ()
+deleteBlogPosts = do
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate
 
+  blogPost1 <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateTitle = pure "Echoes from the other world", generateAuthorId = pure (author ^. #authorId)}
+  blogPost2 <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  liftDB $ delete @BlogPost (Only (blogPostId blogPost2))
+  result <- liftDB $ selectManyByField @BlogPost [field| blogpost_id |] $ Only (#blogPostId blogPost2)
+  U.assertEqual 0 (V.length result)
 
-migrate :: Connection -> IO ()
-migrate conn = void $ runMigrations False conn [MigrationInitialization, MigrationDirectory "./test/migrations"]
+  liftDB $ deleteByField @BlogPost [[field| title |]] (Only @Text "Echoes from the other world")
+  result1 <- liftDB $ selectManyByField @BlogPost [field| title |] $ Only (#title blogPost1)
+  U.assertEqual 0 (V.length result1)
 
-spec :: Spec
-spec = describeDB migrate "Entity DB " $ do
-  itDB "Insert authors" $ do
-    insertAuthor author1
-    insertAuthor author2
-    insertAuthor author3
-  itDB "Insert blog posts" $ do
-    insertBlogPost blogPost1
-    insertBlogPost blogPost2
-    insertBlogPost blogPost3
-    insertBlogPost blogPost4
-    result <- selectById $ Only (#blogPostId blogPost1)
-    result `shouldBe` Just blogPost1
-  itDB "Select blog post by title" $ do
-    selectOneByField @BlogPost [field| title |] (Only ("A Past and Future Secret" :: Text))
-      `shouldReturn` Just blogPost2
-  itDB "Select all blog posts by non-null condition" $ do
-    result <- selectWhereNotNull @BlogPost [[field| author_id |], [field| title |]]
-    V.toList result `shouldMatchList` [blogPost1, blogPost2, blogPost3, blogPost4]
-  itDB "Select no blog post by null condition" $ do
-    result <- selectWhereNull @BlogPost [[field| author_id |], [field| content |]]
-    V.length result `shouldBe` 0
-  itDB "Select multiple blog posts by author id" $ do
-    result <- selectManyByField @BlogPost [field| author_id |] $ Only (#authorId blogPost4)
-    V.toList result `shouldMatchList` [blogPost2, blogPost3, blogPost4]
-  itDB "Delete a blog post" $ do
-    delete @BlogPost (Only (blogPostId blogPost2))
-    result <- selectManyByField @BlogPost [field| blogpost_id |] $ Only (#blogPostId blogPost2)
-    V.length result `shouldBe` 0
-  itDB "Delete a blog post by title" $ do
-    deleteByField @BlogPost [[field| title |]] (Only @Text "Echoes from the other world")
-    result <- selectManyByField @BlogPost [field| title |] $ Only (#title blogPost1)
-    V.length result `shouldBe` 0
-  itDB "Get all the article titles by author name" $ do
-    let q = _joinSelectWithFields @BlogPost @Author [[field| title |]] [[field| name |]]
-    (query_ Select q :: (MonadIO m) => DBT m (V.Vector (Text, Text)))
-      `shouldReturn` [("The Script for my requiem","Hansi Kürsch"),("Mordred's Song","Hansi Kürsch")]
-  itDB "Change the name of an author" $ do
-    let newAuthor = author2{name = "Hannah Kürsch"}
-    update @Author newAuthor
-    selectById (Only (#authorId author2))
-      `shouldReturn` Just newAuthor
-  itDB "Change the name of an author according to their name" $ do
-    let newName = "Tiberus McElroy" :: Text
-    let oldName = "Johnson McElroy" :: Text
-    updateFieldsBy @Author [[field| name |]] ([field| name |], oldName) (Only newName)
-     `shouldReturn` 1
-  itDB "Change the author and title of a blogpost" $ do
-    let newAuthorId =  UUID.toText $ getAuthorId $ #authorId author3 :: Text
-    let newTitle    = "Something Entirely New with a lone quote '" :: Text
-    modifiedRows <- updateFieldsBy @BlogPost [[field| author_id |], [field| title |]] ([field| title |], #title blogPost4) (newAuthorId, newTitle)
-    result <- selectManyByField @BlogPost [field| author_id |] (Only (#authorId author3))
-    V.length result `shouldBe` fromIntegral modifiedRows
-  itDB "Select a row when the value of title is in an array of possible values " $ do
-    insertBlogPost blogPost5
-    selectOneWhereIn @BlogPost [field| title |] ["Testing unescaped single quotes ' :)", "Doesn't exist lol"]
-      `shouldReturn` Just blogPost5
+getAllTitlesByAuthorName :: TestM ()
+getAllTitlesByAuthorName = do
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Hansi Kürsch"}
+
+  liftDB $ instantiateRandomBlogPost randomBlogPostTemplate
+                                     { generateTitle = pure "The Script for my requiem"
+                                     , generateAuthorId = pure (author ^. #authorId)
+                                     }
+  liftDB $ instantiateRandomBlogPost randomBlogPostTemplate
+                                     { generateAuthorId = pure (author ^. #authorId)
+                                     , generateTitle = pure "Mordred's Song"
+                                     }
+
+  let q = _joinSelectWithFields @BlogPost @Author [[field| title |]] [[field| name |]]
+              <> _where @Author [[field| name |]]
+  result <- liftDB (query Select q (Only ("Hansi Kürsch" :: Text)) :: (MonadIO m) => DBT m (V.Vector (Text, Text)))
+  U.assertEqual [("The Script for my requiem","Hansi Kürsch"),("Mordred's Song","Hansi Kürsch")] result
+
+changeAuthorName :: TestM ()
+changeAuthorName = do
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate
+
+  blogPost <- randomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  liftDB $ insertBlogPost blogPost
+
+  let newAuthor = author{name = "Hannah Kürsch"}
+  liftDB $ update @Author newAuthor
+  result1 <- liftDB $ selectById (Only (#authorId author))
+  U.assertEqual (Just newAuthor) result1
+
+  author2 <- liftDB $ instantiateRandomAuthor randomAuthorTemplate
+  let newAuthorId =  UUID.toText $ getAuthorId $ #authorId author2 :: Text
+  let newTitle    = "Something Entirely New with a lone quote '" :: Text
+  modifiedRows <- liftDB $ updateFieldsBy @BlogPost [[field| author_id |], [field| title |]] ([field| title |], #title blogPost) (newAuthorId, newTitle)
+  result2 <- liftDB $ selectManyByField @BlogPost [field| author_id |] (Only (#authorId author2))
+  U.assertEqual (fromIntegral modifiedRows) (V.length result2)
+
+  let oldName = "Johnson McElroy" :: Text
+  liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure oldName}
+  let newName = "Tiberus McElroy" :: Text
+  result3 <- liftDB $ updateFieldsBy @Author [[field| name |]] ([field| name |], oldName) (Only newName)
+  U.assertEqual 1 result3
+
+selectWhereIn :: TestM ()
+selectWhereIn = do
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate
+  blogPost <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate
+                                                 { generateAuthorId = pure (author ^. #authorId)
+                                                 , generateTitle = pure "Testing unescaped single quotes ' :)"
+                                                 }
+  result <- liftDB $ selectOneWhereIn @BlogPost [field| title |] ["Testing unescaped single quotes ' :)", "Doesn't exist lol"]
+  U.assertEqual (Just blogPost) result

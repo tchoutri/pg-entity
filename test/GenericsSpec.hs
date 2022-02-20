@@ -11,7 +11,9 @@ import Database.PostgreSQL.Entity.Internal.BlogPost
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 import GHC.Generics
-import Test.Hspec
+import Test.Tasty
+import Utils
+import qualified Utils as U
 
 data TestType
   = Test { fieldOne   :: Int
@@ -38,23 +40,52 @@ data Endpoint
   deriving (Entity)
     via (GenericEntity '[TableName "endpoints", Schema "apis", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
 
-spec :: Spec
-spec = describe "Ensure generically-derived instances with no options are correct" $ do
-  it "TestType has the expected table name" $ do
-    tableName @TestType `shouldBe` "test_type"
-  it "TestType has the expected field list" $ do
-    fields @TestType `shouldBe` [[field| field_one |], [field| field_two |], [field| field_three |]]
-  it "TestType has the expected primary key" $ do
-    primaryKey @TestType `shouldBe` Field "field_one" Nothing
-  it "Apple has the expected primary key" $ do
-    primaryKey @Apple `shouldBe` Field "this_field" Nothing
-  it "Apple has the expected table name" $ do
-    tableName @Apple `shouldBe` "apples"
-  it "Apple has the expected fields" $ do
-    fields @Apple `shouldBe` [[field| this_field |], [field| that_field |]]
-  it "Prefix stripping works" $ do
-    fields @Endpoint `shouldBe` [[field| id |], [field| project_id |], [field| request_hashes |]]
-  it "Explicit schema works" $ do
-    getTableName @Tags `shouldBe` "public.\"tags\""
-  it "Generically derived schema works" $ do
-    getTableName @Endpoint `shouldBe` "apis.\"endpoints\""
+spec :: TestM TestTree
+spec = testThese "Generic deriving tests"
+  [ testThis "TestType has the expected table name" testExpectedTableName
+  , testThis "TestType has the expected field list" testExpectedFieldList
+  , testThis "TestType has the expected primary key" testExpectedPrimaryKey
+  , testThis "Apple has the expected primary key" testInferredPrimaryKey
+  , testThis "Apple has the expected table name" testSpecifiedTableName
+  , testThis "Apple has the expected fields" testInferredFields
+  , testThis "Prefix stripping works" testPrefixStrippingWorks
+  , testThis "Explicit schema works" testExplicitSchemaWorks
+  , testThis "Generically derived schema works" testGenericallyDerivedSchema
+  ]
+
+
+testExpectedTableName :: TestM ()
+testExpectedTableName =
+    U.assertEqual (tableName @TestType) "test_type"
+
+testExpectedFieldList :: TestM ()
+testExpectedFieldList =
+    U.assertEqual (fields @TestType)  [[field| field_one |], [field| field_two |], [field| field_three |]]
+
+testExpectedPrimaryKey :: TestM ()
+testExpectedPrimaryKey =
+    U.assertEqual (primaryKey @TestType) (Field "field_one" Nothing)
+
+testInferredPrimaryKey :: TestM ()
+testInferredPrimaryKey =
+    U.assertEqual (primaryKey @Apple) (Field "this_field" Nothing)
+
+testSpecifiedTableName :: TestM ()
+testSpecifiedTableName =
+    U.assertEqual (tableName @Apple) "apples"
+
+testInferredFields :: TestM ()
+testInferredFields =
+    U.assertEqual (fields @Apple) [[field| this_field |], [field| that_field |]]
+
+testPrefixStrippingWorks :: TestM ()
+testPrefixStrippingWorks =
+  U.assertEqual (fields @Endpoint) [[field| id |], [field| project_id |], [field| request_hashes |]]
+
+testExplicitSchemaWorks :: TestM ()
+testExplicitSchemaWorks =
+  U.assertEqual (getTableName @Tags) "public.\"tags\""
+
+testGenericallyDerivedSchema :: TestM ()
+testGenericallyDerivedSchema =
+  U.assertEqual (getTableName @Endpoint) "apis.\"endpoints\""
