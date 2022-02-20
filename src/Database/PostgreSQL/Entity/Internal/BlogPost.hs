@@ -37,7 +37,7 @@ import Database.PostgreSQL.Entity.Types (Entity (..), GenericEntity, PrimaryKey,
 -- | Wrapper around the UUID type
 newtype AuthorId
   = AuthorId { getAuthorId :: UUID }
-  deriving (Eq, FromField, Show, ToField)
+  deriving (Eq, Ord, FromField, Show, ToField)
     via UUID
 
 -- | Author data-type
@@ -46,7 +46,7 @@ data Author
            , name      :: Text
            , createdAt :: UTCTime
            }
-  deriving stock (Eq, Generic, Show)
+  deriving stock (Eq, Ord, Generic, Show)
   deriving anyclass (FromRow, ToRow)
   deriving (Entity)
     via (GenericEntity '[PrimaryKey "author_id", TableName "authors"] Author)
@@ -57,7 +57,7 @@ instance HasField x Author a => IsLabel x (Author -> a) where
 -- | Wrapper around the UUID type
 newtype BlogPostId
   = BlogPostId { getBlogPostId :: UUID }
-  deriving (Eq, FromField, Show, ToField)
+  deriving (Eq, Ord, FromField, Show, ToField)
     via UUID
 
 -- | The BlogPost data-type. Look at its 'Entity' instance declaration for how to handle
@@ -73,7 +73,7 @@ data BlogPost
              , content    :: Text
              , createdAt  :: UTCTime
              }
-  deriving stock (Eq, Generic, Show)
+  deriving stock (Eq, Ord, Generic, Show)
   deriving anyclass (FromRow, ToRow)
 
 instance HasField x BlogPost a => IsLabel x (BlogPost -> a) where
