@@ -317,9 +317,6 @@ instance ToRow a => ToRow (UpdateRow a) where
 
 -- |
 -- @since 0.0.2.0
-data SortKeyword = ASC | DESC -- ^ @since 0.0.2.0
-  -- ^ @since 0.0.2.0
-  -- ^ @since 0.0.2.0
-  deriving stock (Eq, Show)
+data SortKeyword = ASC | DESC deriving stock (Eq, Show)
   deriving (Display)
     via ShowInstance SortKeyword
