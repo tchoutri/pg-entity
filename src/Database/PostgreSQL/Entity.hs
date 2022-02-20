@@ -240,7 +240,7 @@ _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> get
 -- __Examples__
 --
 -- >>> _selectWithFields @BlogPost [ [field| blogpost_id |], [field| created_at |] ]
--- "SELECT blogposts.\"blogpost_id\", blogposts.\"created_at\" FROM \"blogposts\""
+-- "SELECT \"blogposts\".\"blogpost_id\", \"blogposts\".\"created_at\" FROM \"\"blogposts\"\""
 --
 -- @since 0.0.1.0
 _selectWithFields :: forall e. Entity e => Vector Field -> Query
@@ -307,7 +307,7 @@ _selectWhereNull fs = _select @e <> textToQuery (" WHERE " <> isNull fs)
 -- | Produce a SELECT statement where the given field is checked aginst the provided array of values .
 --
 -- >>> _selectWhereIn @BlogPost [field| title |] [ "Unnamed", "Mordred's Song" ]
--- SELECT blogposts."blogpost_id", blogposts."author_id", blogposts."uuid_list", blogposts."title", blogposts."content", blogposts."created_at" FROM "blogposts" WHERE "title" IN ('Unnamed', 'Mordred''s Song')
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"title\" IN ('Unnamed', 'Mordred''s Song')"
 --
 -- @since 0.0.2.0
 
@@ -346,7 +346,7 @@ _innerJoin f = textToQuery $ " INNER JOIN " <> getTableName @e
 -- __Examples__
 --
 -- >>> _joinSelectWithFields @BlogPost @Author [ [field| title |] ] [ [field| name |] ]
--- "SELECT blogposts.\"title\", authors.\"name\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
+-- "SELECT \"blogposts\".\"title\", \"authors\".\"name\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
 --
 -- @since 0.0.1.0
 _joinSelectWithFields :: forall e1 e2. (Entity e1, Entity e2)
@@ -448,7 +448,7 @@ _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryK
 -- __Examples__
 --
 -- >>> _deleteWhere @BlogPost [[field| title |], [field| created_at |]]
--- "DELETE FROM blogposts WHERE \"title\" = ? AND \"created_at\" = ?"
+-- "DELETE FROM \"blogposts\" WHERE \"title\" = ? AND \"created_at\" = ?"
 --
 -- @since 0.0.1.0
 _deleteWhere :: forall e. Entity e => Vector Field -> Query

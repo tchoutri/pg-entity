@@ -80,7 +80,7 @@ quoteName n = "\"" <> n <> "\""
 -- __Examples__
 --
 -- >>> literal "meow."
--- "\'meow.\'"
+-- "'meow.'"
 --
 -- @since 0.0.2.0
 literal :: Text -> Text
