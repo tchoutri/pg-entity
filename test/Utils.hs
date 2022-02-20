@@ -53,7 +53,6 @@ runTestM :: TestM a -> TestEnv -> IO a
 runTestM comp env =
   runReaderT (getTestM comp) env
 
-
 testThis :: String -> TestM () -> TestM TestTree
 testThis name assertion = do
   env <- getTestEnv
