@@ -1,13 +1,13 @@
 module Main where
 
-import qualified EntitySpec
-import qualified GenericsSpec
-import Test.Tasty (TestTree, defaultMain, testGroup)
-import Utils
-import Optics.Core
+import Data.Pool (createPool, withResource)
 import qualified Database.PostgreSQL.Simple as PG
 import qualified Database.Postgres.Temp as Postgres.Temp
-import Data.Pool (createPool, withResource)
+import qualified EntitySpec
+import qualified GenericsSpec
+import Optics.Core
+import Test.Tasty (TestTree, defaultMain, testGroup)
+import Utils
 
 main :: IO ()
 main = do
@@ -17,7 +17,7 @@ main = do
   defaultMain . testGroup "pg-entity tests" $ spec
 
 specs :: [TestM TestTree]
-specs = 
+specs =
   [ GenericsSpec.spec
   , EntitySpec.spec
   ]

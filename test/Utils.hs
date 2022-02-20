@@ -12,32 +12,33 @@ import Data.Pool (Pool)
 import Data.Text (Text)
 import Data.Time
 import Data.UUID (UUID)
+import qualified Data.UUID as UUID
+import Data.Vector (Vector)
+import qualified Data.Vector as V
 import Data.Word
 import Database.PostgreSQL.Entity.DBT (withPool)
 import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Transact
-import Data.Vector (Vector)
 import GHC.Generics
 import Hedgehog (MonadGen (..))
-import Test.Tasty (TestTree)
-import Optics.Core
-import qualified Data.UUID as UUID
-import qualified Data.Vector as V
 import qualified Hedgehog.Gen as H
 import qualified Hedgehog.Range as Range
+import Optics.Core
+import Test.Tasty (TestTree)
 import qualified Test.Tasty as Test
 import qualified Test.Tasty.HUnit as Test
 
 import Database.PostgreSQL.Entity.Internal.BlogPost
 import Database.PostgreSQL.Simple.Migration
 
-newtype TestM (a :: Type) = TestM { getTestM :: ReaderT TestEnv IO a }
-  deriving newtype (Functor, Applicative, Monad, MonadIO, MonadThrow)
+newtype TestM (a :: Type)
+  = TestM { getTestM :: ReaderT TestEnv IO a }
+  deriving newtype (Applicative, Functor, Monad, MonadIO, MonadThrow)
 
-data TestEnv = TestEnv
-  { pool :: Pool Connection
-  }
-  deriving stock Generic
+data TestEnv
+  = TestEnv { pool :: Pool Connection
+            }
+  deriving stock (Generic)
 
 liftDB :: DBT IO a -> TestM a
 liftDB comp = do
@@ -104,11 +105,11 @@ genAuthor = do
   createdAt <- genUTCTime
   pure Author{..}
 
-data RandomAuthorTemplate m = RandomAuthorTemplate
-  { generateAuthorId :: m AuthorId
-  , generateName :: m Text
-  , generateCreatedAt :: m UTCTime
-  }
+data RandomAuthorTemplate m
+  = RandomAuthorTemplate { generateAuthorId  :: m AuthorId
+                         , generateName      :: m Text
+                         , generateCreatedAt :: m UTCTime
+                         }
   deriving stock (Generic)
 
 randomAuthorTemplate :: MonadIO m => RandomAuthorTemplate m
@@ -149,14 +150,14 @@ genBlogPost = do
 genBlogPostId :: MonadGen m => m BlogPostId
 genBlogPostId = BlogPostId <$> genUUID
 
-data RandomBlogPostTemplate m = RandomBlogPostTemplate
-  { generateBlogPostId :: m BlogPostId
-  , generateAuthorId :: m AuthorId
-  , generateUUIDList :: m (Vector UUID)
-  , generateTitle :: m Text
-  , generateContent :: m Text
-  , generateCreatedAt :: m UTCTime
-  }
+data RandomBlogPostTemplate m
+  = RandomBlogPostTemplate { generateBlogPostId :: m BlogPostId
+                           , generateAuthorId   :: m AuthorId
+                           , generateUUIDList   :: m (Vector UUID)
+                           , generateTitle      :: m Text
+                           , generateContent    :: m Text
+                           , generateCreatedAt  :: m UTCTime
+                           }
   deriving stock (Generic)
 
 randomBlogPostTemplate :: MonadIO m => RandomBlogPostTemplate m

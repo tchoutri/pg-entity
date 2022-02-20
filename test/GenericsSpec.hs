@@ -12,8 +12,8 @@ import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 import GHC.Generics
 import Test.Tasty
-import qualified Utils as U
 import Utils
+import qualified Utils as U
 
 data TestType
   = Test { fieldOne   :: Int
@@ -55,7 +55,7 @@ spec = testThese "Generic deriving tests"
 
 
 testExpectedTableName :: TestM ()
-testExpectedTableName = 
+testExpectedTableName =
     U.assertEqual (tableName @TestType) "test_type"
 
 testExpectedFieldList :: TestM ()

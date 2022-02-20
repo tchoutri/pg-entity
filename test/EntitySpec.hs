@@ -10,24 +10,24 @@ import Control.Monad.IO.Class
 import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
+import Database.PostgreSQL.Entity (_joinSelectWithFields, _where, delete, deleteByField, selectById, selectManyByField,
+                                   selectOneByField, selectOneWhereIn, selectWhereNotNull, selectWhereNull, update,
+                                   updateFieldsBy)
+import Database.PostgreSQL.Entity.DBT (QueryNature (..), query, query_)
+import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
+                                                     insertAuthor, insertBlogPost)
+import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Simple (Connection, Only (Only))
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
                                              runMigrations)
 import Database.PostgreSQL.Transact (DBT)
-import Database.PostgreSQL.Entity (_joinSelectWithFields, delete, deleteByField, selectById, selectManyByField,
-                                   selectOneByField, selectOneWhereIn, selectWhereNotNull, selectWhereNull, update,
-                                   updateFieldsBy, _where)
-import Database.PostgreSQL.Entity.DBT (QueryNature (..), query_, query)
-import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
-                                                     insertAuthor, insertBlogPost)
-import Database.PostgreSQL.Entity.Internal.QQ (field)
 
+import qualified Data.Set as Set
+import Optics.Core
 import Test.Tasty
 import Test.Tasty.HUnit
 import Utils
 import qualified Utils as U
-import Optics.Core
-import qualified Data.Set as Set
 
 spec :: TestM TestTree
 spec = testThese "Entity Tests"
