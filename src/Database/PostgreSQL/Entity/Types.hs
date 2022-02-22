@@ -52,12 +52,12 @@ import qualified Data.Text as T
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import qualified Data.Vector as Vector
 import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import GHC.Generics
 import GHC.TypeLits
-import qualified Data.Vector as Vector
 
 -- | An 'Entity' stores the following information about the structure of a database table:
 --
@@ -96,10 +96,10 @@ class Entity e where
     where
       primMod = primaryKeyModifiers defaultEntityOptions
       fs = getField @(Rep e) defaultEntityOptions
-      newPrimaryKey = 
+      newPrimaryKey =
         case Vector.find (\(Field name _type) -> name == primMod name) fs of
           Nothing -> Field (primMod "") Nothing
-          Just f -> f
+          Just f  -> f
   -- | The fields of the table.
   fields :: Vector Field
   default fields :: (GetFields (Rep e)) => Vector Field
@@ -178,10 +178,10 @@ instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (G
     where
       primMod = primaryKeyModifiers (entityOptions @t)
       fs = getField @(Rep e) (entityOptions @t)
-      newPrimaryKey = 
+      newPrimaryKey =
         case Vector.find (\(Field name _type) -> name == primMod name) fs of
           Nothing -> Field (primMod "") Nothing
-          Just f -> f
+          Just f  -> f
 
   fields = getField @(Rep e) (entityOptions @t)
 

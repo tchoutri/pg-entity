@@ -3,24 +3,24 @@
 
 module GenericsSpec where
 
+import Data.Aeson
 import Data.Text
+import Data.Time
 import Data.UUID
 import Data.Vector
+import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Entity.Internal (getTableName)
 import Database.PostgreSQL.Entity.Internal.BlogPost
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
+import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.FromField
+import Database.PostgreSQL.Simple.ToField
+import Database.PostgreSQL.Transact
 import GHC.Generics
 import Test.Tasty
 import Utils
 import qualified Utils as U
-import Data.Time
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Transact
-import Data.Aeson
-import Database.PostgreSQL.Simple.ToField
-import Database.PostgreSQL.Simple.FromField
-import Database.PostgreSQL.Entity
 
 data TestType
   = Test { fieldOne   :: Int
@@ -38,48 +38,48 @@ data Apple
   deriving (Entity)
     via (GenericEntity '[TableName "apples"] Apple)
 
-data Project = Project
-  { createdAt :: ZonedTime,
-    updatedAt :: ZonedTime,
-    deletedAt :: Maybe ZonedTime,
-    active :: Bool,
-    id :: Int,
-    title :: Text,
-    description :: Text,
-    hosts :: Vector Text
-  }
-  deriving (Show, Generic)
+data Project
+  = Project { createdAt   :: ZonedTime
+            , updatedAt   :: ZonedTime
+            , deletedAt   :: Maybe ZonedTime
+            , active      :: Bool
+            , id          :: Int
+            , title       :: Text
+            , description :: Text
+            , hosts       :: Vector Text
+            }
+  deriving (Generic, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving
-    Entity
+  deriving (Entity)
     via (GenericEntity '[Schema "projects", TableName "projects", PrimaryKey "id", FieldModifiers '[CamelToSnake]] Project)
 
 
-newtype ProjectId = ProjectId UUID
-  deriving (Show, Eq, ToField, FromField)
+newtype ProjectId
+  = ProjectId UUID
+  deriving (Eq, FromField, Show, ToField)
     via UUID
 
-newtype EndpointId = EndpointId UUID
-  deriving (Show, Eq, ToField, FromField)
+newtype EndpointId
+  = EndpointId UUID
+  deriving (Eq, FromField, Show, ToField)
     via UUID
 
-data Endpoint = Endpoint
-  { enpcreatedAt :: ZonedTime,
-    enpupdatedAt :: ZonedTime,
-    enpprojectId :: ProjectId,
-    enpid :: EndpointId,
-    enpurlPath :: Text,
-    enpurlParams :: Value,
-    enpmethod :: Text,
-    enphosts :: Vector Text,
-    enprequestHashes :: Vector Text,
-    enpresponseHashes :: Vector Text,
-    enpqueryparamHashes :: Vector Text
-  }
-  deriving (Show, Generic)
+data Endpoint
+  = Endpoint { enpcreatedAt        :: ZonedTime
+             , enpupdatedAt        :: ZonedTime
+             , enpprojectId        :: ProjectId
+             , enpid               :: EndpointId
+             , enpurlPath          :: Text
+             , enpurlParams        :: Value
+             , enpmethod           :: Text
+             , enphosts            :: Vector Text
+             , enprequestHashes    :: Vector Text
+             , enpresponseHashes   :: Vector Text
+             , enpqueryparamHashes :: Vector Text
+             }
+  deriving (Generic, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving
-    (Entity)
+  deriving (Entity)
     via (GenericEntity '[TableName "endpoints", Schema "apis", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
 
 
@@ -118,15 +118,15 @@ testExpectedPrimaryKey =
 
 testInferredPrimaryKey :: TestM ()
 testInferredPrimaryKey =
-    U.assertEqual (Field "this_field" Nothing) (primaryKey @Apple) 
+    U.assertEqual (Field "this_field" Nothing) (primaryKey @Apple)
 
 testSpecifiedTableName :: TestM ()
 testSpecifiedTableName =
-    U.assertEqual "apples" (tableName @Apple) 
+    U.assertEqual "apples" (tableName @Apple)
 
 testInferredFields :: TestM ()
 testInferredFields =
-    U.assertEqual [[field| this_field |], [field| that_field |]] (fields @Apple) 
+    U.assertEqual [[field| this_field |], [field| that_field |]] (fields @Apple)
 
 testPrefixStrippingWorks :: TestM ()
 testPrefixStrippingWorks =
@@ -134,11 +134,11 @@ testPrefixStrippingWorks =
 
 testExplicitSchemaWorks :: TestM ()
 testExplicitSchemaWorks =
-  U.assertEqual "public.\"tags\"" (getTableName @Tags) 
+  U.assertEqual "public.\"tags\"" (getTableName @Tags)
 
 testGenericallyDerivedSchema :: TestM ()
 testGenericallyDerivedSchema =
-  U.assertEqual "apis.\"endpoints\"" (getTableName @Endpoint) 
+  U.assertEqual "apis.\"endpoints\"" (getTableName @Endpoint)
 
 testDerivePrimaryKey :: TestM ()
 testDerivePrimaryKey = do
