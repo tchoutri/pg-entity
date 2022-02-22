@@ -2,8 +2,6 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Move brackets to avoid $" #-}
 
 module EntitySpec where
 
@@ -151,14 +149,14 @@ testSelectOrderBy = do
 
   let authors = V.fromList [author1, author2]
 
-  result1 <- V.filter (\a -> a `V.elem` authors) <$> (liftDB $ selectOrderBy @Author (V.fromList [([field| name |], ASC)]))
+  result1 <- V.filter (\a -> a `V.elem` authors) <$> liftDB (selectOrderBy @Author (V.fromList [([field| name |], ASC)]))
   U.assertEqual authors result1
 
   let reverseAuthors = V.fromList [author2, author1]
-  result2 <- V.filter (\a -> a `V.elem` authors) <$> (liftDB $ selectOrderBy @Author (V.fromList [([field| name |], DESC)]))
+  result2 <- V.filter (\a -> a `V.elem` authors) <$> liftDB (selectOrderBy @Author (V.fromList [([field| name |], DESC)]))
   U.assertEqual reverseAuthors result2
 
   author3 <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Blphabetically first", generateCreatedAt = pure (read "2011-03-16 21:38:36Z")}
   let threeAuthors = V.fromList [author1, author3, author2]
-  result3 <- V.filter (\a -> a `V.elem` threeAuthors) <$> (liftDB $ selectOrderBy @Author (V.fromList [([field| name |], ASC), ([field| created_at |], ASC)]))
+  result3 <- V.filter (\a -> a `V.elem` threeAuthors) <$> liftDB (selectOrderBy @Author (V.fromList [([field| name |], ASC), ([field| created_at |], ASC)]))
   U.assertEqual threeAuthors result3
