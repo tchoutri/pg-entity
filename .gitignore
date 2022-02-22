@@ -10,3 +10,5 @@ docs/site
 .envrc
 .vscode/
 hie.yaml
+tags
+tags.mtime

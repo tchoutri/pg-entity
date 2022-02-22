@@ -31,6 +31,7 @@ module Database.PostgreSQL.Entity
   , selectWhereNull
   , selectOneWhereIn
   , joinSelectById
+  , selectOrderBy
     -- ** Insertion
   , insert
     -- ** Update
@@ -63,7 +64,6 @@ module Database.PostgreSQL.Entity
   , _delete
   , _deleteWhere
   , _orderBy
-  , _orderByMany
   ) where
 
 import Control.Monad (void)
@@ -165,6 +165,14 @@ joinSelectById :: forall e1 e2 m.
                 (Entity e1, Entity e2, FromRow e1, MonadIO m)
                 => DBT m (Vector e1)
 joinSelectById = query_ Select (_joinSelect @e1 @e2)
+--
+-- | Perform a SELECT + ORDER BY query on an entity
+--
+-- @since 0.0.2.0
+selectOrderBy :: forall e m.
+                (Entity e, FromRow e, MonadIO m)
+                => Vector (Field, SortKeyword) -> DBT m (Vector e)
+selectOrderBy sortSpec = query_ Select (_select @e <> _orderByMany sortSpec)
 
 -- | Insert an entity.
 --
