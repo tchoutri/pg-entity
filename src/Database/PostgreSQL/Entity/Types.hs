@@ -52,6 +52,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import qualified Data.Vector as Vector
 import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
@@ -91,9 +92,14 @@ class Entity e where
   -- | The name of the primary key for the table.
   primaryKey :: Field
   default primaryKey :: (GetFields (Rep e)) => Field
-  primaryKey = Field (primMod name) typ
-    where primMod = primaryKeyModifiers defaultEntityOptions
-          Field name typ = V.head $ getField @(Rep e) defaultEntityOptions
+  primaryKey = newPrimaryKey
+    where
+      primMod = primaryKeyModifiers defaultEntityOptions
+      fs = getField @(Rep e) defaultEntityOptions
+      newPrimaryKey =
+        case Vector.find (\(Field name _type) -> name == primMod name) fs of
+          Nothing -> Field (primMod "") Nothing
+          Just f  -> f
   -- | The fields of the table.
   fields :: Vector Field
   default fields :: (GetFields (Rep e)) => Vector Field
@@ -168,9 +174,14 @@ instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (G
 
   schema = schemaModifier (entityOptions @t)
 
-  primaryKey = Field (primMod name) typ
-    where primMod = primaryKeyModifiers defaultEntityOptions
-          Field name typ = V.head $ getField @(Rep e) (entityOptions @t)
+  primaryKey = newPrimaryKey
+    where
+      primMod = primaryKeyModifiers (entityOptions @t)
+      fs = getField @(Rep e) (entityOptions @t)
+      newPrimaryKey =
+        case Vector.find (\(Field name _type) -> name == primMod name) fs of
+          Nothing -> Field (primMod "") Nothing
+          Just f  -> f
 
   fields = getField @(Rep e) (entityOptions @t)
 
@@ -183,7 +194,12 @@ data Options
             }
 
 defaultEntityOptions :: Options
-defaultEntityOptions = Options T.toSnake Nothing T.toSnake T.toSnake
+defaultEntityOptions = Options
+  { tableNameModifiers = T.toSnake
+  , schemaModifier = Nothing
+  , primaryKeyModifiers = T.toSnake
+  , fieldModifiers = T.toSnake
+  }
 
 -- | Type-level options for Deriving Via
 class EntityOptions xs where
