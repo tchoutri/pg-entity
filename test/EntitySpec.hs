@@ -11,8 +11,8 @@ import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
 import Database.PostgreSQL.Entity (_joinSelectWithFields, _where, delete, deleteByField, selectById, selectManyByField,
-                                   selectOneByField, selectOneWhereIn, selectWhereNotNull, selectWhereNull, update,
-                                   updateFieldsBy)
+                                   selectOneByField, selectOneWhereIn, selectOrderBy, selectWhereNotNull,
+                                   selectWhereNull, update, updateFieldsBy)
 import Database.PostgreSQL.Entity.DBT (QueryNature (..), query, query_)
 import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
                                                      insertAuthor, insertBlogPost)
@@ -23,6 +23,8 @@ import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirector
 import Database.PostgreSQL.Transact (DBT)
 
 import qualified Data.Set as Set
+import Data.Vector (Vector)
+import Database.PostgreSQL.Entity.Types
 import Optics.Core
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -38,6 +40,7 @@ spec = testThese "Entity Tests"
   , testThis "Get all the article titles by author name" getAllTitlesByAuthorName
   , testThis "Change the name of an author" changeAuthorName
   , testThis "Select a row when the value of title is in an array of possible values" selectWhereIn
+  , testThis "SELECT ORDER BY yields the appropriate results" testSelectOrderBy
   ]
 
 selectBlogPostByTitle :: TestM ()
@@ -100,7 +103,7 @@ getAllTitlesByAuthorName = do
 
   let q = _joinSelectWithFields @BlogPost @Author [[field| title |]] [[field| name |]]
               <> _where @Author [[field| name |]]
-  result <- liftDB (query Select q (Only ("Hansi Kürsch" :: Text)) :: (MonadIO m) => DBT m (V.Vector (Text, Text)))
+  result <- liftDB (query Select q (Only ("Hansi Kürsch" :: Text)) :: (MonadIO m) => DBT m (Vector (Text, Text)))
   U.assertEqual [("The Script for my requiem","Hansi Kürsch"),("Mordred's Song","Hansi Kürsch")] result
 
 changeAuthorName :: TestM ()
@@ -137,3 +140,23 @@ selectWhereIn = do
                                                  }
   result <- liftDB $ selectOneWhereIn @BlogPost [field| title |] ["Testing unescaped single quotes ' :)", "Doesn't exist lol"]
   U.assertEqual (Just blogPost) result
+
+testSelectOrderBy :: TestM ()
+testSelectOrderBy = do
+  author1 <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Alphabetically first", generateCreatedAt = pure (read "2013-03-16 21:38:36Z")}
+
+  author2 <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Blphabetically first", generateCreatedAt = pure (read "2012-03-16 21:38:36Z")}
+
+  let authors = V.fromList [author1, author2]
+
+  result1 <- V.filter (\a -> a `V.elem` authors) <$> liftDB (selectOrderBy @Author (V.fromList [([field| name |], ASC)]))
+  U.assertEqual authors result1
+
+  let reverseAuthors = V.fromList [author2, author1]
+  result2 <- V.filter (\a -> a `V.elem` authors) <$> liftDB (selectOrderBy @Author (V.fromList [([field| name |], DESC)]))
+  U.assertEqual reverseAuthors result2
+
+  author3 <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Blphabetically first", generateCreatedAt = pure (read "2011-03-16 21:38:36Z")}
+  let threeAuthors = V.fromList [author1, author3, author2]
+  result3 <- V.filter (\a -> a `V.elem` threeAuthors) <$> liftDB (selectOrderBy @Author (V.fromList [([field| name |], ASC), ([field| created_at |], ASC)]))
+  U.assertEqual threeAuthors result3

@@ -31,6 +31,7 @@ module Database.PostgreSQL.Entity
   , selectWhereNull
   , selectOneWhereIn
   , joinSelectById
+  , selectOrderBy
     -- ** Insertion
   , insert
     -- ** Update
@@ -62,12 +63,14 @@ module Database.PostgreSQL.Entity
     -- ** Deletion
   , _delete
   , _deleteWhere
+  , _orderBy
   ) where
 
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (fold)
-import Data.Int
+import Data.Int (Int64)
+import Data.Text.Display (display)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Database.PostgreSQL.Simple (Only (..))
@@ -162,6 +165,14 @@ joinSelectById :: forall e1 e2 m.
                 (Entity e1, Entity e2, FromRow e1, MonadIO m)
                 => DBT m (Vector e1)
 joinSelectById = query_ Select (_joinSelect @e1 @e2)
+--
+-- | Perform a SELECT + ORDER BY query on an entity
+--
+-- @since 0.0.2.0
+selectOrderBy :: forall e m.
+                (Entity e, FromRow e, MonadIO m)
+                => Vector (Field, SortKeyword) -> DBT m (Vector e)
+selectOrderBy sortSpec = query_ Select (_select @e <> _orderByMany sortSpec)
 
 -- | Insert an entity.
 --
@@ -453,3 +464,29 @@ _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryK
 -- @since 0.0.1.0
 _deleteWhere :: forall e. Entity e => Vector Field -> Query
 _deleteWhere fs = textToQuery ("DELETE FROM " <> (getTableName @e)) <> _where @e fs
+
+
+-- | Produce an ORDER BY clause with one field and a sorting keyword
+--
+-- __Examples__
+--
+-- >>> _orderBy ([field| title |], ASC)
+-- " ORDER BY \"title\" ASC"
+--
+-- @since 0.0.2.0
+_orderBy :: (Field, SortKeyword) -> Query
+_orderBy (f, sort) = textToQuery (" ORDER BY " <> fieldName f <> " " <> display sort)
+
+-- | Produce an ORDER BY clause with many fields and sorting keywords
+--
+-- __Examples__
+--
+-- >>> _orderBy [([field| title |], ASC), ([field| created_at|], DESC)]
+-- " ORDER BY \"title\" ASC, \"created_at\" DESC"
+--
+-- @since 0.0.2.0
+_orderByMany :: Vector (Field, SortKeyword) -> Query
+_orderByMany sortExpressions = textToQuery $ " ORDER BY " <> fold (intercalateVector ", " $ fmap renderSortExpression sortExpressions)
+
+renderSortExpression :: (Field, SortKeyword) -> Text
+renderSortExpression (f, sort) = fieldName f <> " " <> display sort

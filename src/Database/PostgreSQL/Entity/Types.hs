@@ -24,6 +24,7 @@ module Database.PostgreSQL.Entity.Types
   , fieldName
   , fieldType
   , UpdateRow(..)
+  , SortKeyword(..)
 
     -- * Generics
   , Options(..)
@@ -49,6 +50,7 @@ import Data.Maybe
 import Data.Proxy
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text.Display (Display, ShowInstance (..))
 import qualified Data.Text.Manipulate as T
 import Data.Vector (Vector)
 import qualified Data.Vector as V
@@ -311,3 +313,10 @@ newtype UpdateRow a
 
 instance ToRow a => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
+
+
+-- |
+-- @since 0.0.2.0
+data SortKeyword = ASC | DESC deriving stock (Eq, Show)
+  deriving (Display)
+    via ShowInstance SortKeyword
