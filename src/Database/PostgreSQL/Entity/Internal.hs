@@ -1,4 +1,5 @@
 {-# LANGUAGE Strict #-}
+
 {-|
   Module      : Database.PostgreSQL.Entity.Internal
   Copyright   : © Clément Delafargue, 2018
@@ -20,16 +21,21 @@ module Database.PostgreSQL.Entity.Internal
   , quoteName
   , literal
   , getTableName
+  , getFieldName
+  , getPrimaryKey
   , prefix
   , expandFields
   , expandQualifiedFields
   , expandQualifiedFields'
+  , qualifyField
   , qualifyFields
   , placeholder
+  , placeholder'
   , generatePlaceholders
   , textToQuery
   , queryToText
   , intercalateVector
+  , renderSortExpression
   ) where
 
 import Data.String (fromString)
@@ -41,6 +47,7 @@ import Database.PostgreSQL.Simple.Types (Query (..))
 
 import Data.Foldable (fold)
 import qualified Data.Text as T
+import Data.Text.Display (display)
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 
@@ -49,6 +56,7 @@ import Database.PostgreSQL.Entity.Types
 -- >>> :set -XOverloadedLists
 -- >>> :set -XTypeApplications
 -- >>> import Database.PostgreSQL.Entity
+-- >>> import Database.PostgreSQL.Entity.Types
 -- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
 -- >>> import Database.PostgreSQL.Entity.Internal.QQ
 -- >>> import Database.PostgreSQL.Entity.Internal.Unsafe
@@ -96,12 +104,33 @@ literal n = "\'" <> escapeSingleQuotes n <> "\'"
 -- "\"authors\""
 -- >>> getTableName @Tags
 -- "public.\"tags\""
+--
+-- @since 0.0.1.0
 getTableName :: forall e. Entity e => Text
 getTableName = prefix (schema @e) <> quoteName (tableName @e)
+
+-- | Safe getter that quotes a table's primary key
+--
+-- __Examples__
+--
+-- >>> getPrimaryKey @Author
+-- "\"author_id\""
+-- >>> getPrimaryKey @Tags
+-- "\"category\""
+--
+-- @since 0.0.2.0
+getPrimaryKey :: forall e. Entity e => Text
+getPrimaryKey = getFieldName $ primaryKey @e
 
 prefix :: Maybe Text -> Text
 prefix = maybe "" (<> ".")
 
+-- | Accessor to the name of a field, with quotation.
+--
+-- >>> getFieldName ([field| author_id |])
+-- "\"author_id\""
+--
+-- @since 0.0.2.0
 getFieldName :: Field -> Text
 getFieldName = quoteName . fieldName
 
@@ -141,6 +170,19 @@ expandQualifiedFields' :: Vector Field -> Text -> Text
 expandQualifiedFields' fs prefixName = V.foldl1' (\element acc -> element <> ", " <> acc) fs'
   where
     fs' = fieldName <$> qualifyFields prefixName fs
+--
+-- | Take a prefix and a vector of fields, and qualifies each field with the prefix
+--
+-- __Examples__
+--
+-- >>> qualifyField @Author [field| name |]
+-- "authors.\"name\""
+--
+-- @since 0.0.2.0
+qualifyField :: forall e. Entity e => Field -> Text
+qualifyField f = (\(Field fName _) -> p <> "." <> quoteName fName) f
+  where
+    p = tableName @e
 
 -- | Take a prefix and a vector of fields, and qualifies each field with the prefix
 --
@@ -170,6 +212,21 @@ qualifyFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 placeholder :: Field -> Text
 placeholder (Field f Nothing)  = quoteName f <> " = ?"
 placeholder (Field f (Just t)) = quoteName f <> " = ?::" <> t
+
+-- | Produce a placeholder of the form @table.\"field\" = ?@ with an optional type annotation.
+--
+-- __Examples__
+--
+-- >>> placeholder' @BlogPost [field| id |]
+-- "blogposts.\"id\" = ?"
+--
+-- >>> placeholder' @BlogPost $ [field| ids :: uuid[] |]
+-- "blogposts.\"ids\" = ?::uuid[]"
+--
+-- @since 0.0.2.0
+placeholder' :: forall e. Entity e => Field -> Text
+placeholder' f@(Field _ (Just t)) = qualifyField @e f <> " = ?::" <> t
+placeholder' f                    = qualifyField @e f <> " = ?"
 
 -- | Generate an appropriate number of “?” placeholders given a vector of fields.
 --
@@ -260,3 +317,14 @@ intercalateVector sep vt | V.null vt = vt
     go :: Vector Text -> Vector Text
     go ys | V.null ys = ys
           | otherwise = V.cons sep (V.cons (V.head ys) (go (V.tail ys)))
+
+-- |
+--
+-- __Examples__
+--
+-- >>> renderSortExpression ([field| title |], ASC)
+-- "\"title\" ASC"
+--
+-- @since 0.0.2.0
+renderSortExpression :: (Field, SortKeyword) -> Text
+renderSortExpression (f, sort) = (quoteName . fieldName) f <> " " <> display sort

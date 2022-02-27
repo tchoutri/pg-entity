@@ -31,6 +31,7 @@ module Database.PostgreSQL.Entity
   , selectWhereNull
   , selectOneWhereIn
   , joinSelectById
+  , joinSelectOneByField
   , selectOrderBy
     -- ** Insertion
   , insert
@@ -53,6 +54,7 @@ module Database.PostgreSQL.Entity
   , _joinSelect
   , _innerJoin
   , _joinSelectWithFields
+  , _joinSelectOneByField
     -- ** Insertion
   , _insert
     -- ** Update
@@ -64,6 +66,7 @@ module Database.PostgreSQL.Entity
   , _delete
   , _deleteWhere
   , _orderBy
+  , _orderByMany
   ) where
 
 import Control.Monad (void)
@@ -91,8 +94,13 @@ import Database.PostgreSQL.Entity.Types
 -- >>> :set -XOverloadedLists
 -- >>> :set -XTypeApplications
 -- >>> import Database.PostgreSQL.Entity
+-- >>> import Database.PostgreSQL.Entity.Types
+-- >>> import Database.PostgreSQL.Entity.Internal
 -- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
 -- >>> import Database.PostgreSQL.Entity.Internal.QQ
+-- >>> import Database.PostgreSQL.Simple.Types (Query (..))
+-- >>> import Data.Vector (Vector)
+-- >>> import qualified Data.Vector as V
 
 -- $highlevel
 -- Glossary / Tips’n’Tricks
@@ -165,6 +173,18 @@ joinSelectById :: forall e1 e2 m.
                 (Entity e1, Entity e2, FromRow e1, MonadIO m)
                 => DBT m (Vector e1)
 joinSelectById = query_ Select (_joinSelect @e1 @e2)
+
+-- | Perform a INNER JOIN between two entities
+--
+-- @since 0.0.2.0
+joinSelectOneByField :: forall e1 e2 value m.
+                (Entity e1, Entity e2, FromRow e1, MonadIO m, ToField value)
+                => Field
+                -> Field
+                -> value
+                -> DBT m (Vector e1)
+joinSelectOneByField pivot whereClause value = query Select (_joinSelectOneByField @e1 @e2 pivot whereClause) (Only value)
+
 --
 -- | Perform a SELECT + ORDER BY query on an entity
 --
@@ -361,7 +381,9 @@ _innerJoin f = textToQuery $ " INNER JOIN " <> getTableName @e
 --
 -- @since 0.0.1.0
 _joinSelectWithFields :: forall e1 e2. (Entity e1, Entity e2)
-                   => Vector Field -> Vector Field -> Query
+                      => Vector Field
+                      -> Vector Field
+                      -> Query
 _joinSelectWithFields fs1 fs2 =
   textToQuery $ "SELECT " <> expandQualifiedFields' fs1 tn1
     <> ", " <> expandQualifiedFields' fs2 tn2
@@ -370,6 +392,25 @@ _joinSelectWithFields fs1 fs2 =
   where
     tn1 = getTableName @e1
     tn2 = getTableName @e2
+
+-- | Produce a "SELECT FROM" over two entities.
+--
+-- __Examples__
+--
+-- >>> _joinSelectOneByField @BlogPost @Author [field| author_id |] [field| name |] :: Query
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" INNER JOIN \"authors\" ON \"blogposts\".\"author_id\" = \"authors\".\"author_id\" WHERE authors.\"name\" = ?"
+--
+-- @since 0.0.2.0
+_joinSelectOneByField :: forall e1 e2. (Entity e1, Entity e2)
+                   => Field
+                   -> Field
+                   -> Query
+_joinSelectOneByField pivotField whereField =
+  textToQuery $ "SELECT "  <> expandQualifiedFields @e1 <>
+                 " FROM "  <> (getTableName @e1) <> " INNER JOIN " <> getTableName @e2 <>
+                 " ON "    <> (getTableName @e1) <> "." <> getFieldName pivotField <> " = " <>
+                              (getTableName @e2) <> "." <> getFieldName pivotField <>
+                 " WHERE " <> placeholder' @e2 whereField
 
 -- | Produce an INSERT statement for the given entity.
 --
@@ -475,18 +516,16 @@ _deleteWhere fs = textToQuery ("DELETE FROM " <> (getTableName @e)) <> _where @e
 --
 -- @since 0.0.2.0
 _orderBy :: (Field, SortKeyword) -> Query
-_orderBy (f, sort) = textToQuery (" ORDER BY " <> fieldName f <> " " <> display sort)
+_orderBy (f, sort) = textToQuery (" ORDER BY " <> quoteName (fieldName f) <> " " <> display sort)
 
 -- | Produce an ORDER BY clause with many fields and sorting keywords
 --
 -- __Examples__
 --
--- >>> _orderBy [([field| title |], ASC), ([field| created_at|], DESC)]
+-- >>> _orderByMany (V.fromList [([field| title |], ASC), ([field| created_at |], DESC)])
 -- " ORDER BY \"title\" ASC, \"created_at\" DESC"
 --
 -- @since 0.0.2.0
 _orderByMany :: Vector (Field, SortKeyword) -> Query
 _orderByMany sortExpressions = textToQuery $ " ORDER BY " <> fold (intercalateVector ", " $ fmap renderSortExpression sortExpressions)
 
-renderSortExpression :: (Field, SortKeyword) -> Text
-renderSortExpression (f, sort) = fieldName f <> " " <> display sort

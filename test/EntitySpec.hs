@@ -10,9 +10,9 @@ import Control.Monad.IO.Class
 import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
-import Database.PostgreSQL.Entity (_joinSelectWithFields, _where, delete, deleteByField, selectById, selectManyByField,
-                                   selectOneByField, selectOneWhereIn, selectOrderBy, selectWhereNotNull,
-                                   selectWhereNull, update, updateFieldsBy)
+import Database.PostgreSQL.Entity (_joinSelectWithFields, _where, delete, deleteByField, joinSelectOneByField,
+                                   selectById, selectManyByField, selectOneByField, selectOneWhereIn, selectOrderBy,
+                                   selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
 import Database.PostgreSQL.Entity.DBT (QueryNature (..), query, query_)
 import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (BlogPostId),
                                                      insertAuthor, insertBlogPost)
@@ -22,6 +22,7 @@ import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirector
                                              runMigrations)
 import Database.PostgreSQL.Transact (DBT)
 
+import qualified Data.Set as S
 import qualified Data.Set as Set
 import Data.Vector (Vector)
 import Database.PostgreSQL.Entity.Types
@@ -41,6 +42,7 @@ spec = testThese "Entity Tests"
   , testThis "Change the name of an author" changeAuthorName
   , testThis "Select a row when the value of title is in an array of possible values" selectWhereIn
   , testThis "SELECT ORDER BY yields the appropriate results" testSelectOrderBy
+  , testThis "select blog posts by author's name" selectBlogpostsByAuthorName
   ]
 
 selectBlogPostByTitle :: TestM ()
@@ -160,3 +162,15 @@ testSelectOrderBy = do
   let threeAuthors = V.fromList [author1, author3, author2]
   result3 <- V.filter (\a -> a `V.elem` threeAuthors) <$> liftDB (selectOrderBy @Author (V.fromList [([field| name |], ASC), ([field| created_at |], ASC)]))
   U.assertEqual threeAuthors result3
+
+selectBlogpostsByAuthorName :: TestM ()
+selectBlogpostsByAuthorName = do
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Alfonso Bertholt"}
+  blogPost1 <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate
+                                                 { generateAuthorId = pure (author ^. #authorId)
+                                                 }
+  blogPost2 <- liftDB $ instantiateRandomBlogPost randomBlogPostTemplate
+                                                 { generateAuthorId = pure (author ^. #authorId)
+                                                 }
+  result <- liftDB $ joinSelectOneByField @BlogPost @Author [field| author_id |] [field| name |] (author ^. #name)
+  U.assertEqual (S.fromList [blogPost1, blogPost2]) (S.fromList $ V.toList result)
