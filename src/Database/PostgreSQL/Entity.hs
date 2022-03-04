@@ -174,14 +174,14 @@ joinSelectById :: forall e1 e2 m.
                 => DBT m (Vector e1)
 joinSelectById = query_ Select (_joinSelect @e1 @e2)
 
--- | Perform a INNER JOIN between two entities
+-- | Perform a @INNER JOIN ON field1 WHERE field2 = value@ between two entities
 --
 -- @since 0.0.2.0
 joinSelectOneByField :: forall e1 e2 value m.
                 (Entity e1, Entity e2, FromRow e1, MonadIO m, ToField value)
-                => Field
-                -> Field
-                -> value
+                => Field -- ^ The field over which the two tables will be joined
+                -> Field -- ^ The field in the where clause
+                -> value -- ^ The value of the where clause
                 -> DBT m (Vector e1)
 joinSelectOneByField pivot whereClause value = query Select (_joinSelectOneByField @e1 @e2 pivot whereClause) (Only value)
 
