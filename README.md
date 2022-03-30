@@ -51,7 +51,7 @@ The following GHC versions are supported:
 
 ## Documentation
 
-This library aims to be thoroughly tested, by the means of Oleg Grerus' [cabal-docspec][docspec]
+This library aims to be thoroughly tested, by the means of Oleg Grenrus' [cabal-docspec][docspec]
 and more traditional tests for database roundtrips.
 
 I aim to produce and maintain a decent documentation, therefore do not hesitate to raise an issue if you feel that
