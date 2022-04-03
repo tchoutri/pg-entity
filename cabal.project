@@ -8,9 +8,13 @@ index-state: 2022-02-19T11:25:10Z
 extra-lib-dirs:
   /usr/pgsql-14/lib
 
-package pg-entity
+package *
   ghc-options:
     "-L /usr/pgsql-14/lib" 
   haddock-options:
     "--optghc=-L /usr/pgsql-14/lib" 
 
+source-repository-package
+  type: git
+  location: https://github.com/ElderEphemera/deriving-th
+  tag: c1ea0852f03e823d38ad589c4b61949a3c21e1a1
