@@ -35,6 +35,7 @@ module Database.PostgreSQL.Entity
   , selectOrderBy
     -- ** Insertion
   , insert
+  , insertMany
     -- ** Update
   , update
   , updateFieldsBy
@@ -84,7 +85,7 @@ import Database.PostgreSQL.Simple.Types (Query (..))
 import Database.PostgreSQL.Transact (DBT)
 
 import Data.Text (Text)
-import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, query, queryOne, queryOne_, query_)
+import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, executeMany, query, queryOne, queryOne_, query_)
 import Database.PostgreSQL.Entity.Internal
 import Database.PostgreSQL.Entity.Types
 
@@ -201,6 +202,14 @@ insert :: forall e values m.
        (Entity e, ToRow values, MonadIO m)
        => values -> DBT m ()
 insert fs = void $ execute Insert (_insert @e) fs
+
+-- | Insert multiple rows of an entity.
+--
+-- @since 0.0.2.0
+insertMany :: forall e values m.
+           (Entity e, ToRow values, MonadIO m)
+           => [values] -> DBT m ()
+insertMany entities = void $ executeMany Insert (_insert @e) entities
 
 -- | Update an entity.
 --

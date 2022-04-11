@@ -13,6 +13,7 @@ module Database.PostgreSQL.Entity.DBT
   , withPool
   , withPool'
   , execute
+  , executeMany
   , query
   , query_
   , queryOne
@@ -32,7 +33,9 @@ import Data.Vector (Vector)
 import qualified Data.Vector as V
 
 import Control.Monad.Catch (Exception, MonadCatch, try)
+import Data.ByteString (ByteString)
 import Database.PostgreSQL.Simple as PG (ConnectInfo, Connection, FromRow, Query, ToRow, close, connect)
+import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Transact as PGT
 
 -- | Create a Pool Connection with the appropriate parameters
@@ -126,9 +129,30 @@ execute queryNature q params = do
   logQueryFormat queryNature q params
   PGT.execute q params
 
-logQueryFormat :: (ToRow params, MonadIO m) => QueryNature -> Query -> params -> PGT.DBT m ()
+-- | Query wrapper for SQL statements that operate on multiple rows which do not return.
+--
+-- @since 0.0.2.0
+executeMany :: (ToRow params, MonadIO m)
+            => QueryNature -> Query -> [params] -> PGT.DBT m Int64
+executeMany queryNature q params = do
+  logQueryFormatMany queryNature q params
+  PGT.executeMany q params
+
+
+logQueryFormat :: (ToRow params, MonadIO m)
+               => QueryNature -> Query -> params -> PGT.DBT m ()
 logQueryFormat queryNature q params = do
   msg <- PGT.formatQuery q params
+  case queryNature of
+    Select -> liftIO $ cyanMessage   $ decodeUtf8 msg
+    Update -> liftIO $ yellowMessage $ decodeUtf8 msg
+    Insert -> liftIO $ yellowMessage $ decodeUtf8 msg
+    Delete -> liftIO $ redMessage    $ decodeUtf8 msg
+
+logQueryFormatMany :: (ToRow params, MonadIO m)
+               => QueryNature -> Query -> [params] -> PGT.DBT m ()
+logQueryFormatMany queryNature q params = do
+  msg <- formatMany q params
   case queryNature of
     Select -> liftIO $ cyanMessage   $ decodeUtf8 msg
     Update -> liftIO $ yellowMessage $ decodeUtf8 msg
@@ -140,3 +164,6 @@ logQueryFormat queryNature q params = do
 --
 -- @since 0.0.1.0
 data QueryNature = Select | Insert | Update | Delete deriving (Eq, Show)
+
+formatMany :: (ToRow q, MonadIO m) => Query -> [q] -> PGT.DBT m ByteString
+formatMany q xs = PGT.getConnection >>= \conn -> liftIO $ Simple.formatMany conn q xs
