@@ -13,7 +13,6 @@ import Data.Text (Text)
 import Data.Time
 import Data.UUID (UUID)
 import qualified Data.UUID as UUID
-import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Data.Word
 import Database.PostgreSQL.Entity.DBT (withPool)
@@ -82,8 +81,8 @@ genUUID = UUID.fromWords <$> genWord32 <*> genWord32 <*> genWord32 <*> genWord32
     genWord32 :: MonadGen m => m Word32
     genWord32 = H.word32 (Range.constant minBound maxBound)
 
-genUUIDList :: MonadGen m => m (Vector UUID)
-genUUIDList = V.fromList <$> H.list (Range.linear 1 10) genUUID
+genUUIDList :: MonadGen m => m UUIDList
+genUUIDList = UUIDList . V.fromList <$> H.list (Range.linear 1 10) genUUID
 
 genUTCTime :: MonadGen m => m UTCTime
 genUTCTime = do
@@ -152,7 +151,7 @@ genBlogPostId = BlogPostId <$> genUUID
 data RandomBlogPostTemplate m
   = RandomBlogPostTemplate { generateBlogPostId :: m BlogPostId
                            , generateAuthorId   :: m AuthorId
-                           , generateUUIDList   :: m (Vector UUID)
+                           , generateUUIDList   :: m UUIDList
                            , generateTitle      :: m Text
                            , generateContent    :: m Text
                            , generateCreatedAt  :: m UTCTime

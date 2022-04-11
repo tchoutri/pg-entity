@@ -14,3 +14,4 @@ package pg-entity
   haddock-options:
     "--optghc=-L /usr/pgsql-14/lib" 
 
+test-show-details: direct

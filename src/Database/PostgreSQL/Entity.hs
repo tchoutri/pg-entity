@@ -184,7 +184,8 @@ joinSelectOneByField :: forall e1 e2 value m.
                 -> Field -- ^ The field in the where clause
                 -> value -- ^ The value of the where clause
                 -> DBT m (Vector e1)
-joinSelectOneByField pivot whereClause value = query Select (_joinSelectOneByField @e1 @e2 pivot whereClause) (Only value)
+joinSelectOneByField pivot whereClause value =
+  query Select (_joinSelectOneByField @e1 @e2 pivot whereClause) (Only value)
 
 --
 -- | Perform a SELECT + ORDER BY query on an entity
@@ -209,7 +210,7 @@ insert fs = void $ execute Insert (_insert @e) fs
 insertMany :: forall e values m.
            (Entity e, ToRow values, MonadIO m)
            => [values] -> DBT m ()
-insertMany entities = void $ executeMany Insert (_insert @e) entities
+insertMany values = void $ executeMany Insert (_insert @e) values
 
 -- | Update an entity.
 --
