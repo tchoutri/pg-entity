@@ -11,6 +11,8 @@
 * Add `selectOneWhereIn` that can match a row's column in a value of user-provided values
 * Add `selectOrderBy` to specify a vector of sorting specs (field + sorting keyword) with your select.
 * Fix primary key detection in generic deriving
+* Remove `withPool'`.
+* When using `resource-pool-0.3`, the type of `withPool` reflects the removal of `MonadBaseControl` from the upstream.
 
 ## 0.0.1.0 -- 2021-11-05
 

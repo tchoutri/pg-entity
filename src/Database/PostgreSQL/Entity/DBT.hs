@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-|
   Module      : Database.PostgreSQL.Entity.DBT
   Copyright   : © Clément Delafargue, 2018
@@ -11,7 +13,6 @@
 module Database.PostgreSQL.Entity.DBT
   ( mkPool
   , withPool
-  , withPool'
   , execute
   , executeMany
   , query
@@ -23,16 +24,15 @@ module Database.PostgreSQL.Entity.DBT
 
 import Colourista.IO (cyanMessage, redMessage, yellowMessage)
 import Control.Monad.IO.Class
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Int
 import Data.Maybe (listToMaybe)
 import Data.Pool (Pool, createPool, withResource)
 import Data.Text.Encoding (decodeUtf8)
 import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
+import Control.Monad.Trans.Control (MonadBaseControl)
 import qualified Data.Vector as V
 
-import Control.Monad.Catch (Exception, MonadCatch, try)
 import Data.ByteString (ByteString)
 import Database.PostgreSQL.Simple as PG (ConnectInfo, Connection, FromRow, Query, ToRow, close, connect)
 import qualified Database.PostgreSQL.Simple as Simple
@@ -66,22 +66,13 @@ mkPool connectInfo subPools timeout connections =
 -- See the code in the @example/@ directory on GitHub
 --
 -- @since 0.0.1.0
-withPool :: (MonadBaseControl IO m)
-         => Pool Connection -> PGT.DBT m a -> m a
-withPool pool action = withResource pool $ PGT.runDBTSerializable action
-
--- | Run a DBT action while handling errors as Exceptions.
---
--- This function wraps the DBT actions in a 'try', so that exceptions
--- raised will be converted to the Left branch of the Either.
---
--- @since 0.0.1.0
-withPool' :: forall errorType result m
-          . (Exception errorType, MonadCatch m, MonadBaseControl IO m)
-         => Pool Connection
-         -> PGT.DBT m result
-         -> m (Either errorType result)
-withPool' pool action = try $ withPool pool action
+#if MIN_VERSION_resource_pool(0,3,0)
+withPool :: (MonadIO m) => Pool Connection -> PGT.DBT IO a -> m a
+withPool pool action = liftIO $ withResource pool (\conn -> PGT.runDBTSerializable action conn)
+#else
+withPool :: (MonadBaseControl IO m) => Pool Connection -> PGT.DBT m a -> m a
+withPool pool action = withResource pool (\conn -> PGT.runDBTSerializable action conn)
+#endif
 
 -- | Query wrapper that returns a 'Vector' of results
 --

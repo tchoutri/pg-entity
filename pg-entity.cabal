@@ -82,7 +82,7 @@ library
     , monad-control     ^>= 1.0
     , pg-transact       ^>= 0.3
     , postgresql-simple ^>= 0.6
-    , resource-pool     ^>= 0.2
+    , resource-pool     
     , exceptions        ^>= 0.10
     , parsec            ^>= 3.1.14.0
     , safe-exceptions   ^>= 0.1
