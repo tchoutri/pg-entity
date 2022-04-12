@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-|
   Module      : Database.PostgreSQL.Entity.DBT
   Copyright   : © Clément Delafargue, 2018
@@ -28,6 +30,7 @@ import Data.Pool (Pool, createPool, withResource)
 import Data.Text.Encoding (decodeUtf8)
 import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
+import Control.Monad.Trans.Control (MonadBaseControl)
 import qualified Data.Vector as V
 
 import Data.ByteString (ByteString)
@@ -63,8 +66,13 @@ mkPool connectInfo subPools timeout connections =
 -- See the code in the @example/@ directory on GitHub
 --
 -- @since 0.0.1.0
-withPool :: Pool Connection -> PGT.DBT IO a -> IO a
+#if MIN_VERSION_resource_pool(0,3,0)
+withPool :: (MonadIO m) => Pool Connection -> PGT.DBT IO a -> m a
 withPool pool action = liftIO $ withResource pool (\conn -> PGT.runDBTSerializable action conn)
+#else
+withPool :: (MonadBaseControl IO m) => Pool Connection -> PGT.DBT m a -> m a
+withPool pool action = withResource pool (\conn -> PGT.runDBTSerializable action conn)
+#endif
 
 -- | Query wrapper that returns a 'Vector' of results
 --
