@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-|
   Module      : Database.PostgreSQL.Entity.DBT
   Copyright   : © Clément Delafargue, 2018
@@ -22,20 +21,23 @@ module Database.PostgreSQL.Entity.DBT
   , QueryNature(..)
   ) where
 
+#ifdef PROD
+#else
 import Colourista.IO (cyanMessage, redMessage, yellowMessage)
+import Data.ByteString (ByteString)
+import Data.Text.Encoding (decodeUtf8)
+import qualified Database.PostgreSQL.Simple as Simple
+#endif
+
 import Control.Monad.IO.Class
 import Data.Int
 import Data.Maybe (listToMaybe)
 import Data.Pool (Pool, createPool, withResource)
-import Data.Text.Encoding (decodeUtf8)
 import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import qualified Data.Vector as V
 
-import Data.ByteString (ByteString)
 import Database.PostgreSQL.Simple as PG (ConnectInfo, Connection, FromRow, Query, ToRow, close, connect)
-import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Transact as PGT
 
 -- | Create a Pool Connection with the appropriate parameters
@@ -130,6 +132,10 @@ executeMany queryNature q params = do
   PGT.executeMany q params
 
 
+#ifdef PROD
+logQueryFormat :: (Monad m) => QueryNature -> Query -> params -> PGT.DBT m ()
+logQueryFormat _ _ _ = pure ()
+#else
 logQueryFormat :: (ToRow params, MonadIO m)
                => QueryNature -> Query -> params -> PGT.DBT m ()
 logQueryFormat queryNature q params = do
@@ -139,9 +145,13 @@ logQueryFormat queryNature q params = do
     Update -> liftIO $ yellowMessage $ decodeUtf8 msg
     Insert -> liftIO $ yellowMessage $ decodeUtf8 msg
     Delete -> liftIO $ redMessage    $ decodeUtf8 msg
+#endif
 
-logQueryFormatMany :: (ToRow params, MonadIO m)
-               => QueryNature -> Query -> [params] -> PGT.DBT m ()
+#ifdef PROD
+logQueryFormatMany :: (Monad m) => QueryNature -> Query -> [params] -> PGT.DBT m ()
+logQueryFormatMany _ _ _ = pure ()
+#else
+logQueryFormatMany :: (ToRow params, MonadIO m) => QueryNature -> Query -> [params] -> PGT.DBT m ()
 logQueryFormatMany queryNature q params = do
   msg <- formatMany q params
   case queryNature of
@@ -150,11 +160,12 @@ logQueryFormatMany queryNature q params = do
     Insert -> liftIO $ yellowMessage $ decodeUtf8 msg
     Delete -> liftIO $ redMessage    $ decodeUtf8 msg
 
+formatMany :: (ToRow q, MonadIO m) => Query -> [q] -> PGT.DBT m ByteString
+formatMany q xs = PGT.getConnection >>= \conn -> liftIO $ Simple.formatMany conn q xs
+#endif
+
 -- | This sum type is given to the 'query', 'queryOne' and 'execute' functions to help
 -- with logging.
 --
 -- @since 0.0.1.0
 data QueryNature = Select | Insert | Update | Delete deriving (Eq, Show)
-
-formatMany :: (ToRow q, MonadIO m) => Query -> [q] -> PGT.DBT m ByteString
-formatMany q xs = PGT.getConnection >>= \conn -> liftIO $ Simple.formatMany conn q xs
