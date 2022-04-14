@@ -16,6 +16,7 @@ package pg-entity
     "-L /usr/pgsql-14/lib" 
   haddock-options:
     "--optghc=-L /usr/pgsql-14/lib" 
+  -- flags: +prod -- uncomment this to deactivate stdout logging
 
 source-repository-package
     type: git
