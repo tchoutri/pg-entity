@@ -22,66 +22,69 @@ import Test.Tasty
 import Utils
 import qualified Utils as U
 
-data TestType
-  = Test { fieldOne   :: Int
-         , fieldTwo   :: Text
-         , fieldThree :: [Int]
-         }
+data TestType = Test
+  { fieldOne :: Int
+  , fieldTwo :: Text
+  , fieldThree :: [Int]
+  }
   deriving stock (Eq, Generic, Show)
   deriving anyclass (Entity)
 
-data Apple
-  = AppleCons { thisField :: Text
-              , thatField :: Text
-              }
+data Apple = AppleCons
+  { thisField :: Text
+  , thatField :: Text
+  }
   deriving stock (Eq, Generic, Show)
-  deriving (Entity)
+  deriving
+    (Entity)
     via (GenericEntity '[TableName "apples"] Apple)
 
-data Project
-  = Project { createdAt   :: ZonedTime
-            , updatedAt   :: ZonedTime
-            , deletedAt   :: Maybe ZonedTime
-            , active      :: Bool
-            , id          :: Int
-            , title       :: Text
-            , description :: Text
-            , hosts       :: Vector Text
-            }
+data Project = Project
+  { createdAt :: ZonedTime
+  , updatedAt :: ZonedTime
+  , deletedAt :: Maybe ZonedTime
+  , active :: Bool
+  , id :: Int
+  , title :: Text
+  , description :: Text
+  , hosts :: Vector Text
+  }
   deriving (Generic, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving (Entity)
+  deriving
+    (Entity)
     via (GenericEntity '[Schema "projects", TableName "projects", PrimaryKey "id", FieldModifiers '[CamelToSnake]] Project)
-
 
 newtype ProjectId
   = ProjectId UUID
-  deriving (Eq, FromField, Show, ToField)
+  deriving
+    (Eq, FromField, Show, ToField)
     via UUID
 
 newtype EndpointId
   = EndpointId UUID
-  deriving (Eq, FromField, Show, ToField)
+  deriving
+    (Eq, FromField, Show, ToField)
     via UUID
 
-data Endpoint
-  = Endpoint { enpcreatedAt        :: ZonedTime
-             , enpupdatedAt        :: ZonedTime
-             , enpprojectId        :: ProjectId
-             , enpid               :: EndpointId
-             , enpurlPath          :: Text
-             , enpurlParams        :: Value
-             , enpmethod           :: Text
-             , enphosts            :: Vector Text
-             , enprequestHashes    :: Vector Text
-             , enpresponseHashes   :: Vector Text
-             , enpqueryparamHashes :: Vector Text
-             }
+data Endpoint = Endpoint
+  { enpcreatedAt :: ZonedTime
+  , enpupdatedAt :: ZonedTime
+  , enpprojectId :: ProjectId
+  , enpid :: EndpointId
+  , enpurlPath :: Text
+  , enpurlParams :: Value
+  , enpmethod :: Text
+  , enphosts :: Vector Text
+  , enprequestHashes :: Vector Text
+  , enpresponseHashes :: Vector Text
+  , enpqueryparamHashes :: Vector Text
+  }
   deriving (Generic, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving (Entity)
+  deriving
+    (Entity)
     via (GenericEntity '[TableName "endpoints", Schema "apis", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
-
 
 endpointsByProject :: ProjectId -> DBT IO (Vector Endpoint)
 endpointsByProject pid = selectManyByField @Endpoint [field| project_id |] (Only pid)
@@ -89,48 +92,49 @@ endpointsByProject pid = selectManyByField @Endpoint [field| project_id |] (Only
 endpointById :: EndpointId -> DBT IO (Maybe Endpoint)
 endpointById eId = selectById @Endpoint (Only eId)
 
-
 spec :: TestM TestTree
-spec = testThese "Generic deriving tests"
-  [ testThis "TestType has the expected table name" testExpectedTableName
-  , testThis "TestType has the expected field list" testExpectedFieldList
-  , testThis "TestType has the expected primary key" testExpectedPrimaryKey
-  , testThis "Apple has the expected primary key" testInferredPrimaryKey
-  , testThis "Apple has the expected table name" testSpecifiedTableName
-  , testThis "Apple has the expected fields" testInferredFields
-  , testThis "Prefix stripping works" testPrefixStrippingWorks
-  , testThis "Explicit schema works" testExplicitSchemaWorks
-  , testThis "Generically derived schema works" testGenericallyDerivedSchema
-  , testThis "Derived primary key is not necessarily the first field" testDerivePrimaryKey
-  ]
+spec =
+  testThese
+    "Generic deriving tests"
+    [ testThis "TestType has the expected table name" testExpectedTableName
+    , testThis "TestType has the expected field list" testExpectedFieldList
+    , testThis "TestType has the expected primary key" testExpectedPrimaryKey
+    , testThis "Apple has the expected primary key" testInferredPrimaryKey
+    , testThis "Apple has the expected table name" testSpecifiedTableName
+    , testThis "Apple has the expected fields" testInferredFields
+    , testThis "Prefix stripping works" testPrefixStrippingWorks
+    , testThis "Explicit schema works" testExplicitSchemaWorks
+    , testThis "Generically derived schema works" testGenericallyDerivedSchema
+    , testThis "Derived primary key is not necessarily the first field" testDerivePrimaryKey
+    ]
 
 testExpectedTableName :: TestM ()
 testExpectedTableName =
-    U.assertEqual "test_type" (tableName @TestType)
+  U.assertEqual "test_type" (tableName @TestType)
 
 testExpectedFieldList :: TestM ()
 testExpectedFieldList =
-    U.assertEqual  [[field| field_one |], [field| field_two |], [field| field_three |]] (fields @TestType)
+  U.assertEqual [[field| field_one |], [field| field_two |], [field| field_three |]] (fields @TestType)
 
 testExpectedPrimaryKey :: TestM ()
 testExpectedPrimaryKey =
-    U.assertEqual (Field "field_one" Nothing) (primaryKey @TestType)
+  U.assertEqual (Field "field_one" Nothing) (primaryKey @TestType)
 
 testInferredPrimaryKey :: TestM ()
 testInferredPrimaryKey =
-    U.assertEqual (Field "this_field" Nothing) (primaryKey @Apple)
+  U.assertEqual (Field "this_field" Nothing) (primaryKey @Apple)
 
 testSpecifiedTableName :: TestM ()
 testSpecifiedTableName =
-    U.assertEqual "apples" (tableName @Apple)
+  U.assertEqual "apples" (tableName @Apple)
 
 testInferredFields :: TestM ()
 testInferredFields =
-    U.assertEqual [[field| this_field |], [field| that_field |]] (fields @Apple)
+  U.assertEqual [[field| this_field |], [field| that_field |]] (fields @Apple)
 
 testPrefixStrippingWorks :: TestM ()
 testPrefixStrippingWorks =
-  U.assertEqual (fields @Endpoint) [[field| created_at |],[field| updated_at |],[field| project_id |],[field| id |],[field| url_path |],[field| url_params |],[field| method |],[field| hosts |],[field| request_hashes |],[field| response_hashes |],[field| queryparam_hashes |]]
+  U.assertEqual (fields @Endpoint) [[field| created_at |], [field| updated_at |], [field| project_id |], [field| id |], [field| url_path |], [field| url_params |], [field| method |], [field| hosts |], [field| request_hashes |], [field| response_hashes |], [field| queryparam_hashes |]]
 
 testExplicitSchemaWorks :: TestM ()
 testExplicitSchemaWorks =

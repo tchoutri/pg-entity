@@ -26,8 +26,13 @@ getTestEnvironment :: IO TestEnv
 getTestEnvironment = do
   eitherDb <- Postgres.Temp.start
   case eitherDb of
-      Right db -> do
-        pool <- createPool (PG.connectPostgreSQL $ Postgres.Temp.toConnectionString db)
-                           PG.close 1 100000000 50
-        pure TestEnv{..}
-      Left _ -> error "meh"
+    Right db -> do
+      pool <-
+        createPool
+          (PG.connectPostgreSQL $ Postgres.Temp.toConnectionString db)
+          PG.close
+          1
+          100000000
+          50
+      pure TestEnv{..}
+    Left _ -> error "meh"

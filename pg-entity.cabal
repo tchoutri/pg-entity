@@ -22,9 +22,10 @@ extra-source-files:
 flag prod
   description:
     This flag enables features for production usage, namely:
-      * Disable logging output
-  default: False
-  manual: True
+    * Disable logging output
+
+  default:     False
+  manual:      True
 
 source-repository head
   type:     git
@@ -83,26 +84,26 @@ library
 
   hs-source-dirs:  src
   build-depends:
-    , base               >= 4.12     && <=4.16
-    , bytestring        ^>= 0.10
-    , colourista        ^>= 0.1
-    , monad-control     ^>= 1.0
-    , pg-transact       ^>= 0.3
-    , postgresql-simple ^>= 0.6
-    , resource-pool     
-    , exceptions        ^>= 0.10
-    , parsec            ^>= 3.1.14.0
-    , safe-exceptions   ^>= 0.1
-    , text              ^>= 1.2
-    , text-manipulate   ^>= 0.3
-    , template-haskell   >= 2.15.0.0 && <= 2.17.0.0
-    , time              ^>= 1.9
-    , uuid              ^>= 1.3
-    , vector            ^>= 0.12
-    , text-display      ^>= 0.0
+    , base               >=4.12     && <=4.16
+    , bytestring         ^>=0.10
+    , colourista         ^>=0.1
+    , exceptions         ^>=0.10
+    , monad-control      ^>=1.0
+    , parsec             ^>=3.1.14.0
+    , pg-transact        ^>=0.3
+    , postgresql-simple  ^>=0.6
+    , resource-pool
+    , safe-exceptions    ^>=0.1
+    , template-haskell   >=2.15.0.0 && <=2.17.0.0
+    , text               ^>=1.2
+    , text-display       ^>=0.0
+    , text-manipulate    ^>=0.3
+    , time               ^>=1.9
+    , uuid               ^>=1.3
+    , vector             ^>=0.12
 
   if !flag(prod)
-      cpp-options: -DPROD
+    cpp-options: -DPROD
 
 test-suite entity-test
   import:         common-extensions
@@ -117,6 +118,7 @@ test-suite entity-test
 
   hs-source-dirs: test
   build-depends:
+    , aeson
     , base
     , containers
     , hedgehog
@@ -135,4 +137,3 @@ test-suite entity-test
     , tmp-postgres
     , uuid
     , vector
-    , aeson

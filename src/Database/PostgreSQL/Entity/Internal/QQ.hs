@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-{-|
+{- |
  Module     : Database.PostgreSQL.Entity.Internal.QQ
  Copyright  : © Koz Ross, 2021
  License    : MIT
@@ -21,22 +21,23 @@ import Language.Haskell.TH.Quote (QuasiQuoter (QuasiQuoter))
 import Language.Haskell.TH.Syntax (lift)
 import Text.Parsec (Parsec, anyChar, manyTill, parse, space, spaces, string, try, (<|>))
 
--- | A quasi-quoter for safely constructing 'Field's.
---
--- == Example:
---
--- > instance Entity BlogPost where
--- >   tableName  = "blogposts"
--- >   primaryKey = [field| blogpost_id |]
--- >   fields = [ [field| blogpost_id |]
--- >            , [field| author_id |]
--- >            , [field| uuid_list :: uuid[] |] -- ← This is where we specify an optional PostgreSQL type annotation
--- >            , [field| title |]
--- >            , [field| content |]
--- >            , [field| created_at |]
--- >            ]
---
--- @since 0.1.0.0
+{- | A quasi-quoter for safely constructing 'Field's.
+
+ == Example:
+
+ > instance Entity BlogPost where
+ >   tableName  = "blogposts"
+ >   primaryKey = [field| blogpost_id |]
+ >   fields = [ [field| blogpost_id |]
+ >            , [field| author_id |]
+ >            , [field| uuid_list :: uuid[] |] -- ← This is where we specify an optional PostgreSQL type annotation
+ >            , [field| title |]
+ >            , [field| content |]
+ >            , [field| created_at |]
+ >            ]
+
+ @since 0.1.0.0
+-}
 field :: QuasiQuoter
 field = QuasiQuoter fieldExp errorFieldPat errorFieldType errorFieldDec
 
@@ -44,9 +45,9 @@ field = QuasiQuoter fieldExp errorFieldPat errorFieldType errorFieldDec
 
 fieldExp :: String -> Q Exp
 fieldExp input = case parse fieldParser "Expression" input of
-  Left err               -> fail . show $ err
-  Right (name, Nothing)  -> [e| Field $(lift name) Nothing |]
-  Right (name, Just typ) -> [e| Field $(lift name) (Just $(lift typ)) |]
+  Left err -> fail . show $ err
+  Right (name, Nothing) -> [e|Field $(lift name) Nothing|]
+  Right (name, Just typ) -> [e|Field $(lift name) (Just $(lift typ))|]
 
 errorFieldPat :: String -> Q Pat
 errorFieldPat _ = fail "Cannot use 'field' in a pattern context."
@@ -70,13 +71,13 @@ fieldParser = do
           typ <- manyTill anyChar (try space)
           case typ of
             [] -> fail "Cannot have an empty type."
-            _  -> pure (pack name, Just . pack $ typ)
+            _ -> pure (pack name, Just . pack $ typ)
     noType :: Parsec String () (Text, Maybe Text)
     noType = do
       name <- manyTill anyChar (try space)
       case name of
         [] -> fail "Cannot have an empty field name."
-        _  -> pure (pack name, Nothing)
+        _ -> pure (pack name, Nothing)
 
 errorFieldType :: String -> Q Type
 errorFieldType _ = fail "Cannot use 'field' in a type context."
