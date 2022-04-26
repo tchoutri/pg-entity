@@ -1,4 +1,4 @@
-name: CI
+name: Tests
 
 # Trigger the workflow on push or pull request, but only for the main branch
 on:
@@ -30,7 +30,6 @@ jobs:
           echo "/nix/var/nix/profiles/default/bin" >> "$GITHUB_PATH"
           echo "NIX_SSL_CERT_FILE=$cert_file" >> "$GITHUB_ENV"
           cert_file=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt
-          env
 
     - name: Configure Darwin Nixpkgs
       if: matrix.os == 'macos-latest' 
@@ -69,12 +68,6 @@ jobs:
 
     - name: Installing dependencies 
       run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run 'make deps' .github/workflows/shell.nix
-
-    - name: Running hlint
-      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run './.github/workflows/hlint-runner.sh' .github/workflows/shell.nix
-
-    - name: Running stylish-haskell
-      run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run './.github/workflows/stylish-haskell-runner.sh' .github/workflows/shell.nix
 
     - name: Build
       run: nix-shell --pure -I ${{ env.NIX_PATH }} --argstr ghcVersion ${{env.GHC}} --run 'make build' .github/workflows/shell.nix
