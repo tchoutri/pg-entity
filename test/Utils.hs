@@ -31,12 +31,13 @@ import qualified Test.Tasty.HUnit as Test
 import Database.PostgreSQL.Entity.Internal.BlogPost
 import Database.PostgreSQL.Simple.Migration
 
-newtype TestM (a :: Type) = TestM {getTestM :: ReaderT TestEnv IO a}
+newtype TestM (a :: Type)
+  = TestM { getTestM :: ReaderT TestEnv IO a }
   deriving newtype (Applicative, Functor, Monad, MonadIO, MonadThrow)
 
-data TestEnv = TestEnv
-  { pool :: Pool Connection
-  }
+data TestEnv
+  = TestEnv { pool :: Pool Connection
+            }
   deriving stock (Generic)
 
 liftDB :: DBT IO a -> TestM a
@@ -103,11 +104,11 @@ genAuthor = do
   createdAt <- genUTCTime
   pure Author{..}
 
-data RandomAuthorTemplate m = RandomAuthorTemplate
-  { generateAuthorId :: m AuthorId
-  , generateName :: m Text
-  , generateCreatedAt :: m UTCTime
-  }
+data RandomAuthorTemplate m
+  = RandomAuthorTemplate { generateAuthorId  :: m AuthorId
+                         , generateName      :: m Text
+                         , generateCreatedAt :: m UTCTime
+                         }
   deriving stock (Generic)
 
 randomAuthorTemplate :: MonadIO m => RandomAuthorTemplate m
@@ -149,14 +150,14 @@ genBlogPost = do
 genBlogPostId :: MonadGen m => m BlogPostId
 genBlogPostId = BlogPostId <$> genUUID
 
-data RandomBlogPostTemplate m = RandomBlogPostTemplate
-  { generateBlogPostId :: m BlogPostId
-  , generateAuthorId :: m AuthorId
-  , generateUUIDList :: m UUIDList
-  , generateTitle :: m Text
-  , generateContent :: m Text
-  , generateCreatedAt :: m UTCTime
-  }
+data RandomBlogPostTemplate m
+  = RandomBlogPostTemplate { generateBlogPostId :: m BlogPostId
+                           , generateAuthorId   :: m AuthorId
+                           , generateUUIDList   :: m UUIDList
+                           , generateTitle      :: m Text
+                           , generateContent    :: m Text
+                           , generateCreatedAt  :: m UTCTime
+                           }
   deriving stock (Generic)
 
 randomBlogPostTemplate :: MonadIO m => RandomBlogPostTemplate m

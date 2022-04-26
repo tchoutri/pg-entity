@@ -45,8 +45,8 @@ field = QuasiQuoter fieldExp errorFieldPat errorFieldType errorFieldDec
 
 fieldExp :: String -> Q Exp
 fieldExp input = case parse fieldParser "Expression" input of
-  Left err -> fail . show $ err
-  Right (name, Nothing) -> [e|Field $(lift name) Nothing|]
+  Left err               -> fail . show $ err
+  Right (name, Nothing)  -> [e|Field $(lift name) Nothing|]
   Right (name, Just typ) -> [e|Field $(lift name) (Just $(lift typ))|]
 
 errorFieldPat :: String -> Q Pat
@@ -71,13 +71,13 @@ fieldParser = do
           typ <- manyTill anyChar (try space)
           case typ of
             [] -> fail "Cannot have an empty type."
-            _ -> pure (pack name, Just . pack $ typ)
+            _  -> pure (pack name, Just . pack $ typ)
     noType :: Parsec String () (Text, Maybe Text)
     noType = do
       name <- manyTill anyChar (try space)
       case name of
         [] -> fail "Cannot have an empty field name."
-        _ -> pure (pack name, Nothing)
+        _  -> pure (pack name, Nothing)
 
 errorFieldType :: String -> Q Type
 errorFieldType _ = fail "Cannot use 'field' in a type context."

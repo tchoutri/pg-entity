@@ -26,7 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Configure environment
 
     - name: Set up Haskell
       id: setup-haskell
@@ -34,7 +33,6 @@ jobs:
       with:
         ghc-version: "8.10.7"
         cabal-version: "latest"
-
 
     - name: Install tools
       run: |

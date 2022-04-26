@@ -104,7 +104,7 @@ class Entity e where
       newPrimaryKey =
         case Vector.find (\(Field name _type) -> name == primMod name) fs of
           Nothing -> Field (primMod "") Nothing
-          Just f -> f
+          Just f  -> f
 
   -- | The fields of the table.
   fields :: Vector Field
@@ -174,7 +174,8 @@ instance (KnownSymbol name) => GetFields (M1 S ( 'MetaSel ( 'Just name) _1 _2 _3
 
 -- Deriving Via machinery
 
-newtype GenericEntity t e = GenericEntity {getGenericEntity :: e}
+newtype GenericEntity t e
+  = GenericEntity { getGenericEntity :: e }
 
 instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (GenericEntity t e) where
   tableName = getTableName @(Rep e) (entityOptions @t)
@@ -188,17 +189,17 @@ instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (G
       newPrimaryKey =
         case Vector.find (\(Field name _type) -> name == primMod name) fs of
           Nothing -> Field (primMod "") Nothing
-          Just f -> f
+          Just f  -> f
 
   fields = getField @(Rep e) (entityOptions @t)
 
 -- | Term-level options
-data Options = Options
-  { tableNameModifiers :: Text -> Text
-  , schemaModifier :: Maybe Text
-  , primaryKeyModifiers :: Text -> Text
-  , fieldModifiers :: Text -> Text
-  }
+data Options
+  = Options { tableNameModifiers  :: Text -> Text
+            , schemaModifier      :: Maybe Text
+            , primaryKeyModifiers :: Text -> Text
+            , fieldModifiers      :: Text -> Text
+            }
 
 defaultEntityOptions :: Options
 defaultEntityOptions =
@@ -316,7 +317,8 @@ fieldType (Field _ typ) = typ
 
  @since 0.0.1.0
 -}
-newtype UpdateRow a = UpdateRow {getUpdate :: a}
+newtype UpdateRow a
+  = UpdateRow { getUpdate :: a }
   deriving stock (Eq, Show)
   deriving newtype (Entity)
 
@@ -326,8 +328,6 @@ instance ToRow a => ToRow (UpdateRow a) where
 {- |
  @since 0.0.2.0
 -}
-data SortKeyword = ASC | DESC
-  deriving stock (Eq, Show)
-  deriving
-    (Display)
+data SortKeyword = ASC | DESC deriving stock (Eq, Show)
+  deriving (Display)
     via ShowInstance SortKeyword

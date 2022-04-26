@@ -39,36 +39,35 @@ import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Types (Entity (..), GenericEntity, PrimaryKey, TableName)
 
 -- | Wrapper around the UUID type
-newtype AuthorId = AuthorId {getAuthorId :: UUID}
-  deriving
-    (Eq, FromField, Ord, Show, ToField)
+newtype AuthorId
+  = AuthorId { getAuthorId :: UUID }
+  deriving (Eq, FromField, Ord, Show, ToField)
     via UUID
 
 -- | Author data-type
-data Author = Author
-  { authorId :: AuthorId
-  , name :: Text
-  , createdAt :: UTCTime
-  }
+data Author
+  = Author { authorId  :: AuthorId
+           , name      :: Text
+           , createdAt :: UTCTime
+           }
   deriving stock (Eq, Generic, Ord, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving
-    (Entity)
+  deriving (Entity)
     via (GenericEntity '[PrimaryKey "author_id", TableName "authors"] Author)
 
 instance HasField x Author a => IsLabel x (Author -> a) where
   fromLabel = getField @x
 
 -- | Wrapper around the UUID type
-newtype BlogPostId = BlogPostId {getBlogPostId :: UUID}
-  deriving
-    (Eq, FromField, Ord, Show, ToField)
+newtype BlogPostId
+  = BlogPostId { getBlogPostId :: UUID }
+  deriving (Eq, FromField, Ord, Show, ToField)
     via UUID
 
-newtype UUIDList = UUIDList {getUUIDList :: Vector UUID}
+newtype UUIDList
+  = UUIDList { getUUIDList :: Vector UUID }
   deriving stock (Generic, Show)
-  deriving
-    (Eq, FromField, Ord)
+  deriving (Eq, FromField, Ord)
     via Vector UUID
 
 instance ToField UUIDList where
@@ -85,17 +84,17 @@ instance ToField UUIDList where
 {- | The BlogPost data-type. Look at its 'Entity' instance declaration for how to handle
  a "uuid[]" PostgreSQL type.
 -}
-data BlogPost = BlogPost
-  { blogPostId :: BlogPostId
-  -- ^ Primary key
-  , authorId :: AuthorId
-  -- ^ Foreign keys, for which we need an explicit type annotation
-  , uuidList :: UUIDList
-  -- ^ A type that will need an explicit type annotation in the schema
-  , title :: Text
-  , content :: Text
-  , createdAt :: UTCTime
-  }
+data BlogPost
+  = BlogPost { blogPostId :: BlogPostId
+               -- ^ Primary key
+             , authorId   :: AuthorId
+               -- ^ Foreign keys, for which we need an explicit type annotation
+             , uuidList   :: UUIDList
+               -- ^ A type that will need an explicit type annotation in the schema
+             , title      :: Text
+             , content    :: Text
+             , createdAt  :: UTCTime
+             }
   deriving stock (Eq, Generic, Ord, Show)
   deriving anyclass (FromRow, ToRow)
 
@@ -136,10 +135,10 @@ insertAuthor = insert @Author
 bulkInsertAuthors :: [Author] -> DBT IO ()
 bulkInsertAuthors = insertMany @Author
 
-data Tags = Tags
-  { category :: Text
-  , labels :: [Text]
-  }
+data Tags
+  = Tags { category :: Text
+         , labels   :: [Text]
+         }
 
 instance Entity Tags where
   tableName = "tags"

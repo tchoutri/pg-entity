@@ -226,7 +226,7 @@ qualifyFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
  @since 0.0.1.0
 -}
 placeholder :: Field -> Text
-placeholder (Field f Nothing) = quoteName f <> " = ?"
+placeholder (Field f Nothing)  = quoteName f <> " = ?"
 placeholder (Field f (Just t)) = quoteName f <> " = ?::" <> t
 
 {- | Produce a placeholder of the form @table.\"field\" = ?@ with an optional type annotation.
@@ -243,7 +243,7 @@ placeholder (Field f (Just t)) = quoteName f <> " = ?::" <> t
 -}
 placeholder' :: forall e. Entity e => Field -> Text
 placeholder' f@(Field _ (Just t)) = qualifyField @e f <> " = ?::" <> t
-placeholder' f = qualifyField @e f <> " = ?"
+placeholder' f                    = qualifyField @e f <> " = ?"
 
 {- | Generate an appropriate number of “?” placeholders given a vector of fields.
 
