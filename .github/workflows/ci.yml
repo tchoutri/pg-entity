@@ -1,4 +1,4 @@
-name: CI
+name: Tests
 
 # Trigger the workflow on push or pull request, but only for the main branch
 on:
@@ -7,21 +7,6 @@ on:
     branches: ["main"]
 
 jobs:
-  hlint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: 'Set up HLint'
-      uses: rwe/actions-hlint-setup@v1
-      with:
-        version: '3.3.6'
-
-    - name: 'Run HLint'
-      uses: rwe/actions-hlint-run@v1
-      with:
-        path: '["src/", "test/"]'
-        fail-on: warning
   cabal:
     name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
     runs-on: ${{ matrix.os }}
@@ -45,7 +30,6 @@ jobs:
           echo "/nix/var/nix/profiles/default/bin" >> "$GITHUB_PATH"
           echo "NIX_SSL_CERT_FILE=$cert_file" >> "$GITHUB_ENV"
           cert_file=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt
-          env
 
     - name: Configure Darwin Nixpkgs
       if: matrix.os == 'macos-latest' 

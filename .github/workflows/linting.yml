@@ -1,0 +1,48 @@
+name: Linting
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "development"]
+
+jobs:
+  hlint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: 'Set up HLint'
+      uses: rwe/actions-hlint-setup@v1
+      with:
+        version: '3.3.6'
+
+    - name: 'Run HLint'
+      uses: rwe/actions-hlint-run@v1
+      with:
+        path: '["src/", "test/"]'
+        fail-on: warning
+
+  styling:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Configure environment
+
+    - name: Set up Haskell
+      id: setup-haskell
+      uses: haskell/actions/setup@v1
+      with:
+        ghc-version: "8.10.7"
+        cabal-version: "latest"
+
+
+    - name: Install tools
+      run: |
+        cd ~/
+        echo "$HOME/.ghcup/bin" >> $GITHUB_PATH
+        echo "$HOME/.cabal/bin" >> $GITHUB_PATH
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        cabal install -j fourmolu
+
+    - name: Running fourmolu
+      run: ./.github/workflows/fourmolu-runner.sh

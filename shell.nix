@@ -18,7 +18,7 @@ in with pkgs;
       hlint
       cacert
       haskellPackages.apply-refact
-      stylish-haskell
+      fourmolu_0_6_0_0
       git
       haskellPackages.cabal-fmt
 
