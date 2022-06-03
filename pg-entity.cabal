@@ -94,7 +94,7 @@ library
     , postgresql-simple  ^>=0.6
     , resource-pool
     , safe-exceptions    ^>=0.1
-    , template-haskell   >=2.15.0.0 && <=2.17.0.0
+    , template-haskell   >=2.15.0.0 && <=2.18.0.0
     , text               ^>=1.2
     , text-display       ^>=0.0
     , text-manipulate    ^>=0.3
