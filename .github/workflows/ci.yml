@@ -18,6 +18,10 @@ jobs:
     - uses: actions/checkout@v3
       if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/main'
 
+    - name: "Configure ghcup"
+      run: |
+        ghcup config add-release-channel https://raw.githubusercontent.com/haskell/ghcup-metadata/master/ghcup-prereleases-0.0.7.yaml;
+
     - name: Set up Haskell
       id: setup-haskell
       uses: haskell/actions/setup@v2
