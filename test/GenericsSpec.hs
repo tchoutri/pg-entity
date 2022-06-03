@@ -22,63 +22,68 @@ import Test.Tasty
 import Utils
 import qualified Utils as U
 
-data TestType
-  = Test { fieldOne   :: Int
-         , fieldTwo   :: Text
-         , fieldThree :: [Int]
-         }
+data TestType = Test
+  { fieldOne :: Int
+  , fieldTwo :: Text
+  , fieldThree :: [Int]
+  }
   deriving stock (Eq, Generic, Show)
   deriving anyclass (Entity)
 
-data Apple
-  = AppleCons { thisField :: Text
-              , thatField :: Text
-              }
+data Apple = AppleCons
+  { thisField :: Text
+  , thatField :: Text
+  }
   deriving stock (Eq, Generic, Show)
-  deriving (Entity)
+  deriving
+    (Entity)
     via (GenericEntity '[TableName "apples"] Apple)
 
-data Project
-  = Project { createdAt   :: ZonedTime
-            , updatedAt   :: ZonedTime
-            , deletedAt   :: Maybe ZonedTime
-            , active      :: Bool
-            , id          :: Int
-            , title       :: Text
-            , description :: Text
-            , hosts       :: Vector Text
-            }
+data Project = Project
+  { createdAt :: ZonedTime
+  , updatedAt :: ZonedTime
+  , deletedAt :: Maybe ZonedTime
+  , active :: Bool
+  , id :: Int
+  , title :: Text
+  , description :: Text
+  , hosts :: Vector Text
+  }
   deriving (Generic, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving (Entity)
+  deriving
+    (Entity)
     via (GenericEntity '[Schema "projects", TableName "projects", PrimaryKey "id", FieldModifiers '[CamelToSnake]] Project)
 
 newtype ProjectId
   = ProjectId UUID
-  deriving (Eq, FromField, Show, ToField)
+  deriving
+    (Eq, FromField, Show, ToField)
     via UUID
 
 newtype EndpointId
   = EndpointId UUID
-  deriving (Eq, FromField, Show, ToField)
+  deriving
+    (Eq, FromField, Show, ToField)
     via UUID
 
-data Endpoint
-  = Endpoint { enpcreatedAt        :: ZonedTime
-             , enpupdatedAt        :: ZonedTime
-             , enpprojectId        :: ProjectId
-             , enpid               :: EndpointId
-             , enpurlPath          :: Text
-             , enpurlParams        :: Value
-             , enpmethod           :: Text
-             , enphosts            :: Vector Text
-             , enprequestHashes    :: Vector Text
-             , enpresponseHashes   :: Vector Text
-             , enpqueryparamHashes :: Vector Text
-             }
+data Endpoint = Endpoint
+  { enpcreatedAt :: ZonedTime
+  , enpupdatedAt :: ZonedTime
+  , enpprojectId :: ProjectId
+  , enpid :: EndpointId
+  , enpurlPath :: Text
+  , enpurlParams :: Value
+  , enpmethod :: Text
+  , enphosts :: Vector Text
+  , enprequestHashes :: Vector Text
+  , enpresponseHashes :: Vector Text
+  , enpqueryparamHashes :: Vector Text
+  }
   deriving (Generic, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving (Entity)
+  deriving
+    (Entity)
     via (GenericEntity '[TableName "endpoints", Schema "apis", PrimaryKey "id", FieldModifiers '[StripPrefix "enp", CamelToSnake]] Endpoint)
 
 endpointsByProject :: ProjectId -> DBT IO (Vector Endpoint)

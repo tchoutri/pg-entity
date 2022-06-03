@@ -13,8 +13,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        cabal: ["3.4.0.0"]
-        ghc: ["8.8.4", "8.10.7", "9.0.1"]
+        cabal: ["3.4.0.0", "3.6.2.0", "3.8.0.20220526"]
+        ghc: ["8.8.4", "8.10.7", "9.0.1", "9.2.3"]
 
     steps:
     - uses: actions/checkout@v2
@@ -49,6 +49,8 @@ jobs:
         then echo "GHC='8107'" >> "$GITHUB_ENV"
         elif [[ ${{matrix.ghc}} == '9.0.1' ]]
         then echo "GHC='901'" >> "$GITHUB_ENV"
+        elif [[ ${{matrix.ghc}} == '9.2.3' ]]
+        then echo "GHC='923'" >> "$GITHUB_ENV"
         fi
 
     - name: Install Nix

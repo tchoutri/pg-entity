@@ -3,16 +3,15 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-{- |
-  Module      : Database.PostgreSQL.Entity.Types
-  Copyright   : © Clément Delafargue, 2018
-                  Théophile Choutri, 2021
-  License     : MIT
-  Maintainer  : theophile@choutri.eu
-  Stability   : stable
-
-  Types and classes
--}
+-- |
+--  Module      : Database.PostgreSQL.Entity.Types
+--  Copyright   : © Clément Delafargue, 2018
+--                  Théophile Choutri, 2021
+--  License     : MIT
+--  Maintainer  : theophile@choutri.eu
+--  Stability   : stable
+--
+--  Types and classes
 module Database.PostgreSQL.Entity.Types
   ( -- * The /Entity/ Typeclass
     Entity (..)
@@ -61,29 +60,28 @@ import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import GHC.Generics
 import GHC.TypeLits
 
-{- | An 'Entity' stores the following information about the structure of a database table:
-
- * Its name
- * Its primary key
- * The fields it contains
-
- == Example
-
- > data ExampleEntity = E
- >   { key    :: Key
- >   , field1 :: Int
- >   , field2 :: Bool
- >   }
- >   deriving stock (Eq, Show, Generic)
- >   deriving anyclass (FromRow, ToRow)
- >   deriving Entity
- >      via (GenericEntity '[TableName "entities"] ExampleEntity)
-
- When using the functions provided by this library, you will sometimes need to be explicit about the Entity you are
- referring to.
-
- @since 0.0.1.0
--}
+-- | An 'Entity' stores the following information about the structure of a database table:
+--
+-- * Its name
+-- * Its primary key
+-- * The fields it contains
+--
+-- == Example
+--
+-- > data ExampleEntity = E
+-- >   { key    :: Key
+-- >   , field1 :: Int
+-- >   , field2 :: Bool
+-- >   }
+-- >   deriving stock (Eq, Show, Generic)
+-- >   deriving anyclass (FromRow, ToRow)
+-- >   deriving Entity
+-- >      via (GenericEntity '[TableName "entities"] ExampleEntity)
+--
+-- When using the functions provided by this library, you will sometimes need to be explicit about the Entity you are
+-- referring to.
+--
+-- @since 0.0.1.0
 class Entity e where
   -- | The name of the table in the PostgreSQL database.
   tableName :: Text
@@ -104,7 +102,7 @@ class Entity e where
       newPrimaryKey =
         case Vector.find (\(Field name _type) -> name == primMod name) fs of
           Nothing -> Field (primMod "") Nothing
-          Just f  -> f
+          Just f -> f
 
   -- | The fields of the table.
   fields :: Vector Field
@@ -174,8 +172,7 @@ instance (KnownSymbol name) => GetFields (M1 S ( 'MetaSel ( 'Just name) _1 _2 _3
 
 -- Deriving Via machinery
 
-newtype GenericEntity t e
-  = GenericEntity { getGenericEntity :: e }
+newtype GenericEntity t e = GenericEntity {getGenericEntity :: e}
 
 instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (GenericEntity t e) where
   tableName = getTableName @(Rep e) (entityOptions @t)
@@ -189,17 +186,17 @@ instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (G
       newPrimaryKey =
         case Vector.find (\(Field name _type) -> name == primMod name) fs of
           Nothing -> Field (primMod "") Nothing
-          Just f  -> f
+          Just f -> f
 
   fields = getField @(Rep e) (entityOptions @t)
 
 -- | Term-level options
-data Options
-  = Options { tableNameModifiers  :: Text -> Text
-            , schemaModifier      :: Maybe Text
-            , primaryKeyModifiers :: Text -> Text
-            , fieldModifiers      :: Text -> Text
-            }
+data Options = Options
+  { tableNameModifiers :: Text -> Text
+  , schemaModifier :: Maybe Text
+  , primaryKeyModifiers :: Text -> Text
+  , fieldModifiers :: Text -> Text
+  }
 
 defaultEntityOptions :: Options
 defaultEntityOptions =
@@ -250,13 +247,12 @@ type CamelToSnake = CamelTo "_"
 -- | CamelCase to kebab-case
 type CamelToKebab = CamelTo "-"
 
-{- | The modifiers that you can apply to the fields:
-
- * 'StripPrefix'
- * 'CamelTo', and its variations
-   * 'CamelToSnake'
-   * 'CamelToKebab'
--}
+-- | The modifiers that you can apply to the fields:
+--
+-- * 'StripPrefix'
+-- * 'CamelTo', and its variations
+--   * 'CamelToSnake'
+--   * 'CamelToKebab'
 class TextModifier t where
   getTextModifier :: Text -> Text
 
@@ -298,36 +294,33 @@ type family NonEmptyText (xs :: Symbol) :: Constraint where
   NonEmptyText "" = TypeError ( 'Text "User-provided string cannot be empty!")
   NonEmptyText _ = ()
 
-{- | Get the name of a field.
-
- @since 0.1.0.0
--}
+-- | Get the name of a field.
+--
+-- @since 0.1.0.0
 fieldName :: Field -> Text
 fieldName (Field name _) = name
 
-{- | Get the type of a field, if any.
-
- @since 0.1.0.0
--}
+-- | Get the type of a field, if any.
+--
+-- @since 0.1.0.0
 fieldType :: Field -> Maybe Text
 fieldType (Field _ typ) = typ
 
-{- | Wrapper used by the update function in order to have the primary key as the last parameter passed,
- since it appears in the WHERE clause.
-
- @since 0.0.1.0
--}
-newtype UpdateRow a
-  = UpdateRow { getUpdate :: a }
+-- | Wrapper used by the update function in order to have the primary key as the last parameter passed,
+-- since it appears in the WHERE clause.
+--
+-- @since 0.0.1.0
+newtype UpdateRow a = UpdateRow {getUpdate :: a}
   deriving stock (Eq, Show)
   deriving newtype (Entity)
 
 instance ToRow a => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
 
-{- |
- @since 0.0.2.0
--}
-data SortKeyword = ASC | DESC deriving stock (Eq, Show)
-  deriving (Display)
+-- |
+-- @since 0.0.2.0
+data SortKeyword = ASC | DESC
+  deriving stock (Eq, Show)
+  deriving
+    (Display)
     via ShowInstance SortKeyword
