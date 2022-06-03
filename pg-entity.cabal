@@ -13,7 +13,7 @@ maintainer:         Théophile Choutri
 category:           Database
 license:            MIT
 build-type:         Simple
-tested-with:        GHC ==8.8.4 || ==8.10.7 || ==9.0.1
+tested-with:        GHC ==8.8.4 || ==8.10.7 || ==9.0.1 || ==9.2.3
 extra-source-files:
   CHANGELOG.md
   LICENSE.md
@@ -84,7 +84,7 @@ library
 
   hs-source-dirs:  src
   build-depends:
-    , base               >=4.12     && <=4.16
+    , base               >=4.12     && <=4.18
     , bytestring         ^>=0.10
     , colourista         ^>=0.1
     , exceptions         ^>=0.10
