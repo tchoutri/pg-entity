@@ -8,7 +8,7 @@ on:
 
 jobs:
   cabal:
-    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }} — cabal ${{ matrix.cabal }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
