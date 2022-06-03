@@ -14,7 +14,7 @@ jobs:
     - name: 'Set up HLint'
       uses: rwe/actions-hlint-setup@v1
       with:
-        version: '3.3.6'
+        version: '3.4'
 
     - name: 'Run HLint'
       uses: rwe/actions-hlint-run@v1
@@ -31,7 +31,7 @@ jobs:
       id: setup-haskell
       uses: haskell/actions/setup@v1
       with:
-        ghc-version: "8.10.7"
+        ghc-version: "9.2.3"
         cabal-version: "latest"
 
     - name: Install tools
