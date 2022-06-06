@@ -1,17 +1,16 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-{-|
- Module     : Database.PostgreSQL.Entity.Internal.QQ
- Copyright  : © Koz Ross, 2021
- License    : MIT
- Maintainer : koz.ross@retro-freedom.nz
- Stability  : Experimental
-
- A quasi-quoter for 'Field's, supporting optional types.
-
- There is little reason to import this module directly; instead, import
- 'Database.PostgreSQL.Entity', which re-exports the 'field' quasiquoter.
--}
+-- |
+-- Module     : Database.PostgreSQL.Entity.Internal.QQ
+-- Copyright  : © Koz Ross, 2021
+-- License    : MIT
+-- Maintainer : koz.ross@retro-freedom.nz
+-- Stability  : Experimental
+--
+-- A quasi-quoter for 'Field's, supporting optional types.
+--
+-- There is little reason to import this module directly; instead, import
+-- 'Database.PostgreSQL.Entity', which re-exports the 'field' quasiquoter.
 module Database.PostgreSQL.Entity.Internal.QQ (field) where
 
 import Data.Text (Text, pack)
@@ -44,9 +43,9 @@ field = QuasiQuoter fieldExp errorFieldPat errorFieldType errorFieldDec
 
 fieldExp :: String -> Q Exp
 fieldExp input = case parse fieldParser "Expression" input of
-  Left err               -> fail . show $ err
-  Right (name, Nothing)  -> [e| Field $(lift name) Nothing |]
-  Right (name, Just typ) -> [e| Field $(lift name) (Just $(lift typ)) |]
+  Left err -> fail . show $ err
+  Right (name, Nothing) -> [e|Field $(lift name) Nothing|]
+  Right (name, Just typ) -> [e|Field $(lift name) (Just $(lift typ))|]
 
 errorFieldPat :: String -> Q Pat
 errorFieldPat _ = fail "Cannot use 'field' in a pattern context."
@@ -70,13 +69,13 @@ fieldParser = do
           typ <- manyTill anyChar (try space)
           case typ of
             [] -> fail "Cannot have an empty type."
-            _  -> pure (pack name, Just . pack $ typ)
+            _ -> pure (pack name, Just . pack $ typ)
     noType :: Parsec String () (Text, Maybe Text)
     noType = do
       name <- manyTill anyChar (try space)
       case name of
         [] -> fail "Cannot have an empty field name."
-        _  -> pure (pack name, Nothing)
+        _ -> pure (pack name, Nothing)
 
 errorFieldType :: String -> Q Type
 errorFieldType _ = fail "Cannot use 'field' in a type context."

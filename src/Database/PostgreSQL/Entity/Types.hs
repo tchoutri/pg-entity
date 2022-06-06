@@ -1,21 +1,19 @@
-{-|
-  Module      : Database.PostgreSQL.Entity.Types
-  Copyright   : © Clément Delafargue, 2018
-                  Théophile Choutri, 2021
-  License     : MIT
-  Maintainer  : theophile@choutri.eu
-  Stability   : stable
-
-  Types and classes
-
--}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+-- |
+--  Module      : Database.PostgreSQL.Entity.Types
+--  Copyright   : © Clément Delafargue, 2018
+--                  Théophile Choutri, 2021
+--  License     : MIT
+--  Maintainer  : theophile@choutri.eu
+--  Stability   : stable
+--
+--  Types and classes
 module Database.PostgreSQL.Entity.Types
-  (
-    -- * The /Entity/ Typeclass
+  ( -- * The /Entity/ Typeclass
     Entity (..)
 
     -- * Associated Types
@@ -23,26 +21,27 @@ module Database.PostgreSQL.Entity.Types
   , field
   , fieldName
   , fieldType
-  , UpdateRow(..)
-  , SortKeyword(..)
+  , UpdateRow (..)
+  , SortKeyword (..)
 
     -- * Generics
-  , Options(..)
+  , Options (..)
   , defaultEntityOptions
 
     -- * DerivingVia Options
-  , GenericEntity(..)
-  , EntityOptions(..)
+  , GenericEntity (..)
+  , EntityOptions (..)
   , PrimaryKey
   , Schema
   , TableName
   , FieldModifiers
-  , TextModifier(..)
+  , TextModifier (..)
   , StripPrefix
   , CamelTo
   , CamelToSnake
   , CamelToKebab
-  ) where
+  )
+where
 
 import Data.Char
 import Data.Kind
@@ -88,9 +87,11 @@ class Entity e where
   tableName :: Text
   default tableName :: (GetTableName (Rep e)) => Text
   tableName = getTableName @(Rep e) defaultEntityOptions
+
   -- | The name of the schema; will be appended to the table name: schema."tablename"
   schema :: Maybe Text
   schema = Nothing
+
   -- | The name of the primary key for the table.
   primaryKey :: Field
   default primaryKey :: (GetFields (Rep e)) => Field
@@ -101,7 +102,8 @@ class Entity e where
       newPrimaryKey =
         case Vector.find (\(Field name _type) -> name == primMod name) fs of
           Nothing -> Field (primMod "") Nothing
-          Just f  -> f
+          Just f -> f
+
   -- | The fields of the table.
   fields :: Vector Field
   default fields :: (GetFields (Rep e)) => Vector Field
@@ -111,19 +113,19 @@ class Entity e where
 class GetTableName (e :: Type -> Type) where
   getTableName :: Options -> Text
 
-instance (TypeError ('Text "You can't derive Entity for a void type")) => GetTableName V1 where
+instance (TypeError ( 'Text "You can't derive Entity for a void type")) => GetTableName V1 where
   getTableName _opts = error "You can't derive Entity for a void type"
 
-instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetTableName U1 where
+instance (TypeError ( 'Text "You can't derive Entity for a unit type")) => GetTableName U1 where
   getTableName _opts = error "You can't derive Entity for a unit type"
 
-instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetTableName (e :+: f) where
+instance (TypeError ( 'Text "You can't derive Entity for a sum type")) => GetTableName (e :+: f) where
   getTableName _opts = error "You can't derive Entity for a sum type"
 
-instance (TypeError ('Text "You can't derive an Entity for a type constructor's field")) => GetTableName (K1 i c) where
+instance (TypeError ( 'Text "You can't derive an Entity for a type constructor's field")) => GetTableName (K1 i c) where
   getTableName _opts = error "You can't derive Entity for a type constructor's field"
 
-instance (TypeError ('Text "You don't have to derive GetTableName for a product type")) => GetTableName (e :*: f) where
+instance (TypeError ( 'Text "You don't have to derive GetTableName for a product type")) => GetTableName (e :*: f) where
   getTableName _opts = error "You don't have to derive GetTableName for a product type"
 
 instance GetTableName e => GetTableName (M1 C _1 e) where
@@ -132,24 +134,26 @@ instance GetTableName e => GetTableName (M1 C _1 e) where
 instance GetTableName e => GetTableName (M1 S _1 e) where
   getTableName opts = getTableName @e opts
 
-instance (KnownSymbol name)
-    => GetTableName (M1 D ('MetaData name _1 _2 _3) e) where
+instance
+  (KnownSymbol name) =>
+  GetTableName (M1 D ( 'MetaData name _1 _2 _3) e)
+  where
   getTableName Options{tableNameModifiers, fieldModifiers} = tableNameModifiers $ fieldModifiers $ T.pack $ symbolVal (Proxy :: Proxy name)
 
 -- The sub-class that fetches the table fields
 class GetFields (e :: Type -> Type) where
   getField :: Options -> Vector Field
 
-instance (TypeError ('Text "You can't derive Entity for a void type")) => GetFields V1 where
+instance (TypeError ( 'Text "You can't derive Entity for a void type")) => GetFields V1 where
   getField _opts = error "You can't derive Entity for a void type"
 
-instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetFields U1 where
+instance (TypeError ( 'Text "You can't derive Entity for a unit type")) => GetFields U1 where
   getField _opts = error "You can't derive Entity for a unit type"
 
-instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetFields (e :+: f) where
+instance (TypeError ( 'Text "You can't derive Entity for a sum type")) => GetFields (e :+: f) where
   getField _opts = error "You can't derive Entity for a sum type"
 
-instance (TypeError ('Text "You can't derive Entity for a a type constructor's field")) => GetFields (K1 i c) where
+instance (TypeError ( 'Text "You can't derive Entity for a a type constructor's field")) => GetFields (K1 i c) where
   getField _opts = error "You can't derive Entity for a type constructor's field"
 
 instance (GetFields e, GetFields f) => GetFields (e :*: f) where
@@ -158,18 +162,17 @@ instance (GetFields e, GetFields f) => GetFields (e :*: f) where
 instance GetFields e => GetFields (M1 C _1 e) where
   getField opts = getField @e opts
 
-instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
+instance GetFields e => GetFields (M1 D ( 'MetaData _1 _2 _3 _4) e) where
   getField opts = getField @e opts
 
-instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
+instance (KnownSymbol name) => GetFields (M1 S ( 'MetaSel ( 'Just name) _1 _2 _3) _4) where
   getField Options{fieldModifiers} = V.singleton $ Field fieldName' Nothing
     where
       fieldName' = fieldModifiers $ T.pack $ symbolVal (Proxy @name)
 
 -- Deriving Via machinery
 
-newtype GenericEntity t e
-  = GenericEntity { getGenericEntity :: e }
+newtype GenericEntity t e = GenericEntity {getGenericEntity :: e}
 
 instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (GenericEntity t e) where
   tableName = getTableName @(Rep e) (entityOptions @t)
@@ -183,25 +186,26 @@ instance (EntityOptions t, GetTableName (Rep e), GetFields (Rep e)) => Entity (G
       newPrimaryKey =
         case Vector.find (\(Field name _type) -> name == primMod name) fs of
           Nothing -> Field (primMod "") Nothing
-          Just f  -> f
+          Just f -> f
 
   fields = getField @(Rep e) (entityOptions @t)
 
 -- | Term-level options
-data Options
-  = Options { tableNameModifiers  :: Text -> Text
-            , schemaModifier      :: Maybe Text
-            , primaryKeyModifiers :: Text -> Text
-            , fieldModifiers      :: Text -> Text
-            }
+data Options = Options
+  { tableNameModifiers :: Text -> Text
+  , schemaModifier :: Maybe Text
+  , primaryKeyModifiers :: Text -> Text
+  , fieldModifiers :: Text -> Text
+  }
 
 defaultEntityOptions :: Options
-defaultEntityOptions = Options
-  { tableNameModifiers = T.toSnake
-  , schemaModifier = Nothing
-  , primaryKeyModifiers = T.toSnake
-  , fieldModifiers = T.toSnake
-  }
+defaultEntityOptions =
+  Options
+    { tableNameModifiers = T.toSnake
+    , schemaModifier = Nothing
+    , primaryKeyModifiers = T.toSnake
+    , fieldModifiers = T.toSnake
+    }
 
 -- | Type-level options for Deriving Via
 class EntityOptions xs where
@@ -263,7 +267,7 @@ instance (TextModifier x, TextModifier xs) => TextModifier (x ': xs) where
 instance (KnownSymbol prefix) => TextModifier (StripPrefix prefix) where
   getTextModifier fld = fromMaybe fld (T.stripPrefix prefixToStrip fld)
     where
-      prefixToStrip =  T.pack $ symbolVal (Proxy @prefix)
+      prefixToStrip = T.pack $ symbolVal (Proxy @prefix)
 
 instance (KnownSymbol separator, NonEmptyText separator) => TextModifier (CamelTo separator) where
   getTextModifier fld = T.pack $ camelTo2 char (T.unpack fld)
@@ -272,13 +276,13 @@ instance (KnownSymbol separator, NonEmptyText separator) => TextModifier (CamelT
       char = head $ symbolVal (Proxy @separator)
       camelTo2 :: Char -> String -> String
       camelTo2 c text = map toLower . go2 $ go1 text
-          where go1 "" = ""
-                go1 (x:u:l:xs) | isUpper u && isLower l = x : c : u : l : go1 xs
-                go1 (x:xs) = x : go1 xs
-                go2 "" = ""
-                go2 (l:u:xs) | isLower l && isUpper u = l : c : u : go2 xs
-                go2 (x:xs) = x : go2 xs
-
+        where
+          go1 "" = ""
+          go1 (x : u : l : xs) | isUpper u && isLower l = x : c : u : l : go1 xs
+          go1 (x : xs) = x : go1 xs
+          go2 "" = ""
+          go2 (l : u : xs) | isLower l && isUpper u = l : c : u : go2 xs
+          go2 (x : xs) = x : go2 xs
 
 class GetName name where
   getName :: Text
@@ -287,8 +291,8 @@ instance (KnownSymbol name, NonEmptyText name) => GetName name where
   getName = T.pack (symbolVal (Proxy @name))
 
 type family NonEmptyText (xs :: Symbol) :: Constraint where
-  NonEmptyText "" = TypeError ('Text "User-provided string cannot be empty!")
-  NonEmptyText _  = ()
+  NonEmptyText "" = TypeError ( 'Text "User-provided string cannot be empty!")
+  NonEmptyText _ = ()
 
 -- | Get the name of a field.
 --
@@ -306,17 +310,17 @@ fieldType (Field _ typ) = typ
 -- since it appears in the WHERE clause.
 --
 -- @since 0.0.1.0
-newtype UpdateRow a
-  = UpdateRow { getUpdate :: a }
+newtype UpdateRow a = UpdateRow {getUpdate :: a}
   deriving stock (Eq, Show)
   deriving newtype (Entity)
 
 instance ToRow a => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
 
-
 -- |
 -- @since 0.0.2.0
-data SortKeyword = ASC | DESC deriving stock (Eq, Show)
-  deriving (Display)
+data SortKeyword = ASC | DESC
+  deriving stock (Eq, Show)
+  deriving
+    (Display)
     via ShowInstance SortKeyword

@@ -1,21 +1,19 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE Strict #-}
-{-|
-  Module      : Database.PostgreSQL.Entity
-  Copyright   : © Clément Delafargue, 2018
-                  Théophile Choutri, 2021
-  License     : MIT
-  Maintainer  : theophile@choutri.eu
-  Stability   : stable
 
-  A PostgreSQL database layer that does not get in your way.
-
-
-  See the "Database.PostgreSQL.Entity.Internal.BlogPost" module for an example of a data-type implementing the 'Entity' typeclass.
--}
+-- |
+--  Module      : Database.PostgreSQL.Entity
+--  Copyright   : © Clément Delafargue, 2018
+--                  Théophile Choutri, 2021
+--  License     : MIT
+--  Maintainer  : theophile@choutri.eu
+--  Stability   : stable
+--
+--  A PostgreSQL database layer that does not get in your way.
+--
+--  See the "Database.PostgreSQL.Entity.Internal.BlogPost" module for an example of a data-type implementing the 'Entity' typeclass.
 module Database.PostgreSQL.Entity
-  (
-    -- * The /Entity/ Typeclass
+  ( -- * The /Entity/ Typeclass
     Entity (..)
 
     -- * Associated Types
@@ -23,7 +21,6 @@ module Database.PostgreSQL.Entity
 
     -- * High-level API
     -- $highlevel
-    -- ** Selection
   , selectById
   , selectOneByField
   , selectManyByField
@@ -33,17 +30,21 @@ module Database.PostgreSQL.Entity
   , joinSelectById
   , joinSelectOneByField
   , selectOrderBy
+
     -- ** Insertion
   , insert
   , insertMany
+
     -- ** Update
   , update
   , updateFieldsBy
+
     -- ** Deletion
   , delete
   , deleteByField
 
     -- * SQL Combinators API
+
     -- ** Selection
   , _select
   , _selectWithFields
@@ -56,19 +57,23 @@ module Database.PostgreSQL.Entity
   , _innerJoin
   , _joinSelectWithFields
   , _joinSelectOneByField
+
     -- ** Insertion
   , _insert
+
     -- ** Update
   , _update
   , _updateBy
   , _updateFields
   , _updateFieldsBy
+
     -- ** Deletion
   , _delete
   , _deleteWhere
   , _orderBy
   , _orderByMany
-  ) where
+  )
+where
 
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)
@@ -117,25 +122,33 @@ import Database.PostgreSQL.Entity.Types
 -- | Select an entity by its primary key.
 --
 -- @since 0.0.1.0
-selectById :: forall e value m.
-           (Entity e, FromRow e, MonadIO m, ToRow value)
-           => value -> DBT m (Maybe e)
+selectById ::
+  forall e value m.
+  (Entity e, FromRow e, MonadIO m, ToRow value) =>
+  value ->
+  DBT m (Maybe e)
 selectById value = selectOneByField (primaryKey @e) value
 
 -- | Select precisely __one__ entity by a provided field.
 --
 -- @since 0.0.1.0
-selectOneByField :: forall e value m.
-                 (Entity e, FromRow e, MonadIO m, ToRow value)
-                 => Field -> value -> DBT m (Maybe e)
+selectOneByField ::
+  forall e value m.
+  (Entity e, FromRow e, MonadIO m, ToRow value) =>
+  Field ->
+  value ->
+  DBT m (Maybe e)
 selectOneByField f value = queryOne Select (_selectWhere @e [f]) value
 
 -- | Select potentially many entities by a provided field.
 --
 -- @since 0.0.1.0
-selectManyByField :: forall e value m.
-                  (Entity e, FromRow e, MonadIO m, ToRow value)
-                  => Field -> value -> DBT m (Vector e)
+selectManyByField ::
+  forall e value m.
+  (Entity e, FromRow e, MonadIO m, ToRow value) =>
+  Field ->
+  value ->
+  DBT m (Vector e)
 selectManyByField f value = query Select (_selectWhere @e [f]) value
 
 -- | Select statement with a non-null condition
@@ -143,9 +156,11 @@ selectManyByField f value = query Select (_selectWhere @e [f]) value
 -- See '_selectWhereNotNull' for the generated query.
 --
 -- @since 0.0.1.0
-selectWhereNotNull :: forall e m.
-                   (Entity e, FromRow e, MonadIO m)
-                   => Vector Field -> DBT m (Vector e)
+selectWhereNotNull ::
+  forall e m.
+  (Entity e, FromRow e, MonadIO m) =>
+  Vector Field ->
+  DBT m (Vector e)
 selectWhereNotNull fs = query_ Select (_selectWhereNotNull @e fs)
 
 -- | Select statement with a null condition
@@ -153,63 +168,79 @@ selectWhereNotNull fs = query_ Select (_selectWhereNotNull @e fs)
 -- See '_selectWhereNull' for the generated query.
 --
 -- @since 0.0.1.0
-selectWhereNull :: forall e m.
-                (Entity e, FromRow e, MonadIO m)
-                => Vector Field -> DBT m (Vector e)
+selectWhereNull ::
+  forall e m.
+  (Entity e, FromRow e, MonadIO m) =>
+  Vector Field ->
+  DBT m (Vector e)
 selectWhereNull fs = query_ Select (_selectWhereNull @e fs)
 
 -- | Select statement when for an entity where the field is one of the options passed
 --
 -- @since 0.0.2.0
-selectOneWhereIn :: forall e m.
-                 (Entity e, FromRow e, MonadIO m)
-                 => Field -> Vector Text -> DBT m (Maybe e)
+selectOneWhereIn ::
+  forall e m.
+  (Entity e, FromRow e, MonadIO m) =>
+  Field ->
+  Vector Text ->
+  DBT m (Maybe e)
 selectOneWhereIn f values = queryOne_ Select (_selectWhereIn @e f values)
-
 
 -- | Perform a INNER JOIN between two entities
 --
 -- @since 0.0.1.0
-joinSelectById :: forall e1 e2 m.
-                (Entity e1, Entity e2, FromRow e1, MonadIO m)
-                => DBT m (Vector e1)
+joinSelectById ::
+  forall e1 e2 m.
+  (Entity e1, Entity e2, FromRow e1, MonadIO m) =>
+  DBT m (Vector e1)
 joinSelectById = query_ Select (_joinSelect @e1 @e2)
 
 -- | Perform a @INNER JOIN ON field1 WHERE field2 = value@ between two entities
 --
 -- @since 0.0.2.0
-joinSelectOneByField :: forall e1 e2 value m.
-                (Entity e1, Entity e2, FromRow e1, MonadIO m, ToField value)
-                => Field -- ^ The field over which the two tables will be joined
-                -> Field -- ^ The field in the where clause
-                -> value -- ^ The value of the where clause
-                -> DBT m (Vector e1)
+joinSelectOneByField ::
+  forall e1 e2 value m.
+  (Entity e1, Entity e2, FromRow e1, MonadIO m, ToField value) =>
+  -- | The field over which the two tables will be joined
+  Field ->
+  -- | The field in the where clause
+  Field ->
+  -- | The value of the where clause
+  value ->
+  DBT m (Vector e1)
 joinSelectOneByField pivot whereClause value =
   query Select (_joinSelectOneByField @e1 @e2 pivot whereClause) (Only value)
 
 --
+
 -- | Perform a SELECT + ORDER BY query on an entity
 --
 -- @since 0.0.2.0
-selectOrderBy :: forall e m.
-                (Entity e, FromRow e, MonadIO m)
-                => Vector (Field, SortKeyword) -> DBT m (Vector e)
+selectOrderBy ::
+  forall e m.
+  (Entity e, FromRow e, MonadIO m) =>
+  Vector (Field, SortKeyword) ->
+  DBT m (Vector e)
 selectOrderBy sortSpec = query_ Select (_select @e <> _orderByMany sortSpec)
 
 -- | Insert an entity.
 --
 -- @since 0.0.1.0
-insert :: forall e values m.
-       (Entity e, ToRow values, MonadIO m)
-       => values -> DBT m ()
+insert ::
+  forall e values m.
+  (Entity e, ToRow values, MonadIO m) =>
+  values ->
+  DBT m ()
 insert fs = void $ execute Insert (_insert @e) fs
 
 -- | Insert multiple rows of an entity.
 --
 -- @since 0.0.2.0
-insertMany :: forall e values m.
-           (Entity e, ToRow values, MonadIO m)
-           => [values] -> DBT m ()
+insertMany ::
+  forall e values m.
+  (Entity e, ToRow values, MonadIO m) =>
+  [values] ->
+  DBT m ()
 insertMany values = void $ executeMany Insert (_insert @e) values
 
 -- | Update an entity.
@@ -221,9 +252,11 @@ insertMany values = void $ executeMany Insert (_insert @e) values
 -- > update @Author newAuthor
 --
 -- @since 0.0.1.0
-update :: forall e newValue m.
-       (Entity e, ToRow newValue, MonadIO m)
-       => newValue -> DBT m ()
+update ::
+  forall e newValue m.
+  (Entity e, ToRow newValue, MonadIO m) =>
+  newValue ->
+  DBT m ()
 update fs = void $ execute Update (_update @e) (UpdateRow fs)
 
 -- | Update rows of an entity matching the given value
@@ -235,20 +268,26 @@ update fs = void $ execute Update (_update @e) (UpdateRow fs)
 -- > updateFieldsBy @Author [[field| name |]] ([field| name |], oldName) (Only newName)
 --
 -- @since 0.0.1.0
-updateFieldsBy :: forall e v1 v2 m.
-           (Entity e, MonadIO m, ToRow v2, ToField v1)
-           => Vector Field -- ^ Fields to change
-           -> (Field, v1)  -- ^ Field on which to match and its value
-           -> v2    -- ^ New values of those fields
-           -> DBT m Int64
+updateFieldsBy ::
+  forall e v1 v2 m.
+  (Entity e, MonadIO m, ToRow v2, ToField v1) =>
+  -- | Fields to change
+  Vector Field ->
+  -- | Field on which to match and its value
+  (Field, v1) ->
+  -- | New values of those fields
+  v2 ->
+  DBT m Int64
 updateFieldsBy fs (f, oldValue) newValue = execute Update (_updateFieldsBy @e fs f) (toRow newValue ++ toRow (Only oldValue))
 
 -- | Delete an entity according to its primary key.
 --
 -- @since 0.0.1.0
-delete :: forall e value m.
-       (Entity e, ToRow value, MonadIO m)
-       => value -> DBT m ()
+delete ::
+  forall e value m.
+  (Entity e, ToRow value, MonadIO m) =>
+  value ->
+  DBT m ()
 delete value = deleteByField @e [primaryKey @e] value
 
 -- | Delete rows according to the given fields
@@ -258,9 +297,12 @@ delete value = deleteByField @e [primaryKey @e] value
 -- > deleteByField @BlogPost [[field| title |]] (Only "Echoes from the other world")
 --
 -- @since 0.0.1.0
-deleteByField :: forall e values m.
-       (Entity e, ToRow values, MonadIO m)
-       => Vector Field -> values -> DBT m ()
+deleteByField ::
+  forall e values m.
+  (Entity e, ToRow values, MonadIO m) =>
+  Vector Field ->
+  values ->
+  DBT m ()
 deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
 
 -- * SQL combinators API
@@ -286,7 +328,8 @@ _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> get
 -- @since 0.0.1.0
 _selectWithFields :: forall e. Entity e => Vector Field -> Query
 _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <> " FROM " <> quoteName tn
-  where tn = getTableName @e
+  where
+    tn = getTableName @e
 
 -- | Produce a WHERE clause, given a vector of fields.
 --
@@ -351,7 +394,6 @@ _selectWhereNull fs = _select @e <> textToQuery (" WHERE " <> isNull fs)
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"title\" IN ('Unnamed', 'Mordred''s Song')"
 --
 -- @since 0.0.2.0
-
 _selectWhereIn :: forall e. Entity e => Field -> Vector Text -> Query
 _selectWhereIn f values = _select @e <> textToQuery (" WHERE " <> isIn f values)
 
@@ -364,10 +406,15 @@ _selectWhereIn f values = _select @e <> textToQuery (" WHERE " <> isIn f values)
 --
 -- @since 0.0.1.0
 _joinSelect :: forall e1 e2. (Entity e1, Entity e2) => Query
-_joinSelect = textToQuery $ "SELECT " <> expandQualifiedFields @e1 <> ", "
-                                    <> expandQualifiedFields @e2 <>
-                           " FROM " <> getTableName @e1
-                           <> queryToText (_innerJoin @e2 (primaryKey @e2))
+_joinSelect =
+  textToQuery $
+    "SELECT "
+      <> expandQualifiedFields @e1
+      <> ", "
+      <> expandQualifiedFields @e2
+      <> " FROM "
+      <> getTableName @e1
+      <> queryToText (_innerJoin @e2 (primaryKey @e2))
 
 -- | Produce a "INNER JOIN … USING(…)" fragment.
 --
@@ -378,8 +425,13 @@ _joinSelect = textToQuery $ "SELECT " <> expandQualifiedFields @e1 <> ", "
 --
 -- @since 0.0.1.0
 _innerJoin :: forall e. (Entity e) => Field -> Query
-_innerJoin f = textToQuery $ " INNER JOIN " <> getTableName @e
-                          <> " USING(" <> fieldName f <> ")"
+_innerJoin f =
+  textToQuery $
+    " INNER JOIN "
+      <> getTableName @e
+      <> " USING("
+      <> fieldName f
+      <> ")"
 
 -- | Produce a "SELECT [table1_fields, table2_fields] FROM table1 INNER JOIN table2 USING(table2_pk)" statement.
 -- The primary is used as the join point between the two tables.
@@ -390,15 +442,21 @@ _innerJoin f = textToQuery $ " INNER JOIN " <> getTableName @e
 -- "SELECT \"blogposts\".\"title\", \"authors\".\"name\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
 --
 -- @since 0.0.1.0
-_joinSelectWithFields :: forall e1 e2. (Entity e1, Entity e2)
-                      => Vector Field
-                      -> Vector Field
-                      -> Query
+_joinSelectWithFields ::
+  forall e1 e2.
+  (Entity e1, Entity e2) =>
+  Vector Field ->
+  Vector Field ->
+  Query
 _joinSelectWithFields fs1 fs2 =
-  textToQuery $ "SELECT " <> expandQualifiedFields' fs1 tn1
-    <> ", " <> expandQualifiedFields' fs2 tn2
-    <> " FROM " <> getTableName @e1
-    <> queryToText (_innerJoin @e2 (primaryKey @e2))
+  textToQuery $
+    "SELECT "
+      <> expandQualifiedFields' fs1 tn1
+      <> ", "
+      <> expandQualifiedFields' fs2 tn2
+      <> " FROM "
+      <> getTableName @e1
+      <> queryToText (_innerJoin @e2 (primaryKey @e2))
   where
     tn1 = getTableName @e1
     tn2 = getTableName @e2
@@ -411,16 +469,30 @@ _joinSelectWithFields fs1 fs2 =
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" INNER JOIN \"authors\" ON \"blogposts\".\"author_id\" = \"authors\".\"author_id\" WHERE authors.\"name\" = ?"
 --
 -- @since 0.0.2.0
-_joinSelectOneByField :: forall e1 e2. (Entity e1, Entity e2)
-                   => Field
-                   -> Field
-                   -> Query
+_joinSelectOneByField ::
+  forall e1 e2.
+  (Entity e1, Entity e2) =>
+  Field ->
+  Field ->
+  Query
 _joinSelectOneByField pivotField whereField =
-  textToQuery $ "SELECT "  <> expandQualifiedFields @e1 <>
-                 " FROM "  <> (getTableName @e1) <> " INNER JOIN " <> getTableName @e2 <>
-                 " ON "    <> (getTableName @e1) <> "." <> getFieldName pivotField <> " = " <>
-                              (getTableName @e2) <> "." <> getFieldName pivotField <>
-                 " WHERE " <> placeholder' @e2 whereField
+  textToQuery $
+    "SELECT "
+      <> expandQualifiedFields @e1
+      <> " FROM "
+      <> (getTableName @e1)
+      <> " INNER JOIN "
+      <> getTableName @e2
+      <> " ON "
+      <> (getTableName @e1)
+      <> "."
+      <> getFieldName pivotField
+      <> " = "
+      <> (getTableName @e2)
+      <> "."
+      <> getFieldName pivotField
+      <> " WHERE "
+      <> placeholder' @e2 whereField
 
 -- | Produce an INSERT statement for the given entity.
 --
@@ -447,7 +519,6 @@ _insert = textToQuery $ "INSERT INTO " <> getTableName @e <> " " <> fs <> " VALU
 -- "UPDATE \"blogposts\" SET (\"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") = ROW(?, ?::uuid[], ?, ?, ?) WHERE \"blogpost_id\" = ?"
 --
 -- @since 0.0.1.0
-
 _update :: forall e. Entity e => Query
 _update = _updateBy @e (primaryKey @e)
 
@@ -480,19 +551,30 @@ _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
 -- "UPDATE \"blogposts\" SET (\"author_id\", \"title\") = ROW(?, ?) WHERE \"title\" = ?"
 --
 -- @since 0.0.1.0
-_updateFieldsBy :: forall e. Entity e
-                => Vector Field -- ^ Field names to update
-                -> Field        -- ^ Field on which to match
-                -> Query
-_updateFieldsBy fs' f = textToQuery (
-    "UPDATE " <> getTableName @e
-              <> " SET " <> updatedFields <> " = " <> newValues)
-              <> _where @e [f]
+_updateFieldsBy ::
+  forall e.
+  Entity e =>
+  -- | Field names to update
+  Vector Field ->
+  -- | Field on which to match
+  Field ->
+  Query
+_updateFieldsBy fs' f =
+  textToQuery
+    ( "UPDATE "
+        <> getTableName @e
+        <> " SET "
+        <> updatedFields
+        <> " = "
+        <> newValues
+    )
+    <> _where @e [f]
   where
     fs = V.filter (/= (primaryKey @e)) fs'
     newValues = "ROW" <> inParens (generatePlaceholders fs)
-    updatedFields = inParens $
-      V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . fieldName <$> fs)
+    updatedFields =
+      inParens $
+        V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . fieldName <$> fs)
 
 -- | Produce a DELETE statement for the given entity, with a match on the Primary Key
 --
@@ -516,7 +598,6 @@ _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryK
 _deleteWhere :: forall e. Entity e => Vector Field -> Query
 _deleteWhere fs = textToQuery ("DELETE FROM " <> (getTableName @e)) <> _where @e fs
 
-
 -- | Produce an ORDER BY clause with one field and a sorting keyword
 --
 -- __Examples__
@@ -538,4 +619,3 @@ _orderBy (f, sort) = textToQuery (" ORDER BY " <> quoteName (fieldName f) <> " "
 -- @since 0.0.2.0
 _orderByMany :: Vector (Field, SortKeyword) -> Query
 _orderByMany sortExpressions = textToQuery $ " ORDER BY " <> fold (intercalateVector ", " $ fmap renderSortExpression sortExpressions)
-

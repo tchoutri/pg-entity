@@ -1,14 +1,14 @@
 module Processing.Entity where
 
 import Control.Monad.Except
+import Data.Pool
 import Database.PostgreSQL.Transact
 import GHC.Generics
-import Data.Pool
 
 import Database.PostgreSQL.Entity
+import Database.PostgreSQL.Entity.DBT
 import Database.PostgreSQL.Entity.Types
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Entity.DBT
 
 data E = E
   { key :: Int
@@ -17,7 +17,8 @@ data E = E
   }
   deriving stock (Generic, Eq, Show)
   deriving anyclass (FromRow, ToRow)
-  deriving Entity
+  deriving
+    (Entity)
     via (GenericEntity '[TableName "entities"] E)
 
 data EntityError
@@ -26,12 +27,16 @@ data EntityError
   | EntityProcessingIsRunning
   deriving (Eq, Show)
 
-insertEntity :: (MonadIO m)
-             => E -> DBT m ()
+insertEntity ::
+  (MonadIO m) =>
+  E ->
+  DBT m ()
 insertEntity = insert @E
 
-getEntity :: (MonadError EntityError m, MonadIO m)
-          => Int -> DBT m E
+getEntity ::
+  (MonadError EntityError m, MonadIO m) =>
+  Int ->
+  DBT m E
 getEntity key = do
   result <- selectById (Only key)
   case result of
@@ -44,19 +49,22 @@ getEntity key = do
 -- We check if it is already processing by checking the flag
 --  If the 'processing' flag is True, we throw EntityProcessingIsRunning
 -- Otherwise, we switch the the 'processing' flag to true
-markForProcessing :: (MonadError EntityError m, MonadIO m)
-              => Int -> DBT m ()
+markForProcessing ::
+  (MonadError EntityError m, MonadIO m) =>
+  Int ->
+  DBT m ()
 markForProcessing key = do
   entity <- getEntity key
   checkSanity entity
   let newEntity = entity{processing = True}
   update @E newEntity
   where
-    checkSanity entity | not (state entity) = lift $ throwError EntityBadState
-                       | processing entity = lift $ throwError EntityProcessingIsRunning
-                       | otherwise = pure ()
+    checkSanity entity
+      | not (state entity) = lift $ throwError EntityBadState
+      | processing entity = lift $ throwError EntityProcessingIsRunning
+      | otherwise = pure ()
 
 makePool :: IO (Pool Connection)
 makePool = mkPool connectInfo 10 2 10
   where
-    connectInfo = defaultConnectInfo{connectPassword="postgres"}
+    connectInfo = defaultConnectInfo{connectPassword = "postgres"}

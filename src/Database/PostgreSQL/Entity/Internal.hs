@@ -1,17 +1,16 @@
 {-# LANGUAGE Strict #-}
 
-{-|
-  Module      : Database.PostgreSQL.Entity.Internal
-  Copyright   : © Clément Delafargue, 2018
-                  Théophile Choutri, 2021
-  License     : MIT
-  Maintainer  : theophile@choutri.eu
-  Stability   : stable
-
-  Internal helpers used to implement the high-level API and SQL combinators.
-
-  You can re-use those building blocks freely to create your own wrappers.
--}
+-- |
+--  Module      : Database.PostgreSQL.Entity.Internal
+--  Copyright   : © Clément Delafargue, 2018
+--                  Théophile Choutri, 2021
+--  License     : MIT
+--  Maintainer  : theophile@choutri.eu
+--  Stability   : stable
+--
+--  Internal helpers used to implement the high-level API and SQL combinators.
+--
+--  You can re-use those building blocks freely to create your own wrappers.
 module Database.PostgreSQL.Entity.Internal
   ( -- * Helpers
     isNotNull
@@ -36,7 +35,8 @@ module Database.PostgreSQL.Entity.Internal
   , queryToText
   , intercalateVector
   , renderSortExpression
-  ) where
+  )
+where
 
 import Data.String (fromString)
 import Data.Text (Text, unpack)
@@ -170,7 +170,9 @@ expandQualifiedFields' :: Vector Field -> Text -> Text
 expandQualifiedFields' fs prefixName = V.foldl1' (\element acc -> element <> ", " <> acc) fs'
   where
     fs' = fieldName <$> qualifyFields prefixName fs
+
 --
+
 -- | Take a prefix and a vector of fields, and qualifies each field with the prefix
 --
 -- __Examples__
@@ -210,7 +212,7 @@ qualifyFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 --
 -- @since 0.0.1.0
 placeholder :: Field -> Text
-placeholder (Field f Nothing)  = quoteName f <> " = ?"
+placeholder (Field f Nothing) = quoteName f <> " = ?"
 placeholder (Field f (Just t)) = quoteName f <> " = ?::" <> t
 
 -- | Produce a placeholder of the form @table.\"field\" = ?@ with an optional type annotation.
@@ -226,7 +228,7 @@ placeholder (Field f (Just t)) = quoteName f <> " = ?::" <> t
 -- @since 0.0.2.0
 placeholder' :: forall e. Entity e => Field -> Text
 placeholder' f@(Field _ (Just t)) = qualifyField @e f <> " = ?::" <> t
-placeholder' f                    = qualifyField @e f <> " = ?"
+placeholder' f = qualifyField @e f <> " = ?"
 
 -- | Generate an appropriate number of “?” placeholders given a vector of fields.
 --
@@ -310,13 +312,15 @@ queryToText = decodeUtf8 . fromQuery
 --
 -- @since 0.0.1.0
 intercalateVector :: Text -> Vector Text -> Vector Text
-intercalateVector sep vt | V.null vt = vt
-                         | otherwise = V.cons x (go xs)
+intercalateVector sep vt
+  | V.null vt = vt
+  | otherwise = V.cons x (go xs)
   where
-    (x,xs) = (V.head vt, V.tail vt)
+    (x, xs) = (V.head vt, V.tail vt)
     go :: Vector Text -> Vector Text
-    go ys | V.null ys = ys
-          | otherwise = V.cons sep (V.cons (V.head ys) (go (V.tail ys)))
+    go ys
+      | V.null ys = ys
+      | otherwise = V.cons sep (V.cons (V.head ys) (go (V.tail ys)))
 
 -- |
 --

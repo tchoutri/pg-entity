@@ -1,14 +1,14 @@
 {-# LANGUAGE CPP #-}
-{-|
-  Module      : Database.PostgreSQL.Entity.DBT
-  Copyright   : © Clément Delafargue, 2018
-                  Théophile Choutri, 2021
-  License     : MIT
-  Maintainer  : theophile@choutri.eu
-  Stability   : stable
 
-  The 'Database.PostgreSQL.Transact.DBT' plumbing module to handle database queries and pools
--}
+-- |
+--  Module      : Database.PostgreSQL.Entity.DBT
+--  Copyright   : © Clément Delafargue, 2018
+--                  Théophile Choutri, 2021
+--  License     : MIT
+--  Maintainer  : theophile@choutri.eu
+--  Stability   : stable
+--
+--  The 'Database.PostgreSQL.Transact.DBT' plumbing module to handle database queries and pools
 module Database.PostgreSQL.Entity.DBT
   ( mkPool
   , withPool
@@ -18,8 +18,9 @@ module Database.PostgreSQL.Entity.DBT
   , query_
   , queryOne
   , queryOne_
-  , QueryNature(..)
-  ) where
+  , QueryNature (..)
+  )
+where
 
 #ifdef PROD
 #else
@@ -43,11 +44,12 @@ import qualified Database.PostgreSQL.Transact as PGT
 -- | Create a Pool Connection with the appropriate parameters
 --
 -- @since 0.0.1.0
-mkPool :: ConnectInfo     -- Database access information
-       -> Int             -- Number of sub-pools
-       -> NominalDiffTime -- Allowed timeout
-       -> Int             -- Number of connections
-       -> IO (Pool Connection)
+mkPool ::
+  ConnectInfo -> -- Database access information
+  Int -> -- Number of sub-pools
+  NominalDiffTime -> -- Allowed timeout
+  Int -> -- Number of connections
+  IO (Pool Connection)
 mkPool connectInfo subPools timeout connections =
   createPool (connect connectInfo) close subPools timeout connections
 
@@ -79,8 +81,12 @@ withPool pool action = withResource pool (\conn -> PGT.runDBTSerializable action
 -- | Query wrapper that returns a 'Vector' of results
 --
 -- @since 0.0.1.0
-query :: (ToRow params, FromRow result, MonadIO m)
-          => QueryNature -> Query -> params -> PGT.DBT m (Vector result)
+query ::
+  (ToRow params, FromRow result, MonadIO m) =>
+  QueryNature ->
+  Query ->
+  params ->
+  PGT.DBT m (Vector result)
 query queryNature q params = do
   logQueryFormat queryNature q params
   V.fromList <$> PGT.query q params
@@ -88,8 +94,11 @@ query queryNature q params = do
 -- | Query wrapper that returns a 'Vector' of results and does not take an argument
 --
 -- @since 0.0.1.0
-query_ :: (FromRow result, MonadIO m)
-       => QueryNature -> Query -> PGT.DBT m (Vector result)
+query_ ::
+  (FromRow result, MonadIO m) =>
+  QueryNature ->
+  Query ->
+  PGT.DBT m (Vector result)
 query_ queryNature q = do
   logQueryFormat queryNature q ()
   V.fromList <$> PGT.query_ q
@@ -97,18 +106,26 @@ query_ queryNature q = do
 -- | Query wrapper that returns one result.
 --
 -- @since 0.0.1.0
-queryOne :: (ToRow params, FromRow result, MonadIO m)
-         => QueryNature -> Query -> params -> PGT.DBT m (Maybe result)
+queryOne ::
+  (ToRow params, FromRow result, MonadIO m) =>
+  QueryNature ->
+  Query ->
+  params ->
+  PGT.DBT m (Maybe result)
 queryOne queryNature q params = do
   logQueryFormat queryNature q params
   listToMaybe <$> PGT.query q params
 
 --
+
 -- | Query wrapper that returns one result and does not take an argument
 --
 -- @since 0.0.2.0
-queryOne_ :: (FromRow result, MonadIO m)
-         => QueryNature -> Query -> PGT.DBT m (Maybe result)
+queryOne_ ::
+  (FromRow result, MonadIO m) =>
+  QueryNature ->
+  Query ->
+  PGT.DBT m (Maybe result)
 queryOne_ queryNature q = do
   logQueryFormat queryNature q ()
   listToMaybe <$> PGT.query_ q
@@ -116,8 +133,12 @@ queryOne_ queryNature q = do
 -- | Query wrapper for SQL statements which do not return.
 --
 -- @since 0.0.1.0
-execute :: (ToRow params, MonadIO m)
-        => QueryNature -> Query -> params -> PGT.DBT m Int64
+execute ::
+  (ToRow params, MonadIO m) =>
+  QueryNature ->
+  Query ->
+  params ->
+  PGT.DBT m Int64
 execute queryNature q params = do
   logQueryFormat queryNature q params
   PGT.execute q params
@@ -125,12 +146,15 @@ execute queryNature q params = do
 -- | Query wrapper for SQL statements that operate on multiple rows which do not return.
 --
 -- @since 0.0.2.0
-executeMany :: (ToRow params, MonadIO m)
-            => QueryNature -> Query -> [params] -> PGT.DBT m Int64
+executeMany ::
+  (ToRow params, MonadIO m) =>
+  QueryNature ->
+  Query ->
+  [params] ->
+  PGT.DBT m Int64
 executeMany queryNature q params = do
   logQueryFormatMany queryNature q params
   PGT.executeMany q params
-
 
 #ifdef PROD
 logQueryFormat :: (Monad m) => QueryNature -> Query -> params -> PGT.DBT m ()
