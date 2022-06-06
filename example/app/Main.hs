@@ -1,8 +1,8 @@
 module Main where
 
-import Processing.Entity
-import Database.PostgreSQL.Entity.DBT
 import Control.Monad.Except
+import Database.PostgreSQL.Entity.DBT
+import Processing.Entity
 
 main :: IO ()
 main = do
@@ -17,7 +17,7 @@ main = do
 
     -- withPool pool $ markForProcessing 1
     withPool pool $ markForProcessing 2
-    -- withPool pool $ markForProcessing 3
+  -- withPool pool $ markForProcessing 3
   case result of
     Left err -> print err
-    Right _  -> putStrLn "Everything went well"
+    Right _ -> putStrLn "Everything went well"

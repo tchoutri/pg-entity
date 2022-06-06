@@ -18,7 +18,7 @@ lint: ## Run the code linter (HLint)
 	@cabal-fmt -i *.cabal
 
 style: ## Run the code styler (stylish-haskell)
-	@find test src -name "*.hs" | xargs -P $(PROCS) -I {} fourmolu -q --mode inplace {}
+	@find test src example -name "*.hs" | xargs -P $(PROCS) -I {} fourmolu -q --mode inplace {}
 
 docs-build: ## Generate the documentation
 	@cd docs; mkdocs build
