@@ -14,11 +14,11 @@ test: ## Run the test suite
 	@cabal test
 
 lint: ## Run the code linter (HLint)
-	@find test src -name "*.hs" | xargs -P $(PROCS) -I {} fourmolu --mode inplace {}
+	@find test src -name "*.hs" | xargs -P $(PROCS) -I {} hlint --refactor-options="-i" --refactor {}
 	@cabal-fmt -i *.cabal
 
 style: ## Run the code styler (stylish-haskell)
-	@stylish-haskell -i -r src test
+	@find test src -name "*.hs" | xargs -P $(PROCS) -I {} fourmolu --mode inplace {}
 
 docs-build: ## Generate the documentation
 	@cd docs; mkdocs build
