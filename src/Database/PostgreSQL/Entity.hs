@@ -236,13 +236,16 @@ insert ::
 insert fs = void $ execute Insert (_insert @e) fs
 
 -- | Insert an entity with a "ON CONFLICT DO UPDATE" clause on the primary key as the conflict target
--- 
+--
 -- @since 0.0.2.0
-upsert :: forall e values m.
-        (Entity e, ToRow values, MonadIO m)
-        => values -- ^ Entity to insert
-        -> Vector Field -- ^ Fields to replace in case of conflict
-        -> DBT m ()
+upsert ::
+  forall e values m.
+  (Entity e, ToRow values, MonadIO m) =>
+  -- | Entity to insert
+  values ->
+  -- | Fields to replace in case of conflict
+  Vector Field ->
+  DBT m ()
 upsert entity fieldsToReplace = void $ execute Insert (_insert @e <> _onConflictDoUpdate conflictTarget fieldsToReplace) entity
   where
     conflictTarget = V.singleton $ primaryKey @e
@@ -539,12 +542,11 @@ _insert = textToQuery $ "INSERT INTO " <> getTableName @e <> " " <> fs <> " VALU
 _onConflictDoUpdate :: Vector Field -> Vector Field -> Query
 _onConflictDoUpdate conflictTarget fieldsToReplace =
   textToQuery $ " ON CONFLICT (" <> targetNames <> ") DO UPDATE SET " <> replacedFields
-    where
-      targetNames = fold $ intercalateVector ", " (fmap fieldName conflictTarget)
-      replacedFields = fold $ intercalateVector ", " (fmap (replaceField . fieldName) fieldsToReplace)
-      replaceField :: Text -> Text
-      replaceField f = f <> " = EXCLUDED." <> f  
-
+  where
+    targetNames = fold $ intercalateVector ", " (fmap fieldName conflictTarget)
+    replacedFields = fold $ intercalateVector ", " (fmap (replaceField . fieldName) fieldsToReplace)
+    replaceField :: Text -> Text
+    replaceField f = f <> " = EXCLUDED." <> f
 
 -- | Produce an UPDATE statement for the given entity by primary key
 --
