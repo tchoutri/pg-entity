@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module EntitySpec where
 
@@ -43,6 +42,28 @@ import Database.PostgreSQL.Simple.Migration
   ( MigrationCommand (MigrationDirectory, MigrationInitialization)
   , runMigrations
   )
+||||||| parent of 5e74563 (Add Upsert to the API)
+import Database.PostgreSQL.Entity (_joinSelectWithFields, _where, delete, deleteByField, joinSelectOneByField,
+                                   selectById, selectManyByField, selectOneByField, selectOneWhereIn, selectOrderBy,
+                                   selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
+import Database.PostgreSQL.Entity.DBT (QueryNature (..), query, query_)
+import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..), BlogPostId (..),
+                                                     bulkInsertAuthors, bulkInsertBlogPosts, insertAuthor,
+                                                     insertBlogPost)
+import Database.PostgreSQL.Entity.Internal.QQ (field)
+import Database.PostgreSQL.Simple (Connection, Only (Only))
+import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationDirectory, MigrationInitialization),
+                                             runMigrations)
+=======
+import Database.PostgreSQL.Entity (_joinSelectWithFields, _where, delete, deleteByField, joinSelectOneByField,
+                                   selectById, selectManyByField, selectOneByField, selectOneWhereIn, selectOrderBy,
+                                   selectWhereNotNull, selectWhereNull, update, updateFieldsBy)
+import Database.PostgreSQL.Entity.DBT (QueryNature (..), query)
+import Database.PostgreSQL.Entity.Internal.BlogPost (Author (..), AuthorId (..), BlogPost (..),
+                                                     bulkInsertAuthors, bulkInsertBlogPosts, insertAuthor,
+                                                     insertBlogPost, upsertBlogPost)
+import Database.PostgreSQL.Simple (Only (Only))
+>>>>>>> 5e74563 (Add Upsert to the API)
 import Database.PostgreSQL.Transact (DBT)
 
 import qualified Data.Set as S
@@ -51,25 +72,24 @@ import Data.Vector (Vector)
 import Database.PostgreSQL.Entity.Types
 import Optics.Core
 import Test.Tasty
-import Test.Tasty.HUnit
 import Utils
 import qualified Utils as U
+import Data.Maybe (fromJust)
 
 spec :: TestM TestTree
-spec =
-  testThese
-    "Entity Tests"
-    [ testThis "Select blog post by title" selectBlogPostByTitle
-    , testThis "Select blog posts by null and non-null condition" selectByNullAndNonNull
-    , testThis "Select multiple blog posts by author id" selectManyByAuthorId
-    , testThis "Delete blog posts" deleteBlogPosts
-    , testThis "Get all the article titles by author name" getAllTitlesByAuthorName
-    , testThis "Change the name of an author" changeAuthorName
-    , testThis "Select a row when the value of title is in an array of possible values" selectWhereIn
-    , testThis "SELECT ORDER BY yields the appropriate results" testSelectOrderBy
-    , testThis "select blog posts by author's name" selectBlogpostsByAuthorName
-    , testThis "Insert many blog posts" insertManyBlogPosts
-    ]
+spec = testThese "Entity Tests"
+  [ testThis "Select blog post by title" selectBlogPostByTitle
+  , testThis "Select blog posts by null and non-null condition" selectByNullAndNonNull
+  , testThis "Select multiple blog posts by author id" selectManyByAuthorId
+  , testThis "Delete blog posts" deleteBlogPosts
+  , testThis "Get all the article titles by author name" getAllTitlesByAuthorName
+  , testThis "Change the name of an author" changeAuthorName
+  , testThis "Select a row when the value of title is in an array of possible values" selectWhereIn
+  , testThis "SELECT ORDER BY yields the appropriate results" testSelectOrderBy
+  , testThis "select blog posts by author's name" selectBlogpostsByAuthorName
+  , testThis "Insert many blog posts" insertManyBlogPosts
+  , testThis "Upsert a blog post" testUpsertBlogPost
+  ]
 
 selectBlogPostByTitle :: TestM ()
 selectBlogPostByTitle = do
@@ -241,10 +261,24 @@ insertManyBlogPosts = do
   author2 <- randomAuthor randomAuthorTemplate{generateName = pure "Léana Garibaldi"}
   void $ liftDB $ bulkInsertAuthors [author1, author2]
 
--- author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Léana Garibaldi"}
--- blogPost1 <- randomBlogPost randomBlogPostTemplate{ generateAuthorId = pure (author ^. #authorId) }
--- blogPost2 <- randomBlogPost randomBlogPostTemplate{ generateAuthorId = pure (author ^. #authorId) }
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Léana Garibaldi"}
+  blogPost1 <- randomBlogPost randomBlogPostTemplate{ generateAuthorId = pure (author ^. #authorId) }
+  blogPost2 <- randomBlogPost randomBlogPostTemplate{ generateAuthorId = pure (author ^. #authorId) }
+  void $ liftDB $ bulkInsertBlogPosts [blogPost1, blogPost2]
+  result <- liftDB $ joinSelectOneByField @BlogPost @Author [field| author_id |] [field| name |] (author ^. #name)
+  U.assertEqual (S.fromList [blogPost1, blogPost2]) (S.fromList $ V.toList result)
 
--- void $ liftDB $ bulkInsertBlogPosts [blogPost1, blogPost2]
--- result <- liftDB $ joinSelectOneByField @BlogPost @Author [field| author_id |] [field| name |] (author ^. #name)
--- U.assertEqual (S.fromList [blogPost1, blogPost2]) (S.fromList $ V.toList result)
+testUpsertBlogPost :: TestM ()
+testUpsertBlogPost = do
+  author1 <- randomAuthor randomAuthorTemplate{generateName = pure "Vivienne Brooks"}
+  void $ liftDB $ insertAuthor author1
+  blogPost1 <- randomBlogPost randomBlogPostTemplate{ generateAuthorId = pure (author1 ^. #authorId) }
+  blogPost2 <- randomBlogPost randomBlogPostTemplate{ generateBlogPostId = pure (blogPost1 ^. #blogPostId), generateAuthorId = pure (author1 ^. #authorId), generateTitle = pure "New title" }
+
+  void $ liftDB $ insertBlogPost blogPost1
+  void $ liftDB $ upsertBlogPost blogPost2 [ [field| title |] ]
+
+  r <- liftDB $ selectById @BlogPost (Only (blogPost1 ^. #blogPostId))
+  let result = fromJust r
+  U.assertEqual (result ^. #title)  (blogPost2 ^. #title)
+>>>>>>> 5e74563 (Add Upsert to the API)

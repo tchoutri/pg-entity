@@ -33,7 +33,7 @@ import GHC.Records (HasField (..))
 import Data.ByteString.Builder (byteString, char8)
 import qualified Data.List as List
 import qualified Data.Vector as Vector
-import Database.PostgreSQL.Entity (insert, insertMany)
+import Database.PostgreSQL.Entity (insert, insertMany, Field, upsert)
 import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Types (Entity (..), GenericEntity, PrimaryKey, TableName)
 
@@ -117,9 +117,12 @@ instance Entity BlogPost where
 insertBlogPost :: BlogPost -> DBT IO ()
 insertBlogPost = insert @BlogPost
 
+upsertBlogPost :: BlogPost -> Vector Field -> DBT IO ()
+upsertBlogPost = upsert @BlogPost 
+
 -- | A function to insert many blogposts at once.
 bulkInsertBlogPosts :: [BlogPost] -> DBT IO ()
-bulkInsertBlogPosts = insertMany @BlogPost
+bulkInsertBlogPosts = insertMany @BlogPost 
 
 -- | A specialisation of the 'Database.PostgreSQL.Entity.insert function.
 -- @insertAuthor = insert \@Author@
