@@ -59,4 +59,17 @@ getEntity key = do
     -- business logic component.
 ```
 
+## Arrays of items
+
+Sometimes we want a field to be an array of items, like UUIDs. For such inner types, PostreSQL asks of you to
+provide an explicit type signature. The case of arrays is interesting because you need to adapt to the syntax
+wanted by PostreSQL: 
+
+* An empty array is `{}`;
+* An array with elements is `ARRAY[item1, item2, …, itemN]`
+* An array with elements and a type signature is `ARRAY[item1, item2, …, itemN]::uuid[]`
+
+
+
 [MonadError]: https://hackage.haskell.org/package/mtl-2.2.2/docs/Control-Monad-Except.html#t:MonadError
+

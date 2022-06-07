@@ -13,6 +13,8 @@ import qualified Data.Vector as V
 import Database.PostgreSQL.Entity
   ( delete
   , deleteByField
+  , insert
+  , insertMany
   , joinSelectOneByField
   , selectById
   , selectManyByField
@@ -32,13 +34,15 @@ import Database.PostgreSQL.Entity.Internal.BlogPost
   , AuthorId (..)
   , BlogPost (..)
   , BlogPostId (..)
+  , UUIDList
   , bulkInsertAuthors
   , bulkInsertBlogPosts
   , insertAuthor
   , insertBlogPost
   )
 import Database.PostgreSQL.Entity.Internal.QQ (field)
-import Database.PostgreSQL.Simple (Connection, Only (Only))
+import Database.PostgreSQL.Entity.Types
+import Database.PostgreSQL.Simple (Connection, FromRow, Only (Only), ToRow)
 import Database.PostgreSQL.Simple.Migration
   ( MigrationCommand (MigrationDirectory, MigrationInitialization)
   , runMigrations
@@ -47,8 +51,11 @@ import Database.PostgreSQL.Transact (DBT)
 
 import qualified Data.Set as S
 import qualified Data.Set as Set
+import Data.UUID (UUID)
 import Data.Vector (Vector)
-import Database.PostgreSQL.Entity.Types
+import GHC.Generics (Generic)
+import qualified Hedgehog.Gen as H
+import qualified Hedgehog.Range as Range
 import Optics.Core
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -69,6 +76,7 @@ spec =
     , testThis "SELECT ORDER BY yields the appropriate results" testSelectOrderBy
     , testThis "select blog posts by author's name" selectBlogpostsByAuthorName
     , testThis "Insert many blog posts" insertManyBlogPosts
+    , testThis "Insert many faulty entities" insertManyFaultyEntities
     ]
 
 selectBlogPostByTitle :: TestM ()
@@ -241,10 +249,20 @@ insertManyBlogPosts = do
   author2 <- randomAuthor randomAuthorTemplate{generateName = pure "Léana Garibaldi"}
   void $ liftDB $ bulkInsertAuthors [author1, author2]
 
--- author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Léana Garibaldi"}
--- blogPost1 <- randomBlogPost randomBlogPostTemplate{ generateAuthorId = pure (author ^. #authorId) }
--- blogPost2 <- randomBlogPost randomBlogPostTemplate{ generateAuthorId = pure (author ^. #authorId) }
+  author <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure "Léana Garibaldi"}
+  blogPost1 <- randomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
+  blogPost2 <- randomBlogPost randomBlogPostTemplate{generateAuthorId = pure (author ^. #authorId)}
 
--- void $ liftDB $ bulkInsertBlogPosts [blogPost1, blogPost2]
--- result <- liftDB $ joinSelectOneByField @BlogPost @Author [field| author_id |] [field| name |] (author ^. #name)
--- U.assertEqual (S.fromList [blogPost1, blogPost2]) (S.fromList $ V.toList result)
+  void $ liftDB $ bulkInsertBlogPosts [blogPost1, blogPost2]
+  result <- liftDB $ joinSelectOneByField @BlogPost @Author [field| author_id |] [field| name |] (author ^. #name)
+  U.assertEqual (S.fromList [blogPost1, blogPost2]) (S.fromList $ V.toList result)
+
+insertManyFaultyEntities :: TestM ()
+insertManyFaultyEntities = do
+  entity1 <- H.sample genFaultyEntity
+  entity2 <- H.sample genFaultyEntity
+  entity3 <- H.sample genFaultyEntity
+  entity4 <- H.sample genFaultyEntity
+
+  liftDB $ insert @FaultyEntity entity1
+  liftDB $ insertMany @FaultyEntity [entity2, entity3, entity4]

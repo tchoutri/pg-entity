@@ -15,3 +15,8 @@ create table blogposts (
     foreign key(author_id)
       references authors(author_id)
 );
+
+create table faulty_entity (
+  field1 uuid[] primary key,
+  field2 uuid[]
+);

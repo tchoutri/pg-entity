@@ -17,10 +17,13 @@
 --  The models described in this module are used throughout the library's tests and docspecs.
 module Database.PostgreSQL.Entity.Internal.BlogPost where
 
+import Data.ByteString.Builder (byteString, char8)
+import qualified Data.List as List
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import Data.UUID (UUID)
 import Data.Vector (Vector)
+import qualified Data.Vector as Vector
 import Database.PostgreSQL.Simple.FromField (FromField)
 import Database.PostgreSQL.Simple.FromRow (FromRow (..))
 import Database.PostgreSQL.Simple.ToField (Action (..), ToField (..))
@@ -30,9 +33,6 @@ import GHC.Generics (Generic)
 import GHC.OverloadedLabels (IsLabel (..))
 import GHC.Records (HasField (..))
 
-import Data.ByteString.Builder (byteString, char8)
-import qualified Data.List as List
-import qualified Data.Vector as Vector
 import Database.PostgreSQL.Entity (insert, insertMany)
 import Database.PostgreSQL.Entity.Internal.QQ (field)
 import Database.PostgreSQL.Entity.Types (Entity (..), GenericEntity, PrimaryKey, TableName)
