@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
-{-# HLINT ignore "Use newtype instead of data" #-}
 module Utils where
 
 import Control.Exception.Safe
@@ -14,10 +14,10 @@ import Data.Text (Text)
 import Data.Time
 import Data.UUID (UUID)
 import qualified Data.UUID as UUID
-import qualified Data.Vector as V
+import qualified Data.Vector as Vector
 import Data.Word
 import Database.PostgreSQL.Entity.DBT (withPool)
-import Database.PostgreSQL.Simple (Connection)
+import Database.PostgreSQL.Simple (Connection, FromRow, ToRow)
 import Database.PostgreSQL.Transact
 import GHC.Generics
 import Hedgehog (MonadGen (..))
@@ -28,7 +28,9 @@ import Test.Tasty (TestTree)
 import qualified Test.Tasty as Test
 import qualified Test.Tasty.HUnit as Test
 
+import Data.Vector (Vector)
 import Database.PostgreSQL.Entity.Internal.BlogPost
+import Database.PostgreSQL.Entity.Types
 import Database.PostgreSQL.Simple.Migration
 
 newtype TestM (a :: Type) = TestM {getTestM :: ReaderT TestEnv IO a}
@@ -82,7 +84,7 @@ genUUID = UUID.fromWords <$> genWord32 <*> genWord32 <*> genWord32 <*> genWord32
     genWord32 = H.word32 (Range.constant minBound maxBound)
 
 genUUIDList :: MonadGen m => m UUIDList
-genUUIDList = UUIDList . V.fromList <$> H.list (Range.linear 1 10) genUUID
+genUUIDList = UUIDList . Vector.fromList <$> H.list (Range.linear 1 10) genUUID
 
 genUTCTime :: MonadGen m => m UTCTime
 genUTCTime = do
@@ -191,3 +193,37 @@ instantiateRandomBlogPost RandomBlogPostTemplate{..} = do
   let blogPost = BlogPost{..}
   insertBlogPost blogPost
   pure blogPost
+
+--
+
+data FaultyEntity = FaultyEntity
+  { field1 :: Vector UUID
+  }
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (FromRow, ToRow)
+
+instance Entity FaultyEntity where
+  tableName = "faulty_entity"
+  primaryKey = [field| field1 |]
+  fields = [[field| field1 :: uuid[] |]]
+
+genFaultyEntity :: MonadGen m => m FaultyEntity
+genFaultyEntity = do
+  field1 <- Vector.fromList <$> H.list (Range.linear 1 3) genUUID
+  pure FaultyEntity{..}
+
+data GoodEntity = GoodEntity
+  { field2 :: UUIDList
+  }
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (FromRow, ToRow)
+
+instance Entity GoodEntity where
+  tableName = "faulty_entity"
+  primaryKey = [field| field2 |]
+  fields = [[field| field2 |]]
+
+genGoodEntity :: MonadGen m => m GoodEntity
+genGoodEntity = do
+  field2 <- genUUIDList
+  pure GoodEntity{..}

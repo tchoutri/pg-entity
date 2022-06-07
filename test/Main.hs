@@ -2,7 +2,9 @@ module Main where
 
 import Data.Pool (createPool, withResource)
 import qualified Database.PostgreSQL.Simple as PG
+import Database.Postgres.Temp (Config (..))
 import qualified Database.Postgres.Temp as Postgres.Temp
+import Database.Postgres.Temp.Internal
 import qualified EntitySpec
 import qualified GenericsSpec
 import Optics.Core
@@ -24,7 +26,7 @@ specs =
 
 getTestEnvironment :: IO TestEnv
 getTestEnvironment = do
-  eitherDb <- Postgres.Temp.start
+  eitherDb <- Postgres.Temp.startConfig customConfig
   case eitherDb of
     Right db -> do
       pool <-
@@ -36,3 +38,13 @@ getTestEnvironment = do
           50
       pure TestEnv{..}
     Left _ -> error "meh"
+
+customConfig :: Config
+customConfig =
+  verboseConfig
+    { postgresConfigFile =
+        verbosePostgresConfig
+          <> [ ("log_connections", "off")
+             , ("log_disconnections", "off")
+             ]
+    }
