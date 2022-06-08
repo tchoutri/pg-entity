@@ -14,6 +14,7 @@
 * Remove `withPool'`.
 * When using `resource-pool-0.3`, the type of `withPool` reflects the removal of `MonadBaseControl` from the upstream.
 * The `prod` Cabal flag is introduced. At this time, it disables the stdout logging of queries
+* Add an `upsert` function
 
 ## 0.0.1.0 -- 2021-11-05
 

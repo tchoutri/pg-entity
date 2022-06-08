@@ -191,7 +191,7 @@ qualifyField f = (\(Field fName _) -> p <> "." <> quoteName fName) f
 -- __Examples__
 --
 -- >>> qualifyFields "legacy" (fields @BlogPost)
--- [Field "legacy.\"blogpost_id\"" Nothing,Field "legacy.\"author_id\"" Nothing,Field "legacy.\"uuid_list\"" (Just "uuid[]"),Field "legacy.\"title\"" Nothing,Field "legacy.\"content\"" Nothing,Field "legacy.\"created_at\"" Nothing]
+-- [Field "legacy.\"blogpost_id\"" Nothing,Field "legacy.\"author_id\"" Nothing,Field "legacy.\"uuid_list\"" Nothing,Field "legacy.\"title\"" Nothing,Field "legacy.\"content\"" Nothing,Field "legacy.\"created_at\"" Nothing]
 --
 -- @since 0.0.1.0
 qualifyFields :: Text -> Vector Field -> Vector Field
@@ -204,11 +204,11 @@ qualifyFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
 -- >>> placeholder [field| id |]
 -- "\"id\" = ?"
 --
--- >>> placeholder $ [field| ids :: uuid[] |]
--- "\"ids\" = ?::uuid[]"
+-- >>> placeholder $ [field| ids |]
+-- "\"ids\" = ?"
 --
 -- >>> fmap placeholder $ fields @BlogPost
--- ["\"blogpost_id\" = ?","\"author_id\" = ?","\"uuid_list\" = ?::uuid[]","\"title\" = ?","\"content\" = ?","\"created_at\" = ?"]
+-- ["\"blogpost_id\" = ?","\"author_id\" = ?","\"uuid_list\" = ?","\"title\" = ?","\"content\" = ?","\"created_at\" = ?"]
 --
 -- @since 0.0.1.0
 placeholder :: Field -> Text
@@ -222,8 +222,8 @@ placeholder (Field f (Just t)) = quoteName f <> " = ?::" <> t
 -- >>> placeholder' @BlogPost [field| id |]
 -- "blogposts.\"id\" = ?"
 --
--- >>> placeholder' @BlogPost $ [field| ids :: uuid[] |]
--- "blogposts.\"ids\" = ?::uuid[]"
+-- >>> placeholder' @BlogPost $ [field| ids |]
+-- "blogposts.\"ids\" = ?"
 --
 -- @since 0.0.2.0
 placeholder' :: forall e. Entity e => Field -> Text
@@ -237,7 +237,7 @@ placeholder' f = qualifyField @e f <> " = ?"
 -- __Examples__
 --
 -- >>> generatePlaceholders $ fields @BlogPost
--- "?, ?, ?::uuid[], ?, ?, ?"
+-- "?, ?, ?, ?, ?, ?"
 --
 -- @since 0.0.1.0
 generatePlaceholders :: Vector Field -> Text

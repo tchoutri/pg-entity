@@ -34,6 +34,7 @@ module Database.PostgreSQL.Entity
     -- ** Insertion
   , insert
   , insertMany
+  , upsert
 
     -- ** Update
   , update
@@ -60,6 +61,7 @@ module Database.PostgreSQL.Entity
 
     -- ** Insertion
   , _insert
+  , _onConflictDoUpdate
 
     -- ** Update
   , _update
@@ -233,6 +235,21 @@ insert ::
   DBT m ()
 insert fs = void $ execute Insert (_insert @e) fs
 
+-- | Insert an entity with a "ON CONFLICT DO UPDATE" clause on the primary key as the conflict target
+--
+-- @since 0.0.2.0
+upsert ::
+  forall e values m.
+  (Entity e, ToRow values, MonadIO m) =>
+  -- | Entity to insert
+  values ->
+  -- | Fields to replace in case of conflict
+  Vector Field ->
+  DBT m ()
+upsert entity fieldsToReplace = void $ execute Insert (_insert @e <> _onConflictDoUpdate conflictTarget fieldsToReplace) entity
+  where
+    conflictTarget = V.singleton $ primaryKey @e
+
 -- | Insert multiple rows of an entity.
 --
 -- @since 0.0.2.0
@@ -345,7 +362,7 @@ _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
 --
 -- >>> _select @BlogPost <> _where @BlogPost [ [field| uuid_list |] ]
--- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"uuid_list\" = ?::uuid[]"
+-- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"uuid_list\" = ?"
 --
 -- @since 0.0.1.0
 _where :: forall e. Entity e => Vector Field -> Query
@@ -499,7 +516,7 @@ _joinSelectOneByField pivotField whereField =
 -- __Examples__
 --
 -- >>> _insert @BlogPost
--- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?::uuid[], ?, ?, ?)"
+-- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?, ?)"
 --
 -- @since 0.0.1.0
 _insert :: forall e. Entity e => Query
@@ -507,6 +524,29 @@ _insert = textToQuery $ "INSERT INTO " <> getTableName @e <> " " <> fs <> " VALU
   where
     fs = inParens (expandFields @e)
     ps = inParens (generatePlaceholders $ fields @e)
+
+-- | Produce a "ON CONFLICT (target) DO UPDATE SET …" statement.
+--
+-- __Examples__
+--
+-- >>> _onConflictDoUpdate [[field| blogpost_id |]] [ [field| title |], [field| content |]]
+-- " ON CONFLICT (blogpost_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
+--
+-- >>> _onConflictDoUpdate [[field| blogpost_id |], [field| author_id |]] [ [field| title |], [field| content |]]
+-- " ON CONFLICT (blogpost_id, author_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
+--
+-- >>> _insert @BlogPost <> _onConflictDoUpdate [[field| blogpost_id |]] [ [field| title |], [field| content |]]
+-- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (blogpost_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
+--
+-- @since 0.0.2.0
+_onConflictDoUpdate :: Vector Field -> Vector Field -> Query
+_onConflictDoUpdate conflictTarget fieldsToReplace =
+  textToQuery $ " ON CONFLICT (" <> targetNames <> ") DO UPDATE SET " <> replacedFields
+  where
+    targetNames = fold $ intercalateVector ", " (fmap fieldName conflictTarget)
+    replacedFields = fold $ intercalateVector ", " (fmap (replaceField . fieldName) fieldsToReplace)
+    replaceField :: Text -> Text
+    replaceField f = f <> " = EXCLUDED." <> f
 
 -- | Produce an UPDATE statement for the given entity by primary key
 --
@@ -516,7 +556,7 @@ _insert = textToQuery $ "INSERT INTO " <> getTableName @e <> " " <> fs <> " VALU
 -- "UPDATE \"authors\" SET (\"name\", \"created_at\") = ROW(?, ?) WHERE \"author_id\" = ?"
 --
 -- >>> _update @BlogPost
--- "UPDATE \"blogposts\" SET (\"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") = ROW(?, ?::uuid[], ?, ?, ?) WHERE \"blogpost_id\" = ?"
+-- "UPDATE \"blogposts\" SET (\"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") = ROW(?, ?, ?, ?, ?) WHERE \"blogpost_id\" = ?"
 --
 -- @since 0.0.1.0
 _update :: forall e. Entity e => Query
