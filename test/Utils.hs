@@ -43,7 +43,15 @@ liftDB :: DBT IO a -> TestM a
 liftDB comp = do
   env <- getTestEnv
   let pool = env ^. #pool
-  liftIO $ withPool pool comp
+  liftIO $
+    catch
+      (withPool pool comp)
+      ( \(e :: SqlError) ->
+          if sqlErrorMsg e == "connection disconnected"
+            then withPool pool comp
+            else throw e
+      )
+
 
 migrate :: Connection -> IO ()
 migrate conn = void $ runMigrations False conn [MigrationInitialization, MigrationDirectory "./test/migrations"]
