@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
-{-# HLINT ignore "Use newtype instead of data" #-}
 module Utils where
 
 import Control.Exception.Safe
@@ -17,7 +15,7 @@ import qualified Data.UUID as UUID
 import qualified Data.Vector as V
 import Data.Word
 import Database.PostgreSQL.Entity.DBT (withPool)
-import Database.PostgreSQL.Simple (Connection)
+import Database.PostgreSQL.Simple (Connection, SqlError (..))
 import Database.PostgreSQL.Transact
 import GHC.Generics
 import Hedgehog (MonadGen (..))
@@ -51,7 +49,6 @@ liftDB comp = do
             then withPool pool comp
             else throw e
       )
-
 
 migrate :: Connection -> IO ()
 migrate conn = void $ runMigrations False conn [MigrationInitialization, MigrationDirectory "./test/migrations"]

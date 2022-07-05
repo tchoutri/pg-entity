@@ -13,7 +13,7 @@ maintainer:         Théophile Choutri
 category:           Database
 license:            MIT
 build-type:         Simple
-tested-with:        GHC ==8.8.4 || ==8.10.7 || ==9.0.1 || ==9.2.3
+tested-with:        GHC ==8.8.4 || ==8.10.7 || ==9.0.2 || ==9.2.3
 extra-source-files:
   CHANGELOG.md
   LICENSE.md
@@ -92,7 +92,7 @@ library
     , parsec             ^>=3.1.14.0
     , pg-transact        ^>=0.3
     , postgresql-simple  ^>=0.6
-    , resource-pool
+    , resource-pool      ^>=0.3
     , safe-exceptions    ^>=0.1
     , template-haskell   >=2.15.0.0 && <=2.18.0.0
     , text               ^>=1.2
