@@ -18,10 +18,10 @@ test: ## Run the test suite
 
 lint: ## Run the code linter (HLint)
 	@find test src -name "*.hs" | xargs -P $(PROCS) -I {} hlint --refactor-options="-i" --refactor {}
-	@cabal-fmt -i *.cabal
 
 style: ## Run the code styler (stylish-haskell)
 	@find test src example -name "*.hs" | xargs -P $(PROCS) -I {} fourmolu -q --mode inplace {}
+	@cabal-fmt -i *.cabal
 
 docs-build: ## Generate the documentation
 	@cd docs; mkdocs build
