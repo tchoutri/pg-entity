@@ -9,17 +9,18 @@
 --  Stability   : stable
 --
 --  The 'Database.PostgreSQL.Transact.DBT' plumbing module to handle database queries and pools
-module Database.PostgreSQL.Entity.DBT (
-  mkPool,
-  withPool,
-  execute,
-  executeMany,
-  query,
-  query_,
-  queryOne,
-  queryOne_,
-  QueryNature (..),
-) where
+module Database.PostgreSQL.Entity.DBT
+  ( mkPool
+  , withPool
+  , execute
+  , executeMany
+  , query
+  , query_
+  , queryOne
+  , queryOne_
+  , QueryNature (..)
+  )
+where
 
 #ifdef PROD
 #else

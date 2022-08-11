@@ -21,9 +21,10 @@
 --
 --  If at all possible, instead use the API provided by
 --  'Database.PostgreSQL.Entity.Types'.
-module Database.PostgreSQL.Entity.Internal.Unsafe (
-  Field (..),
-) where
+module Database.PostgreSQL.Entity.Internal.Unsafe
+  ( Field (..)
+  )
+where
 
 import Data.Kind
 import Data.String
