@@ -9,33 +9,33 @@ import Control.Monad.IO.Class
 import Data.Text (Text)
 import qualified Data.UUID as UUID
 import qualified Data.Vector as V
-import Database.PostgreSQL.Entity
-  ( delete
-  , deleteByField
-  , joinSelectOneByField
-  , selectById
-  , selectManyByField
-  , selectOneByField
-  , selectOneWhereIn
-  , selectOrderBy
-  , selectWhereNotNull
-  , selectWhereNull
-  , update
-  , updateFieldsBy
-  , _joinSelectWithFields
-  , _where
-  )
+import Database.PostgreSQL.Entity (
+  delete,
+  deleteByField,
+  joinSelectOneByField,
+  selectById,
+  selectManyByField,
+  selectOneByField,
+  selectOneWhereIn,
+  selectOrderBy,
+  selectWhereNotNull,
+  selectWhereNull,
+  update,
+  updateFieldsBy,
+  _joinSelectWithFields,
+  _where,
+ )
 import Database.PostgreSQL.Entity.DBT (QueryNature (..), query)
-import Database.PostgreSQL.Entity.Internal.BlogPost
-  ( Author (..)
-  , AuthorId (..)
-  , BlogPost (..)
-  , bulkInsertAuthors
-  , bulkInsertBlogPosts
-  , insertAuthor
-  , insertBlogPost
-  , upsertBlogPost
-  )
+import Database.PostgreSQL.Entity.Internal.BlogPost (
+  Author (..),
+  AuthorId (..),
+  BlogPost (..),
+  bulkInsertAuthors,
+  bulkInsertBlogPosts,
+  insertAuthor,
+  insertBlogPost,
+  upsertBlogPost,
+ )
 import Database.PostgreSQL.Simple (Only (Only))
 import Database.PostgreSQL.Transact (DBT)
 

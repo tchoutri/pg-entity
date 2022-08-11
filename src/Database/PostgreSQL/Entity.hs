@@ -12,70 +12,69 @@
 --  A PostgreSQL database layer that does not get in your way.
 --
 --  See the "Database.PostgreSQL.Entity.Internal.BlogPost" module for an example of a data-type implementing the 'Entity' typeclass.
-module Database.PostgreSQL.Entity
-  ( -- * The /Entity/ Typeclass
-    Entity (..)
+module Database.PostgreSQL.Entity (
+  -- * The /Entity/ Typeclass
+  Entity (..),
 
-    -- * Associated Types
-  , Field
+  -- * Associated Types
+  Field,
 
-    -- * High-level API
-    -- $highlevel
-  , selectById
-  , selectOneByField
-  , selectManyByField
-  , selectWhereNotNull
-  , selectWhereNull
-  , selectOneWhereIn
-  , joinSelectById
-  , joinSelectOneByField
-  , selectOrderBy
+  -- * High-level API
+  -- $highlevel
+  selectById,
+  selectOneByField,
+  selectManyByField,
+  selectWhereNotNull,
+  selectWhereNull,
+  selectOneWhereIn,
+  joinSelectById,
+  joinSelectOneByField,
+  selectOrderBy,
 
-    -- ** Insertion
-  , insert
-  , insertMany
-  , upsert
+  -- ** Insertion
+  insert,
+  insertMany,
+  upsert,
 
-    -- ** Update
-  , update
-  , updateFieldsBy
+  -- ** Update
+  update,
+  updateFieldsBy,
 
-    -- ** Deletion
-  , delete
-  , deleteByField
+  -- ** Deletion
+  delete,
+  deleteByField,
 
-    -- * SQL Combinators API
+  -- * SQL Combinators API
 
-    -- ** Selection
-  , _select
-  , _selectWithFields
-  , _where
-  , _selectWhere
-  , _selectWhereNotNull
-  , _selectWhereNull
-  , _selectWhereIn
-  , _joinSelect
-  , _innerJoin
-  , _joinSelectWithFields
-  , _joinSelectOneByField
+  -- ** Selection
+  _select,
+  _selectWithFields,
+  _where,
+  _selectWhere,
+  _selectWhereNotNull,
+  _selectWhereNull,
+  _selectWhereIn,
+  _joinSelect,
+  _innerJoin,
+  _joinSelectWithFields,
+  _joinSelectOneByField,
 
-    -- ** Insertion
-  , _insert
-  , _onConflictDoUpdate
+  -- ** Insertion
+  _insert,
+  _onConflictDoUpdate,
 
-    -- ** Update
-  , _update
-  , _updateBy
-  , _updateFields
-  , _updateFieldsBy
+  -- ** Update
+  _update,
+  _updateBy,
+  _updateFields,
+  _updateFieldsBy,
 
-    -- ** Deletion
-  , _delete
-  , _deleteWhere
-  , _orderBy
-  , _orderByMany
-  )
-where
+  -- ** Deletion
+  _delete,
+  _deleteWhere,
+  _orderBy,
+  _orderByMany,
+) where
 
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)

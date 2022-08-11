@@ -12,36 +12,35 @@
 --  Stability   : stable
 --
 --  Types and classes
-module Database.PostgreSQL.Entity.Types
-  ( -- * The /Entity/ Typeclass
-    Entity (..)
+module Database.PostgreSQL.Entity.Types (
+  -- * The /Entity/ Typeclass
+  Entity (..),
 
-    -- * Associated Types
-  , Field
-  , field
-  , fieldName
-  , fieldType
-  , UpdateRow (..)
-  , SortKeyword (..)
+  -- * Associated Types
+  Field,
+  field,
+  fieldName,
+  fieldType,
+  UpdateRow (..),
+  SortKeyword (..),
 
-    -- * Generics
-  , Options (..)
-  , defaultEntityOptions
+  -- * Generics
+  Options (..),
+  defaultEntityOptions,
 
-    -- * DerivingVia Options
-  , GenericEntity (..)
-  , EntityOptions (..)
-  , PrimaryKey
-  , Schema
-  , TableName
-  , FieldModifiers
-  , TextModifier (..)
-  , StripPrefix
-  , CamelTo
-  , CamelToSnake
-  , CamelToKebab
-  )
-where
+  -- * DerivingVia Options
+  GenericEntity (..),
+  EntityOptions (..),
+  PrimaryKey,
+  Schema,
+  TableName,
+  FieldModifiers,
+  TextModifier (..),
+  StripPrefix,
+  CamelTo,
+  CamelToSnake,
+  CamelToKebab,
+) where
 
 import Data.Char
 import Data.Kind

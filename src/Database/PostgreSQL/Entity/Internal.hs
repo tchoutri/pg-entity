@@ -11,32 +11,31 @@
 --  Internal helpers used to implement the high-level API and SQL combinators.
 --
 --  You can re-use those building blocks freely to create your own wrappers.
-module Database.PostgreSQL.Entity.Internal
-  ( -- * Helpers
-    isNotNull
-  , isNull
-  , isIn
-  , inParens
-  , quoteName
-  , literal
-  , getTableName
-  , getFieldName
-  , getPrimaryKey
-  , prefix
-  , expandFields
-  , expandQualifiedFields
-  , expandQualifiedFields'
-  , qualifyField
-  , qualifyFields
-  , placeholder
-  , placeholder'
-  , generatePlaceholders
-  , textToQuery
-  , queryToText
-  , intercalateVector
-  , renderSortExpression
-  )
-where
+module Database.PostgreSQL.Entity.Internal (
+  -- * Helpers
+  isNotNull,
+  isNull,
+  isIn,
+  inParens,
+  quoteName,
+  literal,
+  getTableName,
+  getFieldName,
+  getPrimaryKey,
+  prefix,
+  expandFields,
+  expandQualifiedFields,
+  expandQualifiedFields',
+  qualifyField,
+  qualifyFields,
+  placeholder,
+  placeholder',
+  generatePlaceholders,
+  textToQuery,
+  queryToText,
+  intercalateVector,
+  renderSortExpression,
+) where
 
 import Data.String (fromString)
 import Data.Text (Text, unpack)
