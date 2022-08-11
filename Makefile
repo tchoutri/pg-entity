@@ -10,6 +10,9 @@ clean: ## Remove compilation artifacts
 repl: ## Start a REPL
 	@cabal repl
 
+watch: ## Reload the code on change
+	@ghcid
+
 test: ## Run the test suite
 	@cabal test
 

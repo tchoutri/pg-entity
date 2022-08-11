@@ -353,8 +353,8 @@ _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <
 -- It is most useful composed with a '_select' or '_delete', which is why these two combinations have their dedicated functions,
 -- but the user is free to compose their own queries.
 --
--- The 'Entity' constraint is required for '_where' in order to get any type annotation that was given in the schema, as well as to
--- filter out unexisting fields.
+-- The 'Entity' constraint is required for '_where' in order to get any type annotation that was given in the schema.
+-- Fields that do not exist in the Entity will be kept so that PostgreSQL can report the error.
 --
 -- __Examples__
 --
@@ -365,12 +365,10 @@ _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"uuid_list\" = ?"
 --
 -- @since 0.0.1.0
-_where :: forall e. Entity e => Vector Field -> Query
+_where :: Vector Field -> Query
 _where fs' = textToQuery $ " WHERE " <> clauseFields
   where
-    fieldNames = fmap fieldName fs'
-    fs = V.filter (\f -> fieldName f `elem` fieldNames) (fields @e)
-    clauseFields = fold $ intercalateVector " AND " (fmap placeholder fs)
+    clauseFields = fold $ intercalateVector " AND " (fmap placeholder fs')
 
 -- | Produce a SELECT statement for a given entity and fields.
 --
@@ -384,7 +382,7 @@ _where fs' = textToQuery $ " WHERE " <> clauseFields
 --
 -- @since 0.0.1.0
 _selectWhere :: forall e. Entity e => Vector Field -> Query
-_selectWhere fs = _select @e <> _where @e fs
+_selectWhere fs = _select @e <> _where fs
 
 -- | Produce a SELECT statement where the provided fields are checked for being non-null.
 -- r
@@ -608,7 +606,7 @@ _updateFieldsBy fs' f =
         <> " = "
         <> newValues
     )
-    <> _where @e [f]
+    <> _where [f]
   where
     fs = V.filter (/= (primaryKey @e)) fs'
     newValues = "ROW" <> inParens (generatePlaceholders fs)
@@ -625,7 +623,7 @@ _updateFieldsBy fs' f =
 --
 -- @since 0.0.1.0
 _delete :: forall e. Entity e => Query
-_delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryKey @e]
+_delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where [primaryKey @e]
 
 -- | Produce a DELETE statement for the given entity and fields
 --
@@ -636,7 +634,7 @@ _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where @e [primaryK
 --
 -- @since 0.0.1.0
 _deleteWhere :: forall e. Entity e => Vector Field -> Query
-_deleteWhere fs = textToQuery ("DELETE FROM " <> (getTableName @e)) <> _where @e fs
+_deleteWhere fs = textToQuery ("DELETE FROM " <> (getTableName @e)) <> _where fs
 
 -- | Produce an ORDER BY clause with one field and a sorting keyword
 --
