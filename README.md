@@ -1,4 +1,6 @@
-# PG-Entity
+<p align="center">
+  pg-entity
+</p>
 
 <p align="center">
 <a href="https://github.com/tchoutri/pg-entity/actions">
