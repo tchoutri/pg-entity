@@ -1,4 +1,18 @@
-# PG-Entity [![CI-badge][CI-badge]][CI-url] [![docs][docs]][docs-url] ![simple-haskell][simple-haskell]
+<h1 align="center">
+  pg-entity
+</h1>
+
+<p align="center">
+<a href="https://github.com/tchoutri/pg-entity/actions">
+  <img src="https://img.shields.io/github/workflow/status/tchoutri/pg-entity/CI?style=flat-square" alt="CI badge" />
+</a>
+<a href="https://haskell.org">
+  <img src="https://img.shields.io/badge/Made%20in-Haskell-%235e5086?logo=haskell&style=flat-square" alt="made with Haskell"/>
+</a>
+<a href="https://hackage.haskell.org/package/pg-entity">
+  <img src="https://img.shields.io/hackage/v/pg-entity?style=flat-square" alt="Hackage" />
+</a>
+</p>
 
 This library is a pleasant layer on top of [postgresql-simple][pg-simple] to safely expand the fields of a table when
 writing SQL queries.  
