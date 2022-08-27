@@ -57,11 +57,7 @@ extra-deps:
   - pg-entity-0.0.1.0
 ```
 
-The following GHC versions are supported:
-
-* 8.8
-* 8.10
-* 9.0
+* [List of supported GHC versions](https://github.com/tchoutri/pg-entity/blob/main/pg-entity.cabal#L16)
 
 ## Documentation
 
