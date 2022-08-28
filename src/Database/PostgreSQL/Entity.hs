@@ -358,10 +358,10 @@ _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <
 --
 -- __Examples__
 --
--- >>> _select @BlogPost <> _where @BlogPost [[field| blogpost_id |]]
+-- >>> _select @BlogPost <> _where [[field| blogpost_id |]]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
 --
--- >>> _select @BlogPost <> _where @BlogPost [ [field| uuid_list |] ]
+-- >>> _select @BlogPost <> _where [ [field| uuid_list |] ]
 -- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"uuid_list\" = ?"
 --
 -- @since 0.0.1.0
