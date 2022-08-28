@@ -1,6 +1,8 @@
 # Revision history for Entity
 
-## 0.0.2.0 -- YYYY-mm-dd
+## 0.0.2.0 -- 2022-08-27
+
+This is an experimental release
 
 * Add `queryOne_`, which takes no params and returns 0 or 1 results.
 * Add `FieldModifiers` deriving option, which takes multiple modifiers:
