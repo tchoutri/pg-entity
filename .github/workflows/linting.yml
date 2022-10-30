@@ -6,41 +6,29 @@ on:
     branches: ["main", "development"]
 
 jobs:
+  fourmolu:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: fourmolu/fourmolu-action@v4
+      with:
+        pattern: |
+          src/**/*.hs
+          test/**/*.hs
+
   hlint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
 
     - name: 'Set up HLint'
       uses: rwe/actions-hlint-setup@v1
       with:
-        version: '3.4'
+        version: '3.3.6'
 
     - name: 'Run HLint'
       uses: rwe/actions-hlint-run@v1
       with:
         path: '["src/", "test/"]'
         fail-on: warning
-
-  styling:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Haskell
-      id: setup-haskell
-      uses: haskell/actions/setup@v1
-      with:
-        ghc-version: "9.2.3"
-        cabal-version: "latest"
-
-    - name: Install tools
-      run: |
-        cd ~/
-        echo "$HOME/.ghcup/bin" >> $GITHUB_PATH
-        echo "$HOME/.cabal/bin" >> $GITHUB_PATH
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        cabal install -j fourmolu
-
-    - name: Running fourmolu
-      run: ./.github/workflows/fourmolu-runner.sh

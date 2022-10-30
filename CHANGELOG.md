@@ -1,5 +1,9 @@
 # Revision history for Entity
 
+## 0.0.3.0 -- 2022-10-30
+
+* Fix compilation with resource-pool <0.3 (#51)
+
 ## 0.0.2.0 -- 2022-08-27
 
 This is an experimental release
