@@ -31,6 +31,10 @@ import qualified Database.PostgreSQL.Simple as Simple
 #endif
 
 import Control.Monad.IO.Class
+#if MIN_VERSION_resource_pool(0,3,0)
+#else
+import Control.Monad.Trans.Control
+#endif
 import Data.Int
 import Data.Maybe (listToMaybe)
 import Data.Pool (Pool, createPool, withResource)
