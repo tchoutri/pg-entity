@@ -1,16 +1,17 @@
 {-# LANGUAGE TemplateHaskell #-}
 
--- |
--- Module     : Database.PostgreSQL.Entity.Internal.QQ
--- Copyright  : © Koz Ross, 2021
--- License    : MIT
--- Maintainer : koz.ross@retro-freedom.nz
--- Stability  : Experimental
---
--- A quasi-quoter for 'Field's, supporting optional types.
---
--- There is little reason to import this module directly; instead, import
--- 'Database.PostgreSQL.Entity', which re-exports the 'field' quasiquoter.
+{-|
+ Module     : Database.PostgreSQL.Entity.Internal.QQ
+ Copyright  : © Koz Ross, 2021
+ License    : MIT
+ Maintainer : koz.ross@retro-freedom.nz
+ Stability  : Experimental
+
+ A quasi-quoter for 'Field's, supporting optional types.
+
+ There is little reason to import this module directly; instead, import
+ 'Database.PostgreSQL.Entity', which re-exports the 'field' quasiquoter.
+-}
 module Database.PostgreSQL.Entity.Internal.QQ (field) where
 
 import Data.Text (Text, pack)
@@ -20,22 +21,23 @@ import Language.Haskell.TH.Quote (QuasiQuoter (QuasiQuoter))
 import Language.Haskell.TH.Syntax (lift)
 import Text.Parsec (Parsec, anyChar, manyTill, parse, space, spaces, string, try, (<|>))
 
--- | A quasi-quoter for safely constructing 'Field's.
---
--- == Example:
---
--- > instance Entity BlogPost where
--- >   tableName  = "blogposts"
--- >   primaryKey = [field| blogpost_id |]
--- >   fields = [ [field| blogpost_id |]
--- >            , [field| author_id |]
--- >            , [field| uuid_list :: uuid[] |] -- ← This is where we specify an optional PostgreSQL type annotation
--- >            , [field| title |]
--- >            , [field| content |]
--- >            , [field| created_at |]
--- >            ]
---
--- @since 0.1.0.0
+{-| A quasi-quoter for safely constructing 'Field's.
+
+ == Example:
+
+ > instance Entity BlogPost where
+ >   tableName  = "blogposts"
+ >   primaryKey = [field| blogpost_id |]
+ >   fields = [ [field| blogpost_id |]
+ >            , [field| author_id |]
+ >            , [field| uuid_list :: uuid[] |] -- ← This is where we specify an optional PostgreSQL type annotation
+ >            , [field| title |]
+ >            , [field| content |]
+ >            , [field| created_at |]
+ >            ]
+
+ @since 0.1.0.0
+-}
 field :: QuasiQuoter
 field = QuasiQuoter fieldExp errorFieldPat errorFieldType errorFieldDec
 

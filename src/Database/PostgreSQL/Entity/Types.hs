@@ -3,15 +3,16 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- |
---  Module      : Database.PostgreSQL.Entity.Types
---  Copyright   : © Clément Delafargue, 2018
---                  Théophile Choutri, 2021
---  License     : MIT
---  Maintainer  : theophile@choutri.eu
---  Stability   : stable
---
---  Types and classes
+{-|
+  Module      : Database.PostgreSQL.Entity.Types
+  Copyright   : © Clément Delafargue, 2018
+                  Théophile Choutri, 2021
+  License     : MIT
+  Maintainer  : theophile@choutri.eu
+  Stability   : stable
+
+  Types and classes
+-}
 module Database.PostgreSQL.Entity.Types
   ( -- * The /Entity/ Typeclass
     Entity (..)
@@ -60,28 +61,29 @@ import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import GHC.Generics
 import GHC.TypeLits
 
--- | An 'Entity' stores the following information about the structure of a database table:
---
--- * Its name
--- * Its primary key
--- * The fields it contains
---
--- == Example
---
--- > data ExampleEntity = E
--- >   { key    :: Key
--- >   , field1 :: Int
--- >   , field2 :: Bool
--- >   }
--- >   deriving stock (Eq, Show, Generic)
--- >   deriving anyclass (FromRow, ToRow)
--- >   deriving Entity
--- >      via (GenericEntity '[TableName "entities"] ExampleEntity)
---
--- When using the functions provided by this library, you will sometimes need to be explicit about the Entity you are
--- referring to.
---
--- @since 0.0.1.0
+{-| An 'Entity' stores the following information about the structure of a database table:
+
+ * Its name
+ * Its primary key
+ * The fields it contains
+
+ == Example
+
+ > data ExampleEntity = E
+ >   { key    :: Key
+ >   , field1 :: Int
+ >   , field2 :: Bool
+ >   }
+ >   deriving stock (Eq, Show, Generic)
+ >   deriving anyclass (FromRow, ToRow)
+ >   deriving Entity
+ >      via (GenericEntity '[TableName "entities"] ExampleEntity)
+
+ When using the functions provided by this library, you will sometimes need to be explicit about the Entity you are
+ referring to.
+
+ @since 0.0.1.0
+-}
 class Entity e where
   -- | The name of the table in the PostgreSQL database.
   tableName :: Text
@@ -135,8 +137,8 @@ instance GetTableName e => GetTableName (M1 S _1 e) where
   getTableName opts = getTableName @e opts
 
 instance
-  (KnownSymbol name) =>
-  GetTableName (M1 D ( 'MetaData name _1 _2 _3) e)
+  (KnownSymbol name)
+  => GetTableName (M1 D ( 'MetaData name _1 _2 _3) e)
   where
   getTableName Options{tableNameModifiers, fieldModifiers} = tableNameModifiers $ fieldModifiers $ T.pack $ symbolVal (Proxy :: Proxy name)
 
@@ -247,12 +249,13 @@ type CamelToSnake = CamelTo "_"
 -- | CamelCase to kebab-case
 type CamelToKebab = CamelTo "-"
 
--- | The modifiers that you can apply to the fields:
---
--- * 'StripPrefix'
--- * 'CamelTo', and its variations
---   * 'CamelToSnake'
---   * 'CamelToKebab'
+{-| The modifiers that you can apply to the fields:
+
+ * 'StripPrefix'
+ * 'CamelTo', and its variations
+   * 'CamelToSnake'
+   * 'CamelToKebab'
+-}
 class TextModifier t where
   getTextModifier :: Text -> Text
 
@@ -294,22 +297,25 @@ type family NonEmptyText (xs :: Symbol) :: Constraint where
   NonEmptyText "" = TypeError ( 'Text "User-provided string cannot be empty!")
   NonEmptyText _ = ()
 
--- | Get the name of a field.
---
--- @since 0.1.0.0
+{-| Get the name of a field.
+
+ @since 0.1.0.0
+-}
 fieldName :: Field -> Text
 fieldName (Field name _) = name
 
--- | Get the type of a field, if any.
---
--- @since 0.1.0.0
+{-| Get the type of a field, if any.
+
+ @since 0.1.0.0
+-}
 fieldType :: Field -> Maybe Text
 fieldType (Field _ typ) = typ
 
--- | Wrapper used by the update function in order to have the primary key as the last parameter passed,
--- since it appears in the WHERE clause.
---
--- @since 0.0.1.0
+{-| Wrapper used by the update function in order to have the primary key as the last parameter passed,
+ since it appears in the WHERE clause.
+
+ @since 0.0.1.0
+-}
 newtype UpdateRow a = UpdateRow {getUpdate :: a}
   deriving stock (Eq, Show)
   deriving newtype (Entity)
@@ -317,8 +323,9 @@ newtype UpdateRow a = UpdateRow {getUpdate :: a}
 instance ToRow a => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
 
--- |
--- @since 0.0.2.0
+{-|
+ @since 0.0.2.0
+-}
 data SortKeyword = ASC | DESC
   deriving stock (Eq, Show)
   deriving

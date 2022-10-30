@@ -84,7 +84,7 @@ library
 
   hs-source-dirs:  src
   build-depends:
-    , base               >=4.12     && <=4.18
+    , base               >=4.12     && <4.18.0
     , bytestring         ^>=0.11
     , colourista         ^>=0.1
     , exceptions         ^>=0.10
@@ -94,7 +94,7 @@ library
     , postgresql-simple  ^>=0.6
     , resource-pool      ^>=0.3
     , safe-exceptions    ^>=0.1
-    , template-haskell   >=2.15.0.0 && <=2.18.0.0
+    , template-haskell   >=2.15.0.0 && <2.18.0.0.0
     , text               ^>=2.0
     , text-display       ^>=0.0
     , text-manipulate    ^>=0.3

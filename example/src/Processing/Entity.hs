@@ -27,32 +27,33 @@ data EntityError
   | EntityProcessingIsRunning
   deriving (Eq, Show)
 
-insertEntity ::
-  (MonadIO m) =>
-  E ->
-  DBT m ()
+insertEntity
+  :: (MonadIO m)
+  => E
+  -> DBT m ()
 insertEntity = insert @E
 
-getEntity ::
-  (MonadError EntityError m, MonadIO m) =>
-  Int ->
-  DBT m E
+getEntity
+  :: (MonadError EntityError m, MonadIO m)
+  => Int
+  -> DBT m E
 getEntity key = do
   result <- selectById (Only key)
   case result of
     Just e -> pure e
     Nothing -> lift $ throwError EntityNotFound
 
--- | We fetch the entity by its key
--- We check if it is in a good state by checking the flag
---   If the 'state' flag is False, we throw EntityBadState
--- We check if it is already processing by checking the flag
---  If the 'processing' flag is True, we throw EntityProcessingIsRunning
--- Otherwise, we switch the the 'processing' flag to true
-markForProcessing ::
-  (MonadError EntityError m, MonadIO m) =>
-  Int ->
-  DBT m ()
+{-| We fetch the entity by its key
+ We check if it is in a good state by checking the flag
+   If the 'state' flag is False, we throw EntityBadState
+ We check if it is already processing by checking the flag
+  If the 'processing' flag is True, we throw EntityProcessingIsRunning
+ Otherwise, we switch the the 'processing' flag to true
+-}
+markForProcessing
+  :: (MonadError EntityError m, MonadIO m)
+  => Int
+  -> DBT m ()
 markForProcessing key = do
   entity <- getEntity key
   checkSanity entity

@@ -2,19 +2,20 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE StrictData #-}
 
--- |
---  Module      : Database.PostgreSQL.Entity.Internal.BlogPost
---  Copyright   : © Clément Delafargue, 2018
---                  Théophile Choutri, 2021
---                  Koz Ross, 2021
---  License     : MIT
---  Maintainer  : theophile@choutri.eu
---  Stability   : stable
---
---  Adapted from Clément Delafargue's [Yet Another Unsafe DB Layer](https://tech.fretlink.com/yet-another-unsafe-db-layer/)
---  article.
---
---  The models described in this module are used throughout the library's tests and docspecs.
+{-|
+  Module      : Database.PostgreSQL.Entity.Internal.BlogPost
+  Copyright   : © Clément Delafargue, 2018
+                  Théophile Choutri, 2021
+                  Koz Ross, 2021
+  License     : MIT
+  Maintainer  : theophile@choutri.eu
+  Stability   : stable
+
+  Adapted from Clément Delafargue's [Yet Another Unsafe DB Layer](https://tech.fretlink.com/yet-another-unsafe-db-layer/)
+  article.
+
+  The models described in this module are used throughout the library's tests and docspecs.
+-}
 module Database.PostgreSQL.Entity.Internal.BlogPost where
 
 import Data.Text (Text)
@@ -81,8 +82,9 @@ instance ToField UUIDList where
             ++ [Plain (char8 ']')]
             ++ [Plain (byteString " :: uuid[]")]
 
--- | The BlogPost data-type. Look at its 'Entity' instance declaration for how to handle
--- a "uuid[]" PostgreSQL type.
+{-| The BlogPost data-type. Look at its 'Entity' instance declaration for how to handle
+ a "uuid[]" PostgreSQL type.
+-}
 data BlogPost = BlogPost
   { blogPostId :: BlogPostId
   -- ^ Primary key
@@ -112,8 +114,9 @@ instance Entity BlogPost where
     , [field| created_at |]
     ]
 
--- | A specialisation of the 'Database.PostgreSQL.Entity.insert' function.
--- @insertBlogPost = insert \@BlogPost@
+{-| A specialisation of the 'Database.PostgreSQL.Entity.insert' function.
+ @insertBlogPost = insert \@BlogPost@
+-}
 insertBlogPost :: BlogPost -> DBT IO ()
 insertBlogPost = insert @BlogPost
 
@@ -124,8 +127,9 @@ upsertBlogPost = upsert @BlogPost
 bulkInsertBlogPosts :: [BlogPost] -> DBT IO ()
 bulkInsertBlogPosts = insertMany @BlogPost
 
--- | A specialisation of the 'Database.PostgreSQL.Entity.insert function.
--- @insertAuthor = insert \@Author@
+{-| A specialisation of the 'Database.PostgreSQL.Entity.insert function.
+ @insertAuthor = insert \@Author@
+-}
 insertAuthor :: Author -> DBT IO ()
 insertAuthor = insert @Author
 
