@@ -115,19 +115,19 @@ class Entity e where
 class GetTableName (e :: Type -> Type) where
   getTableName :: Options -> Text
 
-instance (TypeError ( 'Text "You can't derive Entity for a void type")) => GetTableName V1 where
+instance (TypeError ('Text "You can't derive Entity for a void type")) => GetTableName V1 where
   getTableName _opts = error "You can't derive Entity for a void type"
 
-instance (TypeError ( 'Text "You can't derive Entity for a unit type")) => GetTableName U1 where
+instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetTableName U1 where
   getTableName _opts = error "You can't derive Entity for a unit type"
 
-instance (TypeError ( 'Text "You can't derive Entity for a sum type")) => GetTableName (e :+: f) where
+instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetTableName (e :+: f) where
   getTableName _opts = error "You can't derive Entity for a sum type"
 
-instance (TypeError ( 'Text "You can't derive an Entity for a type constructor's field")) => GetTableName (K1 i c) where
+instance (TypeError ('Text "You can't derive an Entity for a type constructor's field")) => GetTableName (K1 i c) where
   getTableName _opts = error "You can't derive Entity for a type constructor's field"
 
-instance (TypeError ( 'Text "You don't have to derive GetTableName for a product type")) => GetTableName (e :*: f) where
+instance (TypeError ('Text "You don't have to derive GetTableName for a product type")) => GetTableName (e :*: f) where
   getTableName _opts = error "You don't have to derive GetTableName for a product type"
 
 instance GetTableName e => GetTableName (M1 C _1 e) where
@@ -138,7 +138,7 @@ instance GetTableName e => GetTableName (M1 S _1 e) where
 
 instance
   (KnownSymbol name)
-  => GetTableName (M1 D ( 'MetaData name _1 _2 _3) e)
+  => GetTableName (M1 D ('MetaData name _1 _2 _3) e)
   where
   getTableName Options{tableNameModifiers, fieldModifiers} = tableNameModifiers $ fieldModifiers $ T.pack $ symbolVal (Proxy :: Proxy name)
 
@@ -146,16 +146,16 @@ instance
 class GetFields (e :: Type -> Type) where
   getField :: Options -> Vector Field
 
-instance (TypeError ( 'Text "You can't derive Entity for a void type")) => GetFields V1 where
+instance (TypeError ('Text "You can't derive Entity for a void type")) => GetFields V1 where
   getField _opts = error "You can't derive Entity for a void type"
 
-instance (TypeError ( 'Text "You can't derive Entity for a unit type")) => GetFields U1 where
+instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetFields U1 where
   getField _opts = error "You can't derive Entity for a unit type"
 
-instance (TypeError ( 'Text "You can't derive Entity for a sum type")) => GetFields (e :+: f) where
+instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetFields (e :+: f) where
   getField _opts = error "You can't derive Entity for a sum type"
 
-instance (TypeError ( 'Text "You can't derive Entity for a a type constructor's field")) => GetFields (K1 i c) where
+instance (TypeError ('Text "You can't derive Entity for a a type constructor's field")) => GetFields (K1 i c) where
   getField _opts = error "You can't derive Entity for a type constructor's field"
 
 instance (GetFields e, GetFields f) => GetFields (e :*: f) where
@@ -164,10 +164,10 @@ instance (GetFields e, GetFields f) => GetFields (e :*: f) where
 instance GetFields e => GetFields (M1 C _1 e) where
   getField opts = getField @e opts
 
-instance GetFields e => GetFields (M1 D ( 'MetaData _1 _2 _3 _4) e) where
+instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
   getField opts = getField @e opts
 
-instance (KnownSymbol name) => GetFields (M1 S ( 'MetaSel ( 'Just name) _1 _2 _3) _4) where
+instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
   getField Options{fieldModifiers} = V.singleton $ Field fieldName' Nothing
     where
       fieldName' = fieldModifiers $ T.pack $ symbolVal (Proxy @name)
@@ -294,7 +294,7 @@ instance (KnownSymbol name, NonEmptyText name) => GetName name where
   getName = T.pack (symbolVal (Proxy @name))
 
 type family NonEmptyText (xs :: Symbol) :: Constraint where
-  NonEmptyText "" = TypeError ( 'Text "User-provided string cannot be empty!")
+  NonEmptyText "" = TypeError ('Text "User-provided string cannot be empty!")
   NonEmptyText _ = ()
 
 {-| Get the name of a field.
