@@ -4,8 +4,6 @@ tests: True
 
 documentation: True
 
-index-state: 2022-07-05T13:19:53Z
-
 test-show-details: direct
 
 extra-lib-dirs:
