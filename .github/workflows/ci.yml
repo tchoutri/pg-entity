@@ -44,7 +44,7 @@ jobs:
     - name: Configure environment
       run: |
         sudo apt update -y
-        sudo apt install -y postgresql-12 libpq-dev 
+        sudo apt install -y postgresql libpq-dev 
         echo "/usr/lib/postgresql/14/bin/" >> $GITHUB_PATH
         echo "$HOME/.ghcup/bin" >> $GITHUB_PATH
         echo "$HOME/.cabal/bin" >> $GITHUB_PATH
