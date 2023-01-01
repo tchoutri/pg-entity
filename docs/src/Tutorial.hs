@@ -1,11 +1,14 @@
 -- ## pg-entity tutorial
 -- In this tutorial, you will learn how to implement the Entity typeclass for your business logic data-types, and run
 -- queries against the database.
+--
 -- ### Setting up
 -- #### Language Extensions
--- \* `OverloadedLists` allow us to use the `[list]` syntax for datatypes other than List, like Vector.
--- \* `QuasiQuotes` enable us to write plain SQL and field names in a `[|quasi-quoter block|]`.
--- \* The Deriving extensions give us more powerful typeclass derivation.
+--
+-- * `OverloadedLists` allow us to use the `[list]` syntax for datatypes other than List, like Vector.
+-- * `QuasiQuotes` enable us to write plain SQL and field names in a `[|quasi-quoter block|]`.
+-- * The Deriving extensions give us more powerful typeclass derivation.
+
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
