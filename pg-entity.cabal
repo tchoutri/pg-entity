@@ -5,7 +5,7 @@ description:
   A PostgreSQL layer to safely expand your SQL queries with a lightweight eDSL.
   Read the tutorial at https://tchoutri.github.io/pg-entity/Tutorial
 
-version:            0.0.4.0
+version:            0.0.4.1
 homepage:           https://tchoutri.github.io/pg-entity
 bug-reports:        https://github.com/tchoutri/pg-entity/issues
 author:             Théophile Choutri
@@ -26,10 +26,13 @@ extra-doc-files:
   ./docs/book/FontAwesome/css/font-awesome.css
   ./docs/book/FontAwesome/fonts/fontawesome-webfont.woff2
   ./docs/book/fonts/*.woff2
+  ./docs/book/fonts/*.css
   ./docs/book/*.css
+  ./docs/book/css/*.css
   ./docs/book/*.js
   ./docs/book/favicon.png
   ./docs/book/favicon.svg
+  ./docs/book/searchindex.json
 
 flag prod
   description:
