@@ -4,7 +4,7 @@
 
 <p align="center">
 <a href="https://github.com/tchoutri/pg-entity/actions">
-  <img src="https://img.shields.io/github/workflow/status/tchoutri/pg-entity/CI?style=flat-square" alt="CI badge" />
+  <img src="https://img.shields.io/github/actions/workflow/status/tchoutri/pg-entity/ci.yml?style=flat-square" alt="CI badge" />
 </a>
 <a href="https://haskell.org">
   <img src="https://img.shields.io/badge/Made%20in-Haskell-%235e5086?logo=haskell&style=flat-square" alt="made with Haskell"/>
@@ -61,13 +61,14 @@ extra-deps:
 
 ## Documentation
 
+You will find the Tutorial [here][docs-url], and you will find below a short showcase of the library.
+
 This library aims to be thoroughly tested, by the means of Oleg Grenrus' [cabal-docspec][docspec]
 and more traditional tests for database roundtrips.
 
 I aim to produce and maintain a decent documentation, therefore do not hesitate to raise an issue if you feel that
 something is badly explained and should be improved.
 
-You will find the Tutorial [here][docs-url], and you will find below a short showcase of the library.
 
 ### Escape hatches
 
@@ -96,7 +97,7 @@ I wish to thank
 * Joe Kachmar, who enlightened me many times
 
 [docs]: https://img.shields.io/badge/Tutorial%20and%20Guides-pg--entity-blueviolet
-[docs-url]: https://tchoutri.github.io/pg-entity/
+[docs-url]: https://hackage.haskell.org/package/pg-entity/src/docs/book/index.html
 [docspec]: https://github.com/phadej/cabal-extras/blob/master/cabal-docspec/MANUAL.md
 [pg-transact-hspec]: https://github.com/jfischoff/pg-transact-hspec.git
 [entity-blogpost-fretlink]: https://tech.fretlink.com/yet-another-unsafe-db-layer/
