@@ -13,17 +13,33 @@ maintainer:         Théophile Choutri
 category:           Database
 license:            MIT
 build-type:         Simple
-tested-with:        GHC ==8.8.4 || ==8.10.7 || ==9.0.2 || ==9.2.4
+tested-with:
+  GHC ==8.8.4 || ==8.10.7 || ==9.0.2 || ==9.2.5 || ==9.4.4
+
 extra-source-files:
   CHANGELOG.md
   LICENSE.md
   README.md
 
+extra-doc-files:
+  ./docs/book/*.html
+  ./docs/book/FontAwesome/css/font-awesome.css
+  ./docs/book/FontAwesome/fonts/fontawesome-webfont.woff2
+  ./docs/book/fonts/*.woff2
+  ./docs/book/*.css
+  ./docs/book/*.js
+  ./docs/book/favicon.png
+  ./docs/book/favicon.svg
+
 flag prod
   description:
-    This flag enables features for production usage, namely:
-    * Disable logging output
+    This flag enables features for production usage, like disabling logs
 
+  default:     False
+  manual:      True
+
+flag book
+  description: Enable the generation of the book
   default:     False
   manual:      True
 
@@ -104,6 +120,38 @@ library
 
   if flag(prod)
     cpp-options: -DPROD
+
+executable book
+  import:         common-extensions
+  import:         common-ghc-options
+  import:         common-rts-options
+  main-is:        Main.hs
+  other-modules:
+    ErrorsGuide
+    Introduction
+    Tutorial
+
+  hs-source-dirs: docs/src
+
+  if !flag(book)
+    buildable: False
+
+  build-depends:
+    , base
+    , containers
+    , directory
+    , literatex
+    , monad-control
+    , mtl
+    , pg-entity
+    , pg-transact
+    , postgresql-simple
+    , resource-pool
+    , shake
+    , strict
+    , text
+    , time
+    , uuid
 
 test-suite entity-test
   import:         common-extensions

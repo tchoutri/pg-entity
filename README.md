@@ -54,7 +54,7 @@ or in your `stack.yaml` file:
 
 ```
 extra-deps:
-  - pg-entity-0.0.1.0
+  - pg-entity-0.0.4.0
 ```
 
 * [List of supported GHC versions](https://github.com/tchoutri/pg-entity/blob/main/pg-entity.cabal#L16)
@@ -68,102 +68,6 @@ I aim to produce and maintain a decent documentation, therefore do not hesitate 
 something is badly explained and should be improved.
 
 You will find the Tutorial [here][docs-url], and you will find below a short showcase of the library.
-
-### Usage
-
-The idea is to implement the `Entity` typeclass for the datatypes that represent your PostgreSQL table. 
-
-```Haskell
--- Traditional list & string syntax
-{-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE OverloadedStrings #-}
--- Quasi-quoter to construct SQL expressions
-{-# LANGUAGE QuasiQuotes #-}
--- Deriving machinery
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DerivingVia #-}
-
-import Data.UUID (UUID)
-import Data.Vector (Vector)
-import Database.PostgreSQL.Simple.SqlQQ
-
-import Database.PostgreSQL.Entity
-
--- This is our Primary Key newtype. It is wrapped in a newtype to make
--- it impossible to mitake with a plain `UUID`, but we still want to
--- benefit from the pre-existing typeclass instances that exist for
--- `UUID`. You can read the last two lines as:
--- > We use the definitions posessed by `UUID` for our own newtype.
-newtype JobId = JobId { getJobId :: UUID }
-  deriving (Eq, Show, FromField, ToField)
-    via UUID
-
--- A straightforward table definition, which lets us use
--- the DerivingVia mechanism to declare the table name
--- in the `deriving` clause, and infer the fields and primary key.
--- The field names will be converted to snake_case.
-
-data Job
-  = Job { jobId    :: JobId
-        , lockedAt :: UTCTime
-        , jobName  :: Text
-        }
-  deriving stock (Eq, Generic, Show)
-  deriving anyclass (FromRow, ToRow)
-  deriving Entity
-    via (GenericEntity '[TableName "jobs"] Job)
-
--- In the above deriving clause, we only had to specify the table name in order to pluralise it,
--- leaving the guessing of the primary key and the table names to the library.
-
--- Below is a richer table definition that needs some type annotations to help PostgreSQL.
--- We will have to write out the full instance by hand
-
-newtype BagId = BagId { getBagId :: UUID }
-  deriving (Eq, Show, FromField, ToField)
-    via UUID
-
--- | This is a PostgreSQL Enum, which needs to be marked as such in SQL type annotations.
-data Properties = P1 | P2 | P3
-  deriving stock (Eq, Generic, Show)
-  deriving anyclass (FromRow, ToRow)
-
-data Bag
-  = Bag { bagId      :: BagId
-        , someField  :: Vector UUID
-        , properties :: Vector Properties
-        }
-  deriving stock (Eq, Generic, Show)
-  deriving anyclass (FromRow, ToRow)
-
-
-instance Entity Bag where
-  tableName  = "bags"
-  primaryKey = [field| bag_id |]
-  fields     = [ [field| bag_id |]
-               , [field| some_field :: uuid[] |]
-               , [field| properties :: properties[] |]
-               ]
-
--- You can write specialised functions to remove the noise of Type Applications
-
-insertBag :: Bag -> DBT IO ()
-insertBag = insert -- `insert` will be specialised to `Bag`
-
--- And you can insert raw SQL through postgresql-simple
-
-isJobLocked :: Int -> DBT IO (Only Bool)
-isJobLocked jobId = queryOne Select q (Only jobId)
-  where q = [sql| SELECT
-                    CASE WHEN locked_at IS NULL then false
-                         ELSE true
-                     END
-                   FROM jobs WHERE job_id = ?
-            |]
-```
-
-For more examples, see the [BlogPost][BlogPost-module] module for the data-type that is used throughout the tests and doctests.
 
 ### Escape hatches
 

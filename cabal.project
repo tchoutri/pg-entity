@@ -2,6 +2,8 @@ packages: ./
 
 tests: True
 
+flags: +book
+
 documentation: True
 
 test-show-details: direct

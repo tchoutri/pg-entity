@@ -1,0 +1,7 @@
+[book]
+authors = ["Théophile Choutri"]
+language = "en"
+multilingual = false
+src = ".markdown"
+title = "PG-Entity Book"
+create-missing = false
