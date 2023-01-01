@@ -25,10 +25,11 @@ where
 
 #ifdef PROD
 #else
-import Colourista.IO (cyanMessage, redMessage, yellowMessage)
+import Colourista (cyan, red, yellow, formatWith)
 import Data.ByteString (ByteString)
-import Data.Text.Encoding (decodeUtf8)
 import qualified Database.PostgreSQL.Simple as Simple
+import System.IO (stdout)
+import qualified Data.ByteString.Char8 as BS
 #endif
 
 import Control.Monad.IO.Class
@@ -169,6 +170,11 @@ executeMany queryNature q params = do
   logQueryFormatMany queryNature q params
   PGT.executeMany q params
 
+#ifndef PROD
+displayColoured :: (MonadIO m) => ByteString -> ByteString -> PGT.DBT m ()
+displayColoured colour text = liftIO $ BS.hPutStrLn stdout (formatWith [colour] text)
+#endif
+
 #ifdef PROD
 logQueryFormat :: (Monad m) => QueryNature -> Query -> params -> PGT.DBT m ()
 logQueryFormat _ _ _ = pure ()
@@ -178,10 +184,10 @@ logQueryFormat :: (ToRow params, MonadIO m)
 logQueryFormat queryNature q params = do
   msg <- PGT.formatQuery q params
   case queryNature of
-    Select -> liftIO $ cyanMessage   $ decodeUtf8 msg
-    Update -> liftIO $ yellowMessage $ decodeUtf8 msg
-    Insert -> liftIO $ yellowMessage $ decodeUtf8 msg
-    Delete -> liftIO $ redMessage    $ decodeUtf8 msg
+    Select -> displayColoured cyan msg
+    Update -> displayColoured yellow msg
+    Insert -> displayColoured yellow msg
+    Delete -> displayColoured red msg
 #endif
 
 #ifdef PROD
@@ -192,10 +198,10 @@ logQueryFormatMany :: (ToRow params, MonadIO m) => QueryNature -> Query -> [para
 logQueryFormatMany queryNature q params = do
   msg <- formatMany q params
   case queryNature of
-    Select -> liftIO $ cyanMessage   $ decodeUtf8 msg
-    Update -> liftIO $ yellowMessage $ decodeUtf8 msg
-    Insert -> liftIO $ yellowMessage $ decodeUtf8 msg
-    Delete -> liftIO $ redMessage    $ decodeUtf8 msg
+    Select -> displayColoured cyan msg
+    Update -> displayColoured yellow msg
+    Insert -> displayColoured yellow msg
+    Delete -> displayColoured red msg
 
 formatMany :: (ToRow q, MonadIO m) => Query -> [q] -> PGT.DBT m ByteString
 formatMany q xs = PGT.getConnection >>= \conn -> liftIO $ Simple.formatMany conn q xs
