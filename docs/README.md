@@ -8,7 +8,7 @@ In order to build this book, you must install
 Run the following in the top-level directory:
 
 ```bash
-$ ghcid --target exe:book -T Main.main --setup ':set args process'
+$ ghcid --reload=./docs/src --target exe:book -T Main.main --setup ':set args process'
 ```
 
 In another terminal, run

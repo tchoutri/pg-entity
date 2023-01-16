@@ -22,16 +22,16 @@ extra-source-files:
   README.md
 
 extra-doc-files:
-  ./docs/book/*.html
-  ./docs/book/FontAwesome/css/font-awesome.css
-  ./docs/book/FontAwesome/fonts/fontawesome-webfont.woff2
-  ./docs/book/fonts/*.woff2
-  ./docs/book/fonts/*.css
   ./docs/book/*.css
-  ./docs/book/css/*.css
+  ./docs/book/*.html
   ./docs/book/*.js
+  ./docs/book/css/*.css
   ./docs/book/favicon.png
   ./docs/book/favicon.svg
+  ./docs/book/FontAwesome/css/font-awesome.css
+  ./docs/book/FontAwesome/fonts/fontawesome-webfont.woff2
+  ./docs/book/fonts/*.css
+  ./docs/book/fonts/*.woff2
   ./docs/book/searchindex.json
 
 flag prod
@@ -131,7 +131,6 @@ executable book
   main-is:        Main.hs
   other-modules:
     ErrorsGuide
-    Introduction
     Tutorial
 
   hs-source-dirs: docs/src

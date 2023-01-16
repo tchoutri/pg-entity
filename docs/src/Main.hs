@@ -3,11 +3,8 @@
 
 module Main where
 
-import Control.Monad (when)
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable
 import Data.Function
-import qualified Data.List as List
 import Development.Shake
 import Development.Shake.FilePath
 import qualified LiterateX
@@ -15,7 +12,11 @@ import LiterateX.Renderer (Options (..))
 import qualified LiterateX.Renderer as Renderer
 import qualified LiterateX.Types.SourceFormat as SourceFormat
 import qualified System.Directory as Directory
-import qualified System.IO.Strict as Strict
+
+data FileFormat
+  = Haskell
+  | Markdown
+  deriving stock (Eq, Show)
 
 main :: IO ()
 main = shakeArgs shakeOptions{shakeFiles = "_build"} $ do
@@ -23,19 +24,26 @@ main = shakeArgs shakeOptions{shakeFiles = "_build"} $ do
     putInfo "[+] Processing files…"
     liftIO $ Directory.createDirectoryIfMissing True "./docs/.markdown"
     liftIO Directory.getCurrentDirectory
-      >>= liftIO . putStrLn
-    files' <- getDirectoryFiles "./docs/src" ["//*.hs"]
-    let files = filter (/= "Main.hs") files'
-    liftIO $ print files
-    forM_ files $ \f -> do
-      let fileName = toMarkdownFile f
-      liftIO $
-        LiterateX.transformFileToFile
-          SourceFormat.DoubleDash
-          literatexOptions
-          ("./docs/src" </> f)
-          fileName
-      processFullProseModule fileName
+    haskellFiles' <- getDirectoryFiles "./docs/src" ["//*.hs"]
+    let haskellFiles = filter (/= "Main.hs") haskellFiles'
+    markdownFiles <- getDirectoryFiles "./docs/src" ["//*.md"]
+    liftIO $ processFiles Haskell haskellFiles
+    liftIO $ processFiles Markdown markdownFiles
+
+processFiles :: FileFormat -> [FilePath] -> IO ()
+processFiles Haskell files = do
+  forM_ files $ \f -> do
+    let fileName = toMarkdownFile f
+    liftIO $
+      LiterateX.transformFileToFile
+        SourceFormat.DoubleDash
+        literatexOptions
+        ("./docs/src" </> f)
+        fileName
+processFiles Markdown files = do
+  forM_ files $ \f -> do
+    let fileName = toMarkdownFile f
+    Directory.copyFile ("./docs/src" </> f) fileName
 
 literatexOptions :: Options
 literatexOptions =
@@ -68,10 +76,3 @@ prependPath prefixPath path = prefixPath </> path
 -}
 appendExtension :: FilePath -> FilePath -> FilePath
 appendExtension extension path = path <.> extension
-
-processFullProseModule :: (MonadIO m) => FilePath -> m ()
-processFullProseModule filepath = do
-  file <- liftIO $ Strict.readFile filepath
-  when ("{-# ANN module False #-}" `List.isInfixOf` file) $
-    liftIO $
-      writeFile filepath (unlines $ List.drop 5 $ lines file)

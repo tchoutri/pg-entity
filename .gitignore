@@ -15,5 +15,5 @@ tags.mtime
 _build
 .shake
 docs/book
-!.markdown/SUMMARY.md
+!docs/.markdown/SUMMARY.md
 docs/.markdown

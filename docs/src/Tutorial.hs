@@ -8,7 +8,6 @@
 -- * `OverloadedLists` allow us to use the `[list]` syntax for datatypes other than List, like Vector.
 -- * `QuasiQuotes` enable us to write plain SQL and field names in a `[|quasi-quoter block|]`.
 -- * The Deriving extensions give us more powerful typeclass derivation.
-
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -171,7 +170,8 @@ instance Entity BlogPost where
 insertAuthor :: Author -> DBT IO ()
 insertAuthor = insert @Author
 
--- The result of this function, which we call a “DBT action”, is then passed to [`withPool`](https://hackage.haskell.org/package/pg-entity-0.0.1.0/docs/Database-PostgreSQL-Entity-DBT.html#v:withPool).
+-- The result of this function, which we call a “DBT action”,*
+-- is then passed to [`withPool`](https://hackage.haskell.org/package/pg-entity-0.0.1.0/docs/Database-PostgreSQL-Entity-DBT.html#v:withPool).
 
 -- You can then build a higher-level API endpoint or route controller like that:
 
