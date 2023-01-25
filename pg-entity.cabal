@@ -5,7 +5,7 @@ description:
   A PostgreSQL layer to safely expand your SQL queries with a lightweight eDSL.
   Read the tutorial at https://tchoutri.github.io/pg-entity/Tutorial
 
-version:            0.0.4.1
+version:            0.0.4.2
 homepage:           https://tchoutri.github.io/pg-entity
 bug-reports:        https://github.com/tchoutri/pg-entity/issues
 author:             Théophile Choutri
@@ -113,7 +113,7 @@ library
     , postgresql-simple  ^>=0.6
     , resource-pool      ^>=0.3
     , safe-exceptions    ^>=0.1
-    , template-haskell   >=2.15.0.0 && <2.18.0.0.0
+    , template-haskell   >=2.15.0.0 && <2.19.0.0.0
     , text               ^>=2.0
     , text-display       ^>=0.0
     , text-manipulate    ^>=0.3
