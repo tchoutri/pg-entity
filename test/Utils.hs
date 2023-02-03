@@ -51,7 +51,7 @@ liftDB comp = do
       )
 
 migrate :: Connection -> IO ()
-migrate conn = void $ runMigrations False conn [MigrationInitialization, MigrationDirectory "./test/migrations"]
+migrate conn = void $ runMigrations conn defaultOptions [MigrationInitialization, MigrationDirectory "./test/migrations"]
 
 runTestM :: TestM a -> TestEnv -> IO a
 runTestM comp env =

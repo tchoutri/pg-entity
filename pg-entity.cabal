@@ -176,8 +176,8 @@ test-suite entity-test
     , optics-core
     , pg-entity
     , pg-transact
+    , postgresql-migration  ^>=0.2
     , postgresql-simple
-    , postgresql-simple-migration  ^>=0.1
     , resource-pool
     , safe-exceptions
     , tasty
