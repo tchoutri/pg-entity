@@ -1,5 +1,8 @@
 # Revision history for Entity
 
+## 0.0.4.0 -- YYYY-mm-dd
+* Fix the URL of the tutorial
+
 ## 0.0.3.0 -- 2022-10-30
 
 * Fix compilation with resource-pool <0.3 (#51)
