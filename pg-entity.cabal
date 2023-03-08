@@ -84,7 +84,7 @@ common common-ghc-options
     -Wall -Wcompat -Widentities -Wincomplete-record-updates
     -Wincomplete-uni-patterns -Wno-unused-do-bind -Wno-deprecations
     -Wpartial-fields -Wredundant-constraints -fhide-source-paths
-    -funbox-strict-fields -fwrite-ide-info -hiedir=.hie -haddock
+    -funbox-strict-fields
 
 common common-rts-options
   ghc-options: -rtsopts -threaded -with-rtsopts=-N
