@@ -37,7 +37,6 @@ Table of Contents
 
 * [Installation](#installation)
 * [Documentation](#documentation)
-  * [Usage](#usage)
   * [Escape hatches](#escape-hatches)
 * [Acknowledgements](#acknowledgements)
 
@@ -61,7 +60,7 @@ extra-deps:
 
 ## Documentation
 
-You will find the Tutorial [here][docs-url], and you will find below a short showcase of the library.
+* [Tutorial][docs-url]
 
 This library aims to be thoroughly tested, by the means of Oleg Grenrus' [cabal-docspec][docspec]
 and more traditional tests for database roundtrips.
