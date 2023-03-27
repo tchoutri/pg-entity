@@ -352,7 +352,7 @@ deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
 
  @since 0.0.1.0
 -}
-_select :: forall e. Entity e => Query
+_select :: forall e. (Entity e) => Query
 _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> getTableName @e
 
 {-| Produce a SELECT statement with explicit fields for a given entity
@@ -364,7 +364,7 @@ _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> get
 
  @since 0.0.1.0
 -}
-_selectWithFields :: forall e. Entity e => Vector Field -> Query
+_selectWithFields :: forall e. (Entity e) => Vector Field -> Query
 _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <> " FROM " <> quoteName tn
   where
     tn = getTableName @e
@@ -404,7 +404,7 @@ _where fs' = textToQuery $ " WHERE " <> clauseFields
 
  @since 0.0.1.0
 -}
-_selectWhere :: forall e. Entity e => Vector Field -> Query
+_selectWhere :: forall e. (Entity e) => Vector Field -> Query
 _selectWhere fs = _select @e <> _where fs
 
 {-| Produce a SELECT statement where the provided fields are checked for being non-null.
@@ -415,7 +415,7 @@ _selectWhere fs = _select @e <> _where fs
 
  @since 0.0.1.0
 -}
-_selectWhereNotNull :: forall e. Entity e => Vector Field -> Query
+_selectWhereNotNull :: forall e. (Entity e) => Vector Field -> Query
 _selectWhereNotNull fs = _select @e <> textToQuery (" WHERE " <> isNotNull fs)
 
 {-| Produce a SELECT statement where the provided fields are checked for being null.
@@ -425,7 +425,7 @@ _selectWhereNotNull fs = _select @e <> textToQuery (" WHERE " <> isNotNull fs)
 
  @since 0.0.1.0
 -}
-_selectWhereNull :: forall e. Entity e => Vector Field -> Query
+_selectWhereNull :: forall e. (Entity e) => Vector Field -> Query
 _selectWhereNull fs = _select @e <> textToQuery (" WHERE " <> isNull fs)
 
 {-| Produce a SELECT statement where the given field is checked aginst the provided array of values .
@@ -435,7 +435,7 @@ _selectWhereNull fs = _select @e <> textToQuery (" WHERE " <> isNull fs)
 
  @since 0.0.2.0
 -}
-_selectWhereIn :: forall e. Entity e => Field -> Vector Text -> Query
+_selectWhereIn :: forall e. (Entity e) => Field -> Vector Text -> Query
 _selectWhereIn f values = _select @e <> textToQuery (" WHERE " <> isIn f values)
 
 {-| Produce a "SELECT FROM" over two entities.
@@ -548,7 +548,7 @@ _joinSelectOneByField pivotField whereField =
 
  @since 0.0.1.0
 -}
-_insert :: forall e. Entity e => Query
+_insert :: forall e. (Entity e) => Query
 _insert = textToQuery $ "INSERT INTO " <> getTableName @e <> " " <> fs <> " VALUES " <> ps
   where
     fs = inParens (expandFields @e)
@@ -590,7 +590,7 @@ _onConflictDoUpdate conflictTarget fieldsToReplace =
 
  @since 0.0.1.0
 -}
-_update :: forall e. Entity e => Query
+_update :: forall e. (Entity e) => Query
 _update = _updateBy @e (primaryKey @e)
 
 {-| Produce an UPDATE statement for the given entity by the given field.
@@ -602,7 +602,7 @@ _update = _updateBy @e (primaryKey @e)
 
  @since 0.0.1.0
 -}
-_updateBy :: forall e. Entity e => Field -> Query
+_updateBy :: forall e. (Entity e) => Field -> Query
 _updateBy f = _updateFieldsBy @e (fields @e) f
 
 {-| Produce an UPDATE statement for the given entity and fields, by primary key.
@@ -612,7 +612,7 @@ _updateBy f = _updateFieldsBy @e (fields @e) f
 
  @since 0.0.1.0
 -}
-_updateFields :: forall e. Entity e => Vector Field -> Query
+_updateFields :: forall e. (Entity e) => Vector Field -> Query
 _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
 
 {-| Produce an UPDATE statement for the given entity and fields, by the specified field.
@@ -627,7 +627,7 @@ _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
 -}
 _updateFieldsBy
   :: forall e
-   . Entity e
+   . (Entity e)
   => Vector Field
   -- ^ Field names to update
   -> Field
@@ -659,7 +659,7 @@ _updateFieldsBy fs' f =
 
  @since 0.0.1.0
 -}
-_delete :: forall e. Entity e => Query
+_delete :: forall e. (Entity e) => Query
 _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where [primaryKey @e]
 
 {-| Produce a DELETE statement for the given entity and fields
@@ -671,7 +671,7 @@ _delete = textToQuery ("DELETE FROM " <> getTableName @e) <> _where [primaryKey 
 
  @since 0.0.1.0
 -}
-_deleteWhere :: forall e. Entity e => Vector Field -> Query
+_deleteWhere :: forall e. (Entity e) => Vector Field -> Query
 _deleteWhere fs = textToQuery ("DELETE FROM " <> (getTableName @e)) <> _where fs
 
 {-| Produce an ORDER BY clause with one field and a sorting keyword

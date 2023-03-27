@@ -130,10 +130,10 @@ instance (TypeError ('Text "You can't derive an Entity for a type constructor's 
 instance (TypeError ('Text "You don't have to derive GetTableName for a product type")) => GetTableName (e :*: f) where
   getTableName _opts = error "You don't have to derive GetTableName for a product type"
 
-instance GetTableName e => GetTableName (M1 C _1 e) where
+instance (GetTableName e) => GetTableName (M1 C _1 e) where
   getTableName opts = getTableName @e opts
 
-instance GetTableName e => GetTableName (M1 S _1 e) where
+instance (GetTableName e) => GetTableName (M1 S _1 e) where
   getTableName opts = getTableName @e opts
 
 instance
@@ -161,10 +161,10 @@ instance (TypeError ('Text "You can't derive Entity for a a type constructor's f
 instance (GetFields e, GetFields f) => GetFields (e :*: f) where
   getField opts = getField @e opts <> getField @f opts
 
-instance GetFields e => GetFields (M1 C _1 e) where
+instance (GetFields e) => GetFields (M1 C _1 e) where
   getField opts = getField @e opts
 
-instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
+instance (GetFields e) => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
   getField opts = getField @e opts
 
 instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
@@ -320,7 +320,7 @@ newtype UpdateRow a = UpdateRow {getUpdate :: a}
   deriving stock (Eq, Show)
   deriving newtype (Entity)
 
-instance ToRow a => ToRow (UpdateRow a) where
+instance (ToRow a) => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
 
 {-|

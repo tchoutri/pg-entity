@@ -180,7 +180,7 @@ data AuthorInfo = AuthorInfo
   }
   deriving stock (Eq, Show)
 
-mkAuthor :: MonadIO m => AuthorInfo -> m Author
+mkAuthor :: (MonadIO m) => AuthorInfo -> m Author
 mkAuthor AuthorInfo{name = authorName} = do
   authorId <- liftIO $ AuthorId <$> UUID.nextRandom
   createdAt <- liftIO Time.getCurrentTime

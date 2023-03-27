@@ -112,7 +112,7 @@ literal n = "\'" <> escapeSingleQuotes n <> "\'"
 
  @since 0.0.1.0
 -}
-getTableName :: forall e. Entity e => Text
+getTableName :: forall e. (Entity e) => Text
 getTableName = prefix (schema @e) <> quoteName (tableName @e)
 
 {-| Safe getter that quotes a table's primary key
@@ -126,7 +126,7 @@ getTableName = prefix (schema @e) <> quoteName (tableName @e)
 
  @since 0.0.2.0
 -}
-getPrimaryKey :: forall e. Entity e => Text
+getPrimaryKey :: forall e. (Entity e) => Text
 getPrimaryKey = getFieldName $ primaryKey @e
 
 prefix :: Maybe Text -> Text
@@ -151,7 +151,7 @@ getFieldName = quoteName . fieldName
 
  @since 0.0.1.0
 -}
-expandFields :: forall e. Entity e => Text
+expandFields :: forall e. (Entity e) => Text
 expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (getFieldName <$> fields @e)
 
 {-| Produce a comma-separated list of an entity's fields, qualified with the table name
@@ -163,7 +163,7 @@ expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (getFieldName 
 
  @since 0.0.1.0
 -}
-expandQualifiedFields :: forall e. Entity e => Text
+expandQualifiedFields :: forall e. (Entity e) => Text
 expandQualifiedFields = expandQualifiedFields' (fields @e) prefixName
   where
     prefixName = tableName @e
@@ -193,7 +193,7 @@ expandQualifiedFields' fs prefixName = V.foldl1' (\element acc -> element <> ", 
 
  @since 0.0.2.0
 -}
-qualifyField :: forall e. Entity e => Field -> Text
+qualifyField :: forall e. (Entity e) => Field -> Text
 qualifyField f = (\(Field fName _) -> p <> "." <> quoteName fName) f
   where
     p = tableName @e
@@ -241,7 +241,7 @@ placeholder (Field f (Just t)) = quoteName f <> " = ?::" <> t
 
  @since 0.0.2.0
 -}
-placeholder' :: forall e. Entity e => Field -> Text
+placeholder' :: forall e. (Entity e) => Field -> Text
 placeholder' f@(Field _ (Just t)) = qualifyField @e f <> " = ?::" <> t
 placeholder' f = qualifyField @e f <> " = ?"
 

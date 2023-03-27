@@ -56,7 +56,7 @@ data Author = Author
     (Entity)
     via (GenericEntity '[PrimaryKey "author_id", TableName "authors"] Author)
 
-instance HasField x Author a => IsLabel x (Author -> a) where
+instance (HasField x Author a) => IsLabel x (Author -> a) where
   fromLabel = getField @x
 
 -- | Wrapper around the UUID type
@@ -99,7 +99,7 @@ data BlogPost = BlogPost
   deriving stock (Eq, Generic, Ord, Show)
   deriving anyclass (FromRow, ToRow)
 
-instance HasField x BlogPost a => IsLabel x (BlogPost -> a) where
+instance (HasField x BlogPost a) => IsLabel x (BlogPost -> a) where
   fromLabel = getField @x
 
 instance Entity BlogPost where
