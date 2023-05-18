@@ -87,7 +87,7 @@ import GHC.TypeLits
 class Entity e where
   -- | The name of the table in the PostgreSQL database.
   tableName :: Text
-  default tableName :: (GetTableName (Rep e)) => Text
+  default tableName :: GetTableName (Rep e) => Text
   tableName = getTableName @(Rep e) defaultEntityOptions
 
   -- | The name of the schema; will be appended to the table name: schema."tablename"
@@ -96,7 +96,7 @@ class Entity e where
 
   -- | The name of the primary key for the table.
   primaryKey :: Field
-  default primaryKey :: (GetFields (Rep e)) => Field
+  default primaryKey :: GetFields (Rep e) => Field
   primaryKey = newPrimaryKey
     where
       primMod = primaryKeyModifiers defaultEntityOptions
@@ -108,36 +108,36 @@ class Entity e where
 
   -- | The fields of the table.
   fields :: Vector Field
-  default fields :: (GetFields (Rep e)) => Vector Field
+  default fields :: GetFields (Rep e) => Vector Field
   fields = getField @(Rep e) defaultEntityOptions
 
 -- The sub-class that fetches the table name
 class GetTableName (e :: Type -> Type) where
   getTableName :: Options -> Text
 
-instance (TypeError ('Text "You can't derive Entity for a void type")) => GetTableName V1 where
+instance TypeError ('Text "You can't derive Entity for a void type") => GetTableName V1 where
   getTableName _opts = error "You can't derive Entity for a void type"
 
-instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetTableName U1 where
+instance TypeError ('Text "You can't derive Entity for a unit type") => GetTableName U1 where
   getTableName _opts = error "You can't derive Entity for a unit type"
 
-instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetTableName (e :+: f) where
+instance TypeError ('Text "You can't derive Entity for a sum type") => GetTableName (e :+: f) where
   getTableName _opts = error "You can't derive Entity for a sum type"
 
-instance (TypeError ('Text "You can't derive an Entity for a type constructor's field")) => GetTableName (K1 i c) where
+instance TypeError ('Text "You can't derive an Entity for a type constructor's field") => GetTableName (K1 i c) where
   getTableName _opts = error "You can't derive Entity for a type constructor's field"
 
-instance (TypeError ('Text "You don't have to derive GetTableName for a product type")) => GetTableName (e :*: f) where
+instance TypeError ('Text "You don't have to derive GetTableName for a product type") => GetTableName (e :*: f) where
   getTableName _opts = error "You don't have to derive GetTableName for a product type"
 
-instance (GetTableName e) => GetTableName (M1 C _1 e) where
+instance GetTableName e => GetTableName (M1 C _1 e) where
   getTableName opts = getTableName @e opts
 
-instance (GetTableName e) => GetTableName (M1 S _1 e) where
+instance GetTableName e => GetTableName (M1 S _1 e) where
   getTableName opts = getTableName @e opts
 
 instance
-  (KnownSymbol name)
+  KnownSymbol name
   => GetTableName (M1 D ('MetaData name _1 _2 _3) e)
   where
   getTableName Options{tableNameModifiers, fieldModifiers} = tableNameModifiers $ fieldModifiers $ T.pack $ symbolVal (Proxy :: Proxy name)
@@ -146,28 +146,28 @@ instance
 class GetFields (e :: Type -> Type) where
   getField :: Options -> Vector Field
 
-instance (TypeError ('Text "You can't derive Entity for a void type")) => GetFields V1 where
+instance TypeError ('Text "You can't derive Entity for a void type") => GetFields V1 where
   getField _opts = error "You can't derive Entity for a void type"
 
-instance (TypeError ('Text "You can't derive Entity for a unit type")) => GetFields U1 where
+instance TypeError ('Text "You can't derive Entity for a unit type") => GetFields U1 where
   getField _opts = error "You can't derive Entity for a unit type"
 
-instance (TypeError ('Text "You can't derive Entity for a sum type")) => GetFields (e :+: f) where
+instance TypeError ('Text "You can't derive Entity for a sum type") => GetFields (e :+: f) where
   getField _opts = error "You can't derive Entity for a sum type"
 
-instance (TypeError ('Text "You can't derive Entity for a a type constructor's field")) => GetFields (K1 i c) where
+instance TypeError ('Text "You can't derive Entity for a a type constructor's field") => GetFields (K1 i c) where
   getField _opts = error "You can't derive Entity for a type constructor's field"
 
 instance (GetFields e, GetFields f) => GetFields (e :*: f) where
   getField opts = getField @e opts <> getField @f opts
 
-instance (GetFields e) => GetFields (M1 C _1 e) where
+instance GetFields e => GetFields (M1 C _1 e) where
   getField opts = getField @e opts
 
-instance (GetFields e) => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
+instance GetFields e => GetFields (M1 D ('MetaData _1 _2 _3 _4) e) where
   getField opts = getField @e opts
 
-instance (KnownSymbol name) => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
+instance KnownSymbol name => GetFields (M1 S ('MetaSel ('Just name) _1 _2 _3) _4) where
   getField Options{fieldModifiers} = V.singleton $ Field fieldName' Nothing
     where
       fieldName' = fieldModifiers $ T.pack $ symbolVal (Proxy @name)
@@ -267,7 +267,7 @@ instance TextModifier '[] where
 instance (TextModifier x, TextModifier xs) => TextModifier (x ': xs) where
   getTextModifier = getTextModifier @xs . getTextModifier @x
 
-instance (KnownSymbol prefix) => TextModifier (StripPrefix prefix) where
+instance KnownSymbol prefix => TextModifier (StripPrefix prefix) where
   getTextModifier fld = fromMaybe fld (T.stripPrefix prefixToStrip fld)
     where
       prefixToStrip = T.pack $ symbolVal (Proxy @prefix)
@@ -320,7 +320,7 @@ newtype UpdateRow a = UpdateRow {getUpdate :: a}
   deriving stock (Eq, Show)
   deriving newtype (Entity)
 
-instance (ToRow a) => ToRow (UpdateRow a) where
+instance ToRow a => ToRow (UpdateRow a) where
   toRow = (drop <> take) 1 . toRow . getUpdate
 
 {-|

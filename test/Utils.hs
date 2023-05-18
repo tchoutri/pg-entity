@@ -77,19 +77,19 @@ assertEqual expected actual = liftIO $ Test.assertEqual "" expected actual
 
 --
 
-genAuthorId :: (MonadGen m) => m AuthorId
+genAuthorId :: MonadGen m => m AuthorId
 genAuthorId = AuthorId <$> genUUID
 
-genUUID :: (MonadGen m) => m UUID
+genUUID :: MonadGen m => m UUID
 genUUID = UUID.fromWords <$> genWord32 <*> genWord32 <*> genWord32 <*> genWord32
   where
-    genWord32 :: (MonadGen m) => m Word32
+    genWord32 :: MonadGen m => m Word32
     genWord32 = H.word32 (Range.constant minBound maxBound)
 
-genUUIDList :: (MonadGen m) => m UUIDList
+genUUIDList :: MonadGen m => m UUIDList
 genUUIDList = UUIDList . V.fromList <$> H.list (Range.linear 1 10) genUUID
 
-genUTCTime :: (MonadGen m) => m UTCTime
+genUTCTime :: MonadGen m => m UTCTime
 genUTCTime = do
   year <- toInteger <$> H.int (Range.constant 2000 2022)
   month <- H.int (Range.constant 1 12)
@@ -98,10 +98,10 @@ genUTCTime = do
   secs <- toInteger <$> H.int (Range.constant 0 86401)
   pure $ UTCTime date (secondsToDiffTime secs)
 
-genName :: (MonadGen m) => m Text
+genName :: MonadGen m => m Text
 genName = H.text (Range.constant 3 25) H.unicode
 
-genAuthor :: (MonadGen m) => m Author
+genAuthor :: MonadGen m => m Author
 genAuthor = do
   authorId <- genAuthorId
   name <- genName
@@ -115,7 +115,7 @@ data RandomAuthorTemplate m = RandomAuthorTemplate
   }
   deriving stock (Generic)
 
-randomAuthorTemplate :: (MonadIO m) => RandomAuthorTemplate m
+randomAuthorTemplate :: MonadIO m => RandomAuthorTemplate m
 randomAuthorTemplate =
   RandomAuthorTemplate
     { generateAuthorId = H.sample genAuthorId
@@ -123,7 +123,7 @@ randomAuthorTemplate =
     , generateCreatedAt = H.sample genUTCTime
     }
 
-randomAuthor :: (MonadIO m) => RandomAuthorTemplate m -> m Author
+randomAuthor :: MonadIO m => RandomAuthorTemplate m -> m Author
 randomAuthor RandomAuthorTemplate{..} = do
   authorId <- generateAuthorId
   name <- generateName
@@ -141,7 +141,7 @@ instantiateRandomAuthor RandomAuthorTemplate{..} = do
 
 --
 
-genBlogPost :: (MonadGen m) => m BlogPost
+genBlogPost :: MonadGen m => m BlogPost
 genBlogPost = do
   blogPostId <- genBlogPostId
   authorId <- genAuthorId
@@ -151,7 +151,7 @@ genBlogPost = do
   createdAt <- genUTCTime
   pure BlogPost{..}
 
-genBlogPostId :: (MonadGen m) => m BlogPostId
+genBlogPostId :: MonadGen m => m BlogPostId
 genBlogPostId = BlogPostId <$> genUUID
 
 data RandomBlogPostTemplate m = RandomBlogPostTemplate
@@ -164,7 +164,7 @@ data RandomBlogPostTemplate m = RandomBlogPostTemplate
   }
   deriving stock (Generic)
 
-randomBlogPostTemplate :: (MonadIO m) => RandomBlogPostTemplate m
+randomBlogPostTemplate :: MonadIO m => RandomBlogPostTemplate m
 randomBlogPostTemplate =
   RandomBlogPostTemplate
     { generateBlogPostId = H.sample genBlogPostId
@@ -175,7 +175,7 @@ randomBlogPostTemplate =
     , generateCreatedAt = H.sample genUTCTime
     }
 
-randomBlogPost :: (MonadIO m) => RandomBlogPostTemplate m -> m BlogPost
+randomBlogPost :: MonadIO m => RandomBlogPostTemplate m -> m BlogPost
 randomBlogPost RandomBlogPostTemplate{..} = do
   blogPostId <- generateBlogPostId
   authorId <- generateAuthorId

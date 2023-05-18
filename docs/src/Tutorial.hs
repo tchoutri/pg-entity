@@ -5,9 +5,9 @@
 -- ### Setting up
 -- #### Language Extensions
 --
--- * `OverloadedLists` allow us to use the `[list]` syntax for datatypes other than List, like Vector.
--- * `QuasiQuotes` enable us to write plain SQL and field names in a `[|quasi-quoter block|]`.
--- * The Deriving extensions give us more powerful typeclass derivation.
+--   * `OverloadedLists` allow us to use the `[list]` syntax for datatypes other than List, like Vector.
+--   * `QuasiQuotes` enable us to write plain SQL and field names in a `[|quasi-quoter block|]`.
+--   * The Deriving extensions give us more powerful typeclass derivation.
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -180,14 +180,14 @@ data AuthorInfo = AuthorInfo
   }
   deriving stock (Eq, Show)
 
-mkAuthor :: (MonadIO m) => AuthorInfo -> m Author
+mkAuthor :: MonadIO m => AuthorInfo -> m Author
 mkAuthor AuthorInfo{name = authorName} = do
   authorId <- liftIO $ AuthorId <$> UUID.nextRandom
   createdAt <- liftIO Time.getCurrentTime
   pure Author{name = authorName, authorId, createdAt}
 
 addAuthor
-  :: (MonadIO m)
+  :: MonadIO m
   => Pool Connection
   -> AuthorInfo
   -> m ()
@@ -198,7 +198,7 @@ addAuthor pool info = do
 -- And if you want to later select an `Author` based on its `AuthorId`:
 
 getAuthor
-  :: (MonadIO m)
+  :: MonadIO m
   => Pool Connection
   -> AuthorId
   -> m (Maybe Author)

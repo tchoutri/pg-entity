@@ -131,7 +131,7 @@ getAllTitlesByAuthorName = do
   let q =
         _joinSelectWithFields @BlogPost @Author [[field| title |]] [[field| name |]]
           <> _where [[field| name |]]
-  result <- liftDB (query Select q (Only ("Hansi Kürsch" :: Text)) :: (MonadIO m) => DBT m (Vector (Text, Text)))
+  result <- liftDB (query Select q (Only ("Hansi Kürsch" :: Text)) :: MonadIO m => DBT m (Vector (Text, Text)))
   U.assertEqual [("The Script for my requiem", "Hansi Kürsch"), ("Mordred's Song", "Hansi Kürsch")] result
 
 changeAuthorName :: TestM ()
