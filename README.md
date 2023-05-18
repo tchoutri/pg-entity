@@ -99,7 +99,7 @@ I wish to thank
 [docs-url]: https://hackage.haskell.org/package/pg-entity/src/docs/book/index.html
 [docspec]: https://github.com/phadej/cabal-extras/blob/master/cabal-docspec/MANUAL.md
 [pg-transact-hspec]: https://github.com/jfischoff/pg-transact-hspec.git
-[entity-blogpost-fretlink]: https://tech.fretlink.com/yet-another-unsafe-db-layer/
+[entity-blogpost-fretlink]: https://blog.clement.delafargue.name/posts/2020-09-23-yet-another-unsafe-db-layer.html
 [anorm-pg-entity]: https://github.com/CleverCloud/anorm-pg-entity
 [pg-simple]: https://hackage.haskell.org/package/postgresql-simple
 [pg-transact]: https://hackage.haskell.org/package/pg-transact
