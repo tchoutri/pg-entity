@@ -6,8 +6,10 @@ module Utils where
 import Control.Exception.Safe
 import Control.Monad.IO.Class
 import Control.Monad.Reader
+import Data.ByteString (ByteString)
 import Data.Kind
 import Data.Pool (Pool)
+import qualified Data.Pool as Pool
 import Data.Text (Text)
 import Data.Time
 import Data.UUID (UUID)
@@ -17,6 +19,7 @@ import Data.Word
 import Database.PostgreSQL.Entity.DBT (withPool)
 import Database.PostgreSQL.Simple (Connection, SqlError (..))
 import Database.PostgreSQL.Transact
+import Env
 import GHC.Generics
 import Hedgehog (MonadGen (..))
 import qualified Hedgehog.Gen as H
@@ -27,6 +30,7 @@ import qualified Test.Tasty as Test
 import qualified Test.Tasty.HUnit as Test
 
 import Database.PostgreSQL.Entity.Internal.BlogPost
+import qualified Database.PostgreSQL.Simple as PG
 import Database.PostgreSQL.Simple.Migration
 
 newtype TestM (a :: Type) = TestM {getTestM :: ReaderT TestEnv IO a}
@@ -34,8 +38,14 @@ newtype TestM (a :: Type) = TestM {getTestM :: ReaderT TestEnv IO a}
 
 data TestEnv = TestEnv
   { pool :: Pool Connection
+  , connectionInfo :: ByteString
   }
   deriving stock (Generic)
+
+data TestConfig = TestConfig
+  { connectionInfo :: ByteString
+  }
+  deriving stock (Generic, Show, Eq)
 
 liftDB :: DBT IO a -> TestM a
 liftDB comp = do
@@ -196,3 +206,37 @@ instantiateRandomBlogPost RandomBlogPostTemplate{..} = do
   let blogPost = BlogPost{..}
   insertBlogPost blogPost
   pure blogPost
+
+retrieveTestEnv :: IO TestConfig
+retrieveTestEnv =
+  Env.parse id parseTestConfig
+
+parseConnectionInfo :: Parser Error ByteString
+parseConnectionInfo =
+  var str "DB_CONNSTRING" (help "libpq-compatible connection string")
+
+parseTestConfig :: Parser Error TestConfig
+parseTestConfig =
+  TestConfig
+    <$> parseConnectionInfo
+
+testConfigToTestEnv :: TestConfig -> IO TestEnv
+testConfigToTestEnv TestConfig{..} = do
+  let connectionTimeout = 100
+  let maxResources = 10
+  pool <- mkPool connectionInfo connectionTimeout maxResources
+  pure TestEnv{..}
+
+mkPool
+  :: ByteString -- Database access information
+  -> NominalDiffTime -- Allowed timeout
+  -> Int -- Number of connections
+  -> IO (Pool PG.Connection)
+mkPool connectionInfo timeout' maxResources =
+  Pool.newPool $
+    Pool.setNumStripes (Just 10) $
+      Pool.defaultPoolConfig
+        (PG.connectPostgreSQL connectionInfo)
+        PG.close
+        (realToFrac timeout')
+        maxResources
