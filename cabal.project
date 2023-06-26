@@ -16,5 +16,4 @@ package pg-entity
     "-L /usr/pgsql-14/lib" -fwrite-ide-info -hiedir=.hie -haddock
   haddock-options:
     "--optghc=-L /usr/pgsql-14/lib" 
-  -- flags: +prod -- uncomment this to deactivate stdout logging
 allow-newer: all

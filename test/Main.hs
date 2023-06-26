@@ -1,8 +1,6 @@
 module Main where
 
-import Data.Pool (createPool, withResource)
-import qualified Database.PostgreSQL.Simple as PG
-import qualified Database.Postgres.Temp as Postgres.Temp
+import Data.Pool (withResource)
 import qualified EntitySpec
 import qualified GenericsSpec
 import Optics.Core
@@ -24,15 +22,6 @@ specs =
 
 getTestEnvironment :: IO TestEnv
 getTestEnvironment = do
-  eitherDb <- Postgres.Temp.start
-  case eitherDb of
-    Right db -> do
-      pool <-
-        createPool
-          (PG.connectPostgreSQL $ Postgres.Temp.toConnectionString db)
-          PG.close
-          1
-          100000000
-          50
-      pure TestEnv{..}
-    Left _ -> error "meh"
+  TestConfig{..} <- retrieveTestEnv
+  pool <- mkPool connectionInfo 100 10
+  pure TestEnv{..}
