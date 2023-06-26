@@ -3,7 +3,7 @@
 {-# LANGUAGE StrictData #-}
 
 {-|
-  Module      : Database.PostgreSQL.Entity.Internal.BlogPost
+  Module      : BlogPost
   Copyright   : © Clément Delafargue, 2018
                   Théophile Choutri, 2021
                   Koz Ross, 2021
@@ -16,7 +16,7 @@
 
   The models described in this module are used throughout the library's tests and docspecs.
 -}
-module Database.PostgreSQL.Entity.Internal.BlogPost where
+module BlogPost where
 
 import Data.Text (Text)
 import Data.Time (UTCTime)

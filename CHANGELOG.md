@@ -1,7 +1,10 @@
 # Revision history for Entity
 
-## 0.0.4.0 -- YYYY-mm-dd
+## 0.0.4.3 -- 2023-06-26
 * Fix the URL of the tutorial
+* Bump version bounds for `base`, `resource-pool` and `template-haskell` 
+* Bump supported minor GHC versions
+* Internalise `Database.PostgreSQL.Entity.Internal.BlogPost` for the tests
 
 ## 0.0.3.0 -- 2022-10-30
 

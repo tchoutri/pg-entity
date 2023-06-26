@@ -98,7 +98,6 @@ library
     Database.PostgreSQL.Entity
     Database.PostgreSQL.Entity.DBT
     Database.PostgreSQL.Entity.Internal
-    Database.PostgreSQL.Entity.Internal.BlogPost
     Database.PostgreSQL.Entity.Internal.QQ
     Database.PostgreSQL.Entity.Internal.Unsafe
     Database.PostgreSQL.Entity.Types
@@ -158,6 +157,7 @@ test-suite entity-test
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
   other-modules:
+    BlogPost
     EntitySpec
     GenericsSpec
     Utils

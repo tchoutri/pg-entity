@@ -3,6 +3,7 @@
 
 module GenericsSpec where
 
+import BlogPost
 import Data.Aeson
 import Data.Text
 import Data.Time
@@ -10,7 +11,6 @@ import Data.UUID
 import Data.Vector
 import Database.PostgreSQL.Entity
 import Database.PostgreSQL.Entity.Internal (getTableName)
-import Database.PostgreSQL.Entity.Internal.BlogPost
 import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 import Database.PostgreSQL.Simple

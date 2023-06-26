@@ -4,6 +4,16 @@
 
 module EntitySpec where
 
+import BlogPost
+  ( Author (..)
+  , AuthorId (..)
+  , BlogPost (..)
+  , bulkInsertAuthors
+  , bulkInsertBlogPosts
+  , insertAuthor
+  , insertBlogPost
+  , upsertBlogPost
+  )
 import Control.Monad (void)
 import Control.Monad.IO.Class
 import Data.Text (Text)
@@ -26,16 +36,6 @@ import Database.PostgreSQL.Entity
   , _where
   )
 import Database.PostgreSQL.Entity.DBT (QueryNature (..), query)
-import Database.PostgreSQL.Entity.Internal.BlogPost
-  ( Author (..)
-  , AuthorId (..)
-  , BlogPost (..)
-  , bulkInsertAuthors
-  , bulkInsertBlogPosts
-  , insertAuthor
-  , insertBlogPost
-  , upsertBlogPost
-  )
 import Database.PostgreSQL.Simple (Only (Only))
 import Database.PostgreSQL.Transact (DBT)
 

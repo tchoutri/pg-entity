@@ -29,7 +29,7 @@ import Test.Tasty (TestTree)
 import qualified Test.Tasty as Test
 import qualified Test.Tasty.HUnit as Test
 
-import Database.PostgreSQL.Entity.Internal.BlogPost
+import BlogPost
 import qualified Database.PostgreSQL.Simple as PG
 import Database.PostgreSQL.Simple.Migration
 
