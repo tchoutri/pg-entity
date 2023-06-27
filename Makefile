@@ -25,10 +25,10 @@ style: ## Run the code styler (stylish-haskell)
 	@find docs/src test src -name "*.hs" | xargs -P $(PROCS) -I {} fourmolu -q --mode inplace {}
 
 docs-build: ## Generate the documentation
-	@cd docs; mkdocs build
+	@cabal run book -- process
 
 docs-serve: ## Start a web server to serve the documentation
-	@cd docs; mkdocs serve
+	@cd docs; mdbook serve --open
 
 db-create: ## Create the database
 	@createdb -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) $(DB_DATABASE)
