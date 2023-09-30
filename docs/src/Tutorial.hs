@@ -18,6 +18,8 @@
 module Tutorial where
 
 -- Then, let's import some data-types and modules:
+
+import Control.Monad.IO.Class (MonadIO (..))
 import Data.Pool (Pool)
 import Data.Text (Text)
 import Data.Time (UTCTime)
@@ -28,7 +30,6 @@ import Database.PostgreSQL.Simple.ToField
 import Database.PostgreSQL.Transact (DBT)
 import GHC.Generics
 
-import Control.Monad.Error
 import qualified Data.Time as Time
 import qualified Data.UUID.V4 as UUID
 import Database.PostgreSQL.Entity

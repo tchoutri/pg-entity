@@ -164,7 +164,7 @@ test-suite entity-test
 
   hs-source-dirs: test
   build-depends:
-    , aeson
+    , aeson                 <2.1.0
     , base
     , bytestring
     , containers

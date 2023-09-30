@@ -3,9 +3,10 @@
 
 module Utils where
 
-import Control.Exception.Safe
-import Control.Monad.IO.Class
-import Control.Monad.Reader
+import Control.Exception.Safe (MonadThrow, catch, throw)
+import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO (..))
+import Control.Monad.Reader (ReaderT (..), ask)
 import Data.ByteString (ByteString)
 import Data.Kind
 import Data.Pool (Pool)
