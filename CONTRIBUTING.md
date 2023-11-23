@@ -12,7 +12,7 @@ All you have to do is
 
 #### Nix Tips for Beginners ####
 
-Get setup with Nix: `insert-url-here`
+Get setup with Nix: https://nixos.org/download#download-nix
 
 Start the Nix daemon if the install tells you that it's not compatible
 with your init system:
