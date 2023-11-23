@@ -31,4 +31,6 @@ This works for the multi-user setup and the single-user setup.
 Once your development environment is setup you should be able to use
 the `test` target in the Makefile to run `./scripts/run-tests.sh`
 which will source `environment.sh`, connect to the PostgreSQL database
-from there, and setup and run the integration stests.
+from there, and setup and run the integration tests:
+
+   $ <pg-entity> make test
