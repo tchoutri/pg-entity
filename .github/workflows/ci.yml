@@ -79,8 +79,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ${{ steps.setup-haskell.outputs.cabal-store }}
-        key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
-        restore-keys: ${{ runner.os }}-${{ matrix.ghc }}-
+        key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-cabal-${{ hashFiles('**/plan.json') }}
+        restore-keys: ${{ runner.os }}-ghc-${{ matrix.ghc }}-
 
     - name: Build
       run: |
