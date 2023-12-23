@@ -35,28 +35,9 @@ Its dependency footprint is optimised for my own setups, and as such it makes us
 Table of Contents
 =================
 
-* [Installation](#installation)
 * [Documentation](#documentation)
   * [Escape hatches](#escape-hatches)
 * [Acknowledgements](#acknowledgements)
-
-## Installation
-
-At present time, `pg-entity` is published on Hackage but not on Stackage. To use it in your projects, add it in your
-cabal file like this:
-
-```
-pg-entity ^>= 0.0
-```
-
-or in your `stack.yaml` file:
-
-```
-extra-deps:
-  - pg-entity-0.0.4.0
-```
-
-* [List of supported GHC versions](https://github.com/tchoutri/pg-entity/blob/main/pg-entity.cabal#L16)
 
 ## Documentation
 
