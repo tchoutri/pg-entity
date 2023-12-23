@@ -1,5 +1,8 @@
 # Revision history for Entity
 
+## 0.0.4.4 -- 2024-12-23
+* Remove extraneous quoting of table name in _selectWithFields
+
 ## 0.0.4.3 -- 2023-06-26
 * Fix the URL of the tutorial
 * Bump version bounds for `base`, `resource-pool` and `template-haskell` 
