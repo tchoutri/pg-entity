@@ -365,7 +365,7 @@ _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> get
  @since 0.0.1.0
 -}
 _selectWithFields :: forall e. Entity e => Vector Field -> Query
-_selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <> " FROM " <> quoteName tn
+_selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <> " FROM " <> tn
   where
     tn = getTableName @e
 

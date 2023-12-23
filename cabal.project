@@ -16,4 +16,3 @@ package pg-entity
     "-L /usr/pgsql-14/lib" -fwrite-ide-info -hiedir=.hie -haddock
   haddock-options:
     "--optghc=-L /usr/pgsql-14/lib" 
-allow-newer: all
