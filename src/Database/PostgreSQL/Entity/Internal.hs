@@ -53,14 +53,63 @@ import Database.PostgreSQL.Entity.Internal.Unsafe (Field (Field))
 import Database.PostgreSQL.Entity.Types
 
 {- $setup
- >>> :set -XQuasiQuotes
- >>> :set -XOverloadedLists
- >>> :set -XTypeApplications
- >>> import Database.PostgreSQL.Entity
- >>> import Database.PostgreSQL.Entity.Types
- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
- >>> import Database.PostgreSQL.Entity.Internal.QQ
- >>> import Database.PostgreSQL.Entity.Internal.Unsafe
+>>> :set -XQuasiQuotes
+>>> :set -XOverloadedStrings
+>>> :set -XOverloadedLists
+>>> :set -XTypeApplications
+>>> import Database.PostgreSQL.Entity
+>>> import Database.PostgreSQL.Simple.FromRow (FromRow(..))
+>>> import Database.PostgreSQL.Simple.ToRow
+>>> import Database.PostgreSQL.Entity.Types
+>>> import Database.PostgreSQL.Entity.Internal
+>>> import Database.PostgreSQL.Entity.Internal.QQ
+>>> import Database.PostgreSQL.Simple.Types (Query (..))
+>>> import Data.Vector (Vector)
+>>> import qualified Data.Vector as V
+>>> import Data.Time (UTCTime)
+>>> import GHC.Generics (Generic)
+>>> :{
+>>> data Author = Author
+>>>   { authorId :: Int
+>>>   , name :: Text
+>>>   , createdAt :: UTCTime
+>>>   }
+>>>   deriving stock (Eq, Generic, Ord, Show)
+>>>   deriving anyclass (FromRow, ToRow)
+>>>   deriving
+>>>     (Entity)
+>>>     via (GenericEntity '[PrimaryKey "author_id", TableName "authors"] Author)
+>>>
+>>> data BlogPost = BlogPost
+>>>   { blogPostId :: Int
+>>>   -- ^ Primary key
+>>>   , authorId :: Int
+>>>   -- ^ Foreign keys, for which we need an explicit type annotation
+>>>   , intList :: Vector Int
+>>>   , title :: Text
+>>>   , content :: Text
+>>>   , createdAt :: UTCTime
+>>>   }
+>>>   deriving stock (Eq, Generic, Ord, Show)
+>>>   deriving anyclass (FromRow, ToRow)
+>>>   deriving
+>>>     (Entity)
+>>>     via (GenericEntity '[PrimaryKey "blog_post_id", TableName "blogposts"] BlogPost)
+>>>
+>>> data Tags = Tags
+>>>   { category :: Text
+>>>   , labels :: [Text]
+>>>   }
+>>>
+>>> instance Entity Tags where
+>>>   tableName = "tags"
+>>>   schema = Just "public"
+>>>   primaryKey = [field| category |]
+>>>   fields =
+>>>     [ [field| category |]
+>>>     , [field| labels |]
+>>>     ]
+>>> :}
 -}
 
 {-| Wrap the given text between parentheses
@@ -147,7 +196,7 @@ getFieldName = quoteName . fieldName
  __Examples__
 
  >>> expandFields @BlogPost
- "\"blogpost_id\", \"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\""
+ "\"blog_post_id\", \"author_id\", \"int_list\", \"title\", \"content\", \"created_at\""
 
  @since 0.0.1.0
 -}
@@ -159,7 +208,7 @@ expandFields = V.foldl1' (\element acc -> element <> ", " <> acc) (getFieldName 
  __Examples__
 
  >>> expandQualifiedFields @BlogPost
- "blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\""
+ "blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\""
 
  @since 0.0.1.0
 -}
@@ -173,7 +222,7 @@ expandQualifiedFields = expandQualifiedFields' (fields @e) prefixName
  __Examples__
 
  >>> expandQualifiedFields' (fields @BlogPost) "legacy"
- "legacy.\"blogpost_id\", legacy.\"author_id\", legacy.\"uuid_list\", legacy.\"title\", legacy.\"content\", legacy.\"created_at\""
+ "legacy.\"blog_post_id\", legacy.\"author_id\", legacy.\"int_list\", legacy.\"title\", legacy.\"content\", legacy.\"created_at\""
 
  @since 0.0.1.0
 -}
@@ -203,7 +252,7 @@ qualifyField f = (\(Field fName _) -> p <> "." <> quoteName fName) f
  __Examples__
 
  >>> qualifyFields "legacy" (fields @BlogPost)
- [Field "legacy.\"blogpost_id\"" Nothing,Field "legacy.\"author_id\"" Nothing,Field "legacy.\"uuid_list\"" Nothing,Field "legacy.\"title\"" Nothing,Field "legacy.\"content\"" Nothing,Field "legacy.\"created_at\"" Nothing]
+ [Field "legacy.\"blog_post_id\"" Nothing,Field "legacy.\"author_id\"" Nothing,Field "legacy.\"int_list\"" Nothing,Field "legacy.\"title\"" Nothing,Field "legacy.\"content\"" Nothing,Field "legacy.\"created_at\"" Nothing]
 
  @since 0.0.1.0
 -}
@@ -221,7 +270,7 @@ qualifyFields p fs = fmap (\(Field f t) -> Field (p <> "." <> quoteName f) t) fs
  "\"ids\" = ?"
 
  >>> fmap placeholder $ fields @BlogPost
- ["\"blogpost_id\" = ?","\"author_id\" = ?","\"uuid_list\" = ?","\"title\" = ?","\"content\" = ?","\"created_at\" = ?"]
+ ["\"blog_post_id\" = ?","\"author_id\" = ?","\"int_list\" = ?","\"title\" = ?","\"content\" = ?","\"created_at\" = ?"]
 
  @since 0.0.1.0
 -}
@@ -293,13 +342,20 @@ isNull fs' = fold $ intercalateVector " AND " (fmap process fieldNames)
     fieldNames = fmap fieldName fs'
     process f = quoteName f <> " IS NULL"
 
+{-| Produce an "IS (<value1>, <value2>, …, <valueN>)" clause
+
+>>> isIn [field| colour |] [ "yellow", "blue", "magenta" ]
+"\"colour\" IN ('yellow', 'blue', 'magenta')"
+
+@since 0.0.2.0
+-}
 isIn :: Field -> Vector Text -> Text
 isIn f values = process f <> " IN (" <> fold (intercalateVector ", " vals) <> ")"
   where
     vals = fmap literal values
     process f' = quoteName $ fieldName f'
 
-{-| Since the 'Query' type has an 'IsString' instance, the process of converting from 'Text' to 'String' to 'Query' is
+{-| Since the 'Query' type has an 'Data.String.IsString' instance, the process of converting from 'Text' to 'String' to 'Query' is
  factored into this function
 
  ⚠ This may be dangerous and an unregulated usage of this function may expose to you SQL injection attacks

@@ -30,6 +30,9 @@ docs-build: ## Generate the documentation
 docs-serve: ## Start a web server to serve the documentation
 	@cd docs; mdbook serve --open
 
+doctest: ## Run the doctests
+	@cabal repl --with-ghc=doctest
+
 db-create: ## Create the database
 	@createdb -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) $(DB_DATABASE)
 

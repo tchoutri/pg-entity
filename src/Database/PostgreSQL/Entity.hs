@@ -98,18 +98,47 @@ import Database.PostgreSQL.Entity.Internal
 import Database.PostgreSQL.Entity.Types
 
 {- $setup
- >>> :set -XQuasiQuotes
- >>> :set -XOverloadedStrings
- >>> :set -XOverloadedLists
- >>> :set -XTypeApplications
- >>> import Database.PostgreSQL.Entity
- >>> import Database.PostgreSQL.Entity.Types
- >>> import Database.PostgreSQL.Entity.Internal
- >>> import Database.PostgreSQL.Entity.Internal.BlogPost
- >>> import Database.PostgreSQL.Entity.Internal.QQ
- >>> import Database.PostgreSQL.Simple.Types (Query (..))
- >>> import Data.Vector (Vector)
- >>> import qualified Data.Vector as V
+>>> :set -XQuasiQuotes
+>>> :set -XOverloadedStrings
+>>> :set -XOverloadedLists
+>>> :set -XTypeApplications
+>>> import Database.PostgreSQL.Entity
+>>> import Database.PostgreSQL.Entity.Types
+>>> import Database.PostgreSQL.Entity.Internal
+>>> import Database.PostgreSQL.Entity.Internal.QQ
+>>> import Database.PostgreSQL.Simple.Types (Query (..))
+>>> import Data.Vector (Vector)
+>>> import qualified Data.Vector as V
+>>> import Data.Time (UTCTime)
+>>> import GHC.Generics (Generic)
+>>> :{
+>>> data Author = Author
+>>>   { authorId :: Int
+>>>   , name :: Text
+>>>   , createdAt :: UTCTime
+>>>   }
+>>>   deriving stock (Eq, Generic, Ord, Show)
+>>>   deriving anyclass (FromRow, ToRow)
+>>>   deriving
+>>>     (Entity)
+>>>     via (GenericEntity '[PrimaryKey "author_id", TableName "authors"] Author)
+>>>
+>>> data BlogPost = BlogPost
+>>>   { blogPostId :: Int
+>>>   -- ^ Primary key
+>>>   , authorId :: Int
+>>>   -- ^ Foreign keys, for which we need an explicit type annotation
+>>>   , intList :: Vector Int
+>>>   , title :: Text
+>>>   , content :: Text
+>>>   , createdAt :: UTCTime
+>>>   }
+>>>   deriving stock (Eq, Generic, Ord, Show)
+>>>   deriving anyclass (FromRow, ToRow)
+>>>   deriving
+>>>     (Entity)
+>>>     via (GenericEntity '[PrimaryKey "blog_post_id", TableName "blogposts"] BlogPost)
+>>> :}
 -}
 
 {- $highlevel
@@ -348,7 +377,7 @@ deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
  __Examples__
 
  >>> _select @BlogPost
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\""
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\""
 
  @since 0.0.1.0
 -}
@@ -359,8 +388,8 @@ _select = textToQuery $ "SELECT " <> expandQualifiedFields @e <> " FROM " <> get
 
  __Examples__
 
- >>> _selectWithFields @BlogPost [ [field| blogpost_id |], [field| created_at |] ]
- "SELECT \"blogposts\".\"blogpost_id\", \"blogposts\".\"created_at\" FROM \"\"blogposts\"\""
+ >>> _selectWithFields @BlogPost [ [field| blog_post_id |], [field| created_at |] ]
+ "SELECT \"blogposts\".\"blog_post_id\", \"blogposts\".\"created_at\" FROM \"blogposts\""
 
  @since 0.0.1.0
 -}
@@ -379,11 +408,11 @@ _selectWithFields fs = textToQuery $ "SELECT " <> expandQualifiedFields' fs tn <
 
  __Examples__
 
- >>> _select @BlogPost <> _where [[field| blogpost_id |]]
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
+ >>> _select @BlogPost <> _where [[field| blog_post_id |]]
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"blog_post_id\" = ?"
 
- >>> _select @BlogPost <> _where [ [field| uuid_list |] ]
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"uuid_list\" = ?"
+ >>> _select @BlogPost <> _where [ [field| int_list |] ]
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"int_list\" = ?"
 
  @since 0.0.1.0
 -}
@@ -397,10 +426,10 @@ _where fs' = textToQuery $ " WHERE " <> clauseFields
  __Examples__
 
  >>> _selectWhere @BlogPost [ [field| author_id |] ]
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" = ?"
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" = ?"
 
  >>> _selectWhere @BlogPost [ [field| author_id |], [field| title |]]
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" = ? AND \"title\" = ?"
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" = ? AND \"title\" = ?"
 
  @since 0.0.1.0
 -}
@@ -411,7 +440,7 @@ _selectWhere fs = _select @e <> _where fs
  r
 
  >>> _selectWhereNotNull @BlogPost [ [field| author_id |] ]
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" IS NOT NULL"
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" IS NOT NULL"
 
  @since 0.0.1.0
 -}
@@ -421,7 +450,7 @@ _selectWhereNotNull fs = _select @e <> textToQuery (" WHERE " <> isNotNull fs)
 {-| Produce a SELECT statement where the provided fields are checked for being null.
 
  >>> _selectWhereNull @BlogPost [ [field| author_id |] ]
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" IS NULL"
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"author_id\" IS NULL"
 
  @since 0.0.1.0
 -}
@@ -431,7 +460,7 @@ _selectWhereNull fs = _select @e <> textToQuery (" WHERE " <> isNull fs)
 {-| Produce a SELECT statement where the given field is checked aginst the provided array of values .
 
  >>> _selectWhereIn @BlogPost [field| title |] [ "Unnamed", "Mordred's Song" ]
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"title\" IN ('Unnamed', 'Mordred''s Song')"
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" WHERE \"title\" IN ('Unnamed', 'Mordred''s Song')"
 
  @since 0.0.2.0
 -}
@@ -443,7 +472,7 @@ _selectWhereIn f values = _select @e <> textToQuery (" WHERE " <> isIn f values)
  __Examples__
 
  >>> _joinSelect @BlogPost @Author
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\", authors.\"author_id\", authors.\"name\", authors.\"created_at\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\", authors.\"author_id\", authors.\"name\", authors.\"created_at\" FROM \"blogposts\" INNER JOIN \"authors\" USING(author_id)"
 
  @since 0.0.1.0
 -}
@@ -510,7 +539,7 @@ _joinSelectWithFields fs1 fs2 =
  __Examples__
 
  >>> _joinSelectOneByField @BlogPost @Author [field| author_id |] [field| name |] :: Query
- "SELECT blogposts.\"blogpost_id\", blogposts.\"author_id\", blogposts.\"uuid_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" INNER JOIN \"authors\" ON \"blogposts\".\"author_id\" = \"authors\".\"author_id\" WHERE authors.\"name\" = ?"
+ "SELECT blogposts.\"blog_post_id\", blogposts.\"author_id\", blogposts.\"int_list\", blogposts.\"title\", blogposts.\"content\", blogposts.\"created_at\" FROM \"blogposts\" INNER JOIN \"authors\" ON \"blogposts\".\"author_id\" = \"authors\".\"author_id\" WHERE authors.\"name\" = ?"
 
  @since 0.0.2.0
 -}
@@ -544,7 +573,7 @@ _joinSelectOneByField pivotField whereField =
  __Examples__
 
  >>> _insert @BlogPost
- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?, ?)"
+ "INSERT INTO \"blogposts\" (\"blog_post_id\", \"author_id\", \"int_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?, ?)"
 
  @since 0.0.1.0
 -}
@@ -558,14 +587,14 @@ _insert = textToQuery $ "INSERT INTO " <> getTableName @e <> " " <> fs <> " VALU
 
  __Examples__
 
- >>> _onConflictDoUpdate [[field| blogpost_id |]] [ [field| title |], [field| content |]]
- " ON CONFLICT (blogpost_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
+ >>> _onConflictDoUpdate [[field| blog_post_id |]] [ [field| title |], [field| content |]]
+ " ON CONFLICT (blog_post_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
 
- >>> _onConflictDoUpdate [[field| blogpost_id |], [field| author_id |]] [ [field| title |], [field| content |]]
- " ON CONFLICT (blogpost_id, author_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
+ >>> _onConflictDoUpdate [[field| blog_post_id |], [field| author_id |]] [ [field| title |], [field| content |]]
+ " ON CONFLICT (blog_post_id, author_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
 
- >>> _insert @BlogPost <> _onConflictDoUpdate [[field| blogpost_id |]] [ [field| title |], [field| content |]]
- "INSERT INTO \"blogposts\" (\"blogpost_id\", \"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (blogpost_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
+ >>> _insert @BlogPost <> _onConflictDoUpdate [[field| blog_post_id |]] [ [field| title |], [field| content |]]
+ "INSERT INTO \"blogposts\" (\"blog_post_id\", \"author_id\", \"int_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (blog_post_id) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content"
 
  @since 0.0.2.0
 -}
@@ -586,7 +615,7 @@ _onConflictDoUpdate conflictTarget fieldsToReplace =
  "UPDATE \"authors\" SET (\"name\", \"created_at\") = ROW(?, ?) WHERE \"author_id\" = ?"
 
  >>> _update @BlogPost
- "UPDATE \"blogposts\" SET (\"author_id\", \"uuid_list\", \"title\", \"content\", \"created_at\") = ROW(?, ?, ?, ?, ?) WHERE \"blogpost_id\" = ?"
+ "UPDATE \"blogposts\" SET (\"author_id\", \"int_list\", \"title\", \"content\", \"created_at\") = ROW(?, ?, ?, ?, ?) WHERE \"blog_post_id\" = ?"
 
  @since 0.0.1.0
 -}
@@ -655,7 +684,7 @@ _updateFieldsBy fs' f =
  __Examples__
 
  >>> _delete @BlogPost
- "DELETE FROM \"blogposts\" WHERE \"blogpost_id\" = ?"
+ "DELETE FROM \"blogposts\" WHERE \"blog_post_id\" = ?"
 
  @since 0.0.1.0
 -}

@@ -27,8 +27,8 @@ import Text.Parsec (Parsec, anyChar, manyTill, parse, space, spaces, string, try
 
  > instance Entity BlogPost where
  >   tableName  = "blogposts"
- >   primaryKey = [field| blogpost_id |]
- >   fields = [ [field| blogpost_id |]
+ >   primaryKey = [field| blog_post_id |]
+ >   fields = [ [field| blog_post_id |]
  >            , [field| author_id |]
  >            , [field| uuid_list :: uuid[] |] -- ← This is where we specify an optional PostgreSQL type annotation
  >            , [field| title |]

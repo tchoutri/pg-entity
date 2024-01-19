@@ -72,7 +72,6 @@ jobs:
         touch ~/.pgpass
         chmod 0600 ~/.pgpass
         echo "${FLORA_DB_HOST}:${FLORA_DB_PORT}:${FLORA_DB_DATABASE}:${FLORA_DB_USER}:${FLORA_DB_PASSWORD}" > .pgpass
-        cabal freeze
 
     - name: Cache
       uses: actions/cache@v3
@@ -85,8 +84,12 @@ jobs:
       run: |
         echo "$HOME/.local/bin" >> $GITHUB_PATH
         make build
+        cabal install doctest
         cabal install postgresql-migration
 
+    - name: Doctests
+      run: |
+          make doctest
     - name: Test
       run: |
         source environment.sh
