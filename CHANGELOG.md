@@ -1,6 +1,10 @@
 # Revision history for Entity
 
-## 0.0.4.4 -- 2024-12-23
+## 0.0.5.0 -- 2024-01-19
+
+* Update version of `bytestring` to 0.12, `text` to 2.1 and `postgresql-simple` to 0.7 ([#72](https://github.com/tchoutri/pg-entity/pull/72))
+
+## 0.0.4.4 -- 2023-12-23
 * Remove extraneous quoting of table name in _selectWithFields
 
 ## 0.0.4.3 -- 2023-06-26

@@ -5,7 +5,7 @@ description:
   A PostgreSQL layer to safely expand your SQL queries with a lightweight eDSL.
   Read the tutorial at https://hackage.haskell.org/package/pg-entity/src/docs/book/index.html
 
-version:            0.0.4.4
+version:            0.0.5.0
 homepage:
   https://hackage.haskell.org/package/pg-entity/src/docs/book/index.html
 
@@ -16,7 +16,7 @@ category:           Database
 license:            MIT
 build-type:         Simple
 tested-with:
-  GHC ==8.8.4 || ==8.10.7 || ==9.0.2 || ==9.2.8 || ==9.4.8
+  GHC ==8.8.4 || ==8.10.7 || ==9.0.2 || ==9.2.8 || ==9.4.8 || ==9.6.4
 
 extra-source-files:
   CHANGELOG.md
