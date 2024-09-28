@@ -39,10 +39,12 @@ import Database.PostgreSQL.Entity.DBT (QueryNature (..), query)
 import Database.PostgreSQL.Simple (Only (Only))
 import Database.PostgreSQL.Transact (DBT)
 
+import qualified Data.Map as Map
 import Data.Maybe (fromJust)
 import qualified Data.Set as S
 import qualified Data.Set as Set
 import Data.Vector (Vector)
+import qualified Data.Vector as Vector
 import Database.PostgreSQL.Entity.Types
 import Optics.Core
 import Test.Tasty
@@ -132,7 +134,11 @@ getAllTitlesByAuthorName = do
         _joinSelectWithFields @BlogPost @Author [[field| title |]] [[field| name |]]
           <> _where [[field| name |]]
   result <- liftDB (query Select q (Only ("Hansi Kürsch" :: Text)) :: MonadIO m => DBT m (Vector (Text, Text)))
-  U.assertEqual [("The Script for my requiem", "Hansi Kürsch"), ("Mordred's Song", "Hansi Kürsch")] result
+  let actualMap = Map.fromList $ Vector.toList result
+  let expectedMap = Map.fromList [("The Script for my requiem", "Hansi Kürsch"), ("Mordred's Song", "Hansi Kürsch")]
+  U.assertEqual
+    expectedMap
+    actualMap
 
 changeAuthorName :: TestM ()
 changeAuthorName = do
