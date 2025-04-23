@@ -109,11 +109,11 @@ library
     , pg-transact        ^>=0.3
     , postgresql-simple  ^>=0.7
     , resource-pool      ^>=0.4
-    , template-haskell   >=2.15.0.0 && <2.22.0.0.0
+    , template-haskell   >=2.15.0.0 && <2.23.0.0.0
     , text               ^>=2.1
-    , text-display       ^>=0.0
+    , text-display       ^>=1.0
     , text-manipulate    ^>=0.3
-    , time               ^>=1.12
+    , time               ^>=1.14
     , vector             ^>=0.13
 
   if flag(prod)
