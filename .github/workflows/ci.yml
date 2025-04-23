@@ -63,7 +63,7 @@ jobs:
         sudo apt install -y postgresql libpq-dev 
         wget https://github.com/rust-lang/mdBook/releases/download/v0.4.30/mdbook-v0.4.30-x86_64-unknown-linux-gnu.tar.gz
         tar -xzvf *.tar.gz
-        mkdir "$HOME/.local/bin"
+        mkdir -p "$HOME/.local/bin"
         mv mdbook $HOME/.local/bin/mdbook
         echo "/usr/lib/postgresql/14/bin/" >> $GITHUB_PATH
         echo "$HOME/.ghcup/bin" >> $GITHUB_PATH

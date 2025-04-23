@@ -1,5 +1,9 @@
 # Revision history for Entity
 
+## 0.0.5.1 -- 2025-04-23
+
+* Update dependencies
+
 ## 0.0.5.0 -- 2024-01-19
 
 * Update version of `bytestring` to 0.12, `text` to 2.1 and `postgresql-simple` to 0.7 ([#72](https://github.com/tchoutri/pg-entity/pull/72))
