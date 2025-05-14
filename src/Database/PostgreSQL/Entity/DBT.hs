@@ -41,6 +41,7 @@ import Data.Int
 import Data.Maybe (listToMaybe)
 import Data.Pool (Pool, createPool, withResource)
 import Data.Time (NominalDiffTime)
+import GHC.Stack
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 
@@ -52,7 +53,8 @@ import qualified Database.PostgreSQL.Transact as PGT
  @since 0.0.1.0
 -}
 mkPool
-  :: ConnectInfo -- Database access information
+  :: HasCallStack
+  => ConnectInfo -- Database access information
   -> Int -- Number of sub-pools
   -> NominalDiffTime -- Allowed timeout
   -> Int -- Number of connections
@@ -79,7 +81,7 @@ mkPool connectInfo subPools timeout connections =
  @since 0.0.1.0
 -}
 #if MIN_VERSION_resource_pool(0,3,0)
-withPool :: (MonadIO m) => Pool Connection -> PGT.DBT IO a -> m a
+withPool :: (HasCallStack, MonadIO m) => Pool Connection -> PGT.DBT IO a -> m a
 withPool pool action = liftIO $ withResource pool (\conn -> PGT.runDBTSerializable action conn)
 #else
 withPool :: (MonadBaseControl IO m) => Pool Connection -> PGT.DBT m a -> m a
@@ -91,7 +93,7 @@ withPool pool action = withResource pool (\conn -> PGT.runDBTSerializable action
  @since 0.0.1.0
 -}
 query
-  :: (ToRow params, FromRow result, MonadIO m)
+  :: (HasCallStack, ToRow params, FromRow result, MonadIO m)
   => QueryNature
   -> Query
   -> params
@@ -105,7 +107,7 @@ query queryNature q params = do
  @since 0.0.1.0
 -}
 query_
-  :: (FromRow result, MonadIO m)
+  :: (HasCallStack, FromRow result, MonadIO m)
   => QueryNature
   -> Query
   -> PGT.DBT m (Vector result)
@@ -118,7 +120,7 @@ query_ queryNature q = do
  @since 0.0.1.0
 -}
 queryOne
-  :: (ToRow params, FromRow result, MonadIO m)
+  :: (HasCallStack, ToRow params, FromRow result, MonadIO m)
   => QueryNature
   -> Query
   -> params
@@ -134,7 +136,7 @@ queryOne queryNature q params = do
  @since 0.0.2.0
 -}
 queryOne_
-  :: (FromRow result, MonadIO m)
+  :: (HasCallStack, FromRow result, MonadIO m)
   => QueryNature
   -> Query
   -> PGT.DBT m (Maybe result)
@@ -147,7 +149,7 @@ queryOne_ queryNature q = do
  @since 0.0.1.0
 -}
 execute
-  :: (ToRow params, MonadIO m)
+  :: (HasCallStack, ToRow params, MonadIO m)
   => QueryNature
   -> Query
   -> params
@@ -161,7 +163,7 @@ execute queryNature q params = do
  @since 0.0.2.0
 -}
 executeMany
-  :: (ToRow params, MonadIO m)
+  :: (HasCallStack, ToRow params, MonadIO m)
   => QueryNature
   -> Query
   -> [params]
@@ -171,15 +173,15 @@ executeMany queryNature q params = do
   PGT.executeMany q params
 
 #ifndef PROD
-displayColoured :: (MonadIO m) => ByteString -> ByteString -> PGT.DBT m ()
+displayColoured :: (HasCallStack, MonadIO m) => ByteString -> ByteString -> PGT.DBT m ()
 displayColoured colour text = liftIO $ BS.hPutStrLn stdout (formatWith [colour] text)
 #endif
 
 #ifdef PROD
-logQueryFormat :: (Monad m) => QueryNature -> Query -> params -> PGT.DBT m ()
+logQueryFormat :: (HasCallStack, Monad m) => QueryNature -> Query -> params -> PGT.DBT m ()
 logQueryFormat _ _ _ = pure ()
 #else
-logQueryFormat :: (ToRow params, MonadIO m)
+logQueryFormat :: (HasCallStack, ToRow params, MonadIO m)
                => QueryNature -> Query -> params -> PGT.DBT m ()
 logQueryFormat queryNature q params = do
   msg <- PGT.formatQuery q params
@@ -191,10 +193,10 @@ logQueryFormat queryNature q params = do
 #endif
 
 #ifdef PROD
-logQueryFormatMany :: (Monad m) => QueryNature -> Query -> [params] -> PGT.DBT m ()
+logQueryFormatMany :: (HasCallStack, Monad m) => QueryNature -> Query -> [params] -> PGT.DBT m ()
 logQueryFormatMany _ _ _ = pure ()
 #else
-logQueryFormatMany :: (ToRow params, MonadIO m) => QueryNature -> Query -> [params] -> PGT.DBT m ()
+logQueryFormatMany :: (HasCallStack, ToRow params, MonadIO m) => QueryNature -> Query -> [params] -> PGT.DBT m ()
 logQueryFormatMany queryNature q params = do
   msg <- formatMany q params
   case queryNature of
@@ -203,7 +205,7 @@ logQueryFormatMany queryNature q params = do
     Insert -> displayColoured yellow msg
     Delete -> displayColoured red msg
 
-formatMany :: (ToRow q, MonadIO m) => Query -> [q] -> PGT.DBT m ByteString
+formatMany :: (HasCallStack, ToRow q, MonadIO m) => Query -> [q] -> PGT.DBT m ByteString
 formatMany q xs = PGT.getConnection >>= \conn -> liftIO $ Simple.formatMany conn q xs
 #endif
 
