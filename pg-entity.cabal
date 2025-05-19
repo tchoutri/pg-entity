@@ -34,13 +34,6 @@ extra-doc-files:
   -- ./docs/book/fonts/*.woff2
   -- ./docs/book/searchindex.json
 
-flag prod
-  description:
-    This flag enables features for production usage, like disabling logs
-
-  default:     False
-  manual:      True
-
 flag book
   description: Enable the generation of the book
   default:     False
@@ -104,7 +97,6 @@ library
   build-depends:
     , base               >=4.12     && <5.0
     , bytestring         ^>=0.12
-    , colourista         ^>=0.1
     , parsec             ^>=3.1
     , pg-transact        ^>=0.3
     , postgresql-simple  ^>=0.7
@@ -113,11 +105,8 @@ library
     , text               ^>=2.1
     , text-display       ^>=1.0
     , text-manipulate    ^>=0.3
-    , time               ^>=1.12
+    , time               ^>=1.15
     , vector             ^>=0.13
-
-  if flag(prod)
-    cpp-options: -DPROD
 
 executable book
   import:         common-extensions
