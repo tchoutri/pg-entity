@@ -7,12 +7,3 @@ flags: +book
 documentation: True
 
 test-show-details: direct
-
-extra-lib-dirs:
-  /usr/pgsql-14/lib
-
-package pg-entity
-  ghc-options:
-    "-L /usr/pgsql-14/lib" -fwrite-ide-info -hiedir=.hie -haddock
-  haddock-options:
-    "--optghc=-L /usr/pgsql-14/lib" 
