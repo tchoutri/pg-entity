@@ -22,6 +22,8 @@ module Database.PostgreSQL.Entity
 
     -- * High-level API
     -- $highlevel
+ 
+    -- ** Selection
   , selectById
   , selectOneByField
   , selectManyByField
@@ -93,7 +95,7 @@ import Database.PostgreSQL.Simple.Types (Query (..))
 import Database.PostgreSQL.Transact (DBT)
 
 import Data.Text (Text)
-import Database.PostgreSQL.Entity.DBT (QueryNature (..), execute, executeMany, query, queryOne, queryOne_, query_)
+import Database.PostgreSQL.Entity.DBT (execute, executeMany, query, queryOne, queryOne_, query_)
 import Database.PostgreSQL.Entity.Internal
 import Database.PostgreSQL.Entity.Types
 
@@ -174,7 +176,7 @@ selectOneByField
   => Field
   -> value
   -> DBT m (Maybe e)
-selectOneByField f value = queryOne Select (_selectWhere @e [f]) value
+selectOneByField f value = queryOne (_selectWhere @e [f]) value
 
 {-| Select potentially many entities by a provided field.
 
@@ -186,7 +188,7 @@ selectManyByField
   => Field
   -> value
   -> DBT m (Vector e)
-selectManyByField f value = query Select (_selectWhere @e [f]) value
+selectManyByField f value = query (_selectWhere @e [f]) value
 
 {-| Select statement with a non-null condition
 
@@ -199,7 +201,7 @@ selectWhereNotNull
    . (Entity e, FromRow e, MonadIO m)
   => Vector Field
   -> DBT m (Vector e)
-selectWhereNotNull fs = query_ Select (_selectWhereNotNull @e fs)
+selectWhereNotNull fs = query_ (_selectWhereNotNull @e fs)
 
 {-| Select statement with a null condition
 
@@ -212,7 +214,7 @@ selectWhereNull
    . (Entity e, FromRow e, MonadIO m)
   => Vector Field
   -> DBT m (Vector e)
-selectWhereNull fs = query_ Select (_selectWhereNull @e fs)
+selectWhereNull fs = query_ (_selectWhereNull @e fs)
 
 {-| Select statement when for an entity where the field is one of the options passed
 
@@ -224,7 +226,7 @@ selectOneWhereIn
   => Field
   -> Vector Text
   -> DBT m (Maybe e)
-selectOneWhereIn f values = queryOne_ Select (_selectWhereIn @e f values)
+selectOneWhereIn f values = queryOne_ (_selectWhereIn @e f values)
 
 {-| Perform a INNER JOIN between two entities
 
@@ -234,7 +236,7 @@ joinSelectById
   :: forall e1 e2 m
    . (Entity e1, Entity e2, FromRow e1, MonadIO m)
   => DBT m (Vector e1)
-joinSelectById = query_ Select (_joinSelect @e1 @e2)
+joinSelectById = query_ (_joinSelect @e1 @e2)
 
 {-| Perform a @INNER JOIN ON field1 WHERE field2 = value@ between two entities
 
@@ -251,7 +253,7 @@ joinSelectOneByField
   -- ^ The value of the where clause
   -> DBT m (Vector e1)
 joinSelectOneByField pivot whereClause value =
-  query Select (_joinSelectOneByField @e1 @e2 pivot whereClause) (Only value)
+  query (_joinSelectOneByField @e1 @e2 pivot whereClause) (Only value)
 
 --
 
@@ -264,7 +266,7 @@ selectOrderBy
    . (Entity e, FromRow e, MonadIO m)
   => Vector (Field, SortKeyword)
   -> DBT m (Vector e)
-selectOrderBy sortSpec = query_ Select (_select @e <> _orderByMany sortSpec)
+selectOrderBy sortSpec = query_ (_select @e <> _orderByMany sortSpec)
 
 {-| Insert an entity.
 
@@ -275,7 +277,7 @@ insert
    . (Entity e, ToRow values, MonadIO m)
   => values
   -> DBT m ()
-insert fs = void $ execute Insert (_insert @e) fs
+insert fs = void $ execute (_insert @e) fs
 
 {-| Insert an entity with a "ON CONFLICT DO UPDATE" clause on the primary key as the conflict target
 
@@ -289,7 +291,7 @@ upsert
   -> Vector Field
   -- ^ Fields to replace in case of conflict
   -> DBT m ()
-upsert entity fieldsToReplace = void $ execute Insert (_insert @e <> _onConflictDoUpdate conflictTarget fieldsToReplace) entity
+upsert entity fieldsToReplace = void $ execute (_insert @e <> _onConflictDoUpdate conflictTarget fieldsToReplace) entity
   where
     conflictTarget = V.singleton $ primaryKey @e
 
@@ -302,7 +304,7 @@ insertMany
    . (Entity e, ToRow values, MonadIO m)
   => [values]
   -> DBT m ()
-insertMany values = void $ executeMany Insert (_insert @e) values
+insertMany values = void $ executeMany (_insert @e) values
 
 {-| Update an entity.
 
@@ -319,7 +321,7 @@ update
    . (Entity e, ToRow newValue, MonadIO m)
   => newValue
   -> DBT m ()
-update fs = void $ execute Update (_update @e) (UpdateRow fs)
+update fs = void $ execute (_update @e) (UpdateRow fs)
 
 {-| Update rows of an entity matching the given value
 
@@ -341,7 +343,7 @@ updateFieldsBy
   -> v2
   -- ^ New values of those fields
   -> DBT m Int64
-updateFieldsBy fs (f, oldValue) newValue = execute Update (_updateFieldsBy @e fs f) (toRow newValue ++ toRow (Only oldValue))
+updateFieldsBy fs (f, oldValue) newValue = execute (_updateFieldsBy @e fs f) (toRow newValue ++ toRow (Only oldValue))
 
 {-| Delete an entity according to its primary key.
 
@@ -368,7 +370,7 @@ deleteByField
   => Vector Field
   -> values
   -> DBT m ()
-deleteByField fs values = void $ execute Delete (_deleteWhere @e fs) values
+deleteByField fs values = void $ execute (_deleteWhere @e fs) values
 
 -- * SQL combinators API
 

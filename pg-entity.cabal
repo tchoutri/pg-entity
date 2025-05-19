@@ -96,7 +96,6 @@ library
   hs-source-dirs:  src
   build-depends:
     , base               >=4.12     && <5.0
-    , bytestring         ^>=0.12
     , parsec             ^>=3.1
     , pg-transact        ^>=0.3
     , postgresql-simple  ^>=0.7

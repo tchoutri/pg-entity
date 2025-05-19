@@ -25,7 +25,6 @@ import Data.UUID (UUID)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromField
 import Database.PostgreSQL.Simple.ToField
-import Database.PostgreSQL.Transact (DBT)
 import GHC.Generics
 
 import Control.Monad.IO.Class (MonadIO (..))

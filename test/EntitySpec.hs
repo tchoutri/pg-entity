@@ -35,7 +35,7 @@ import Database.PostgreSQL.Entity
   , _joinSelectWithFields
   , _where
   )
-import Database.PostgreSQL.Entity.DBT (QueryNature (..), query)
+import Database.PostgreSQL.Entity.DBT (query)
 import Database.PostgreSQL.Simple (Only (Only))
 import Database.PostgreSQL.Transact (DBT)
 
@@ -133,7 +133,7 @@ getAllTitlesByAuthorName = do
   let q =
         _joinSelectWithFields @BlogPost @Author [[field| title |]] [[field| name |]]
           <> _where [[field| name |]]
-  result <- liftDB (query Select q (Only ("Hansi Kürsch" :: Text)) :: MonadIO m => DBT m (Vector (Text, Text)))
+  result <- liftDB (query q (Only ("Hansi Kürsch" :: Text)) :: MonadIO m => DBT m (Vector (Text, Text)))
   let actualMap = Map.fromList $ Vector.toList result
   let expectedMap = Map.fromList [("The Script for my requiem", "Hansi Kürsch"), ("Mordred's Song", "Hansi Kürsch")]
   U.assertEqual
