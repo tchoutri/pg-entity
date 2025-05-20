@@ -5,7 +5,7 @@ description:
   A PostgreSQL layer to safely expand your SQL queries with a lightweight eDSL.
   Read the tutorial at https://hackage.haskell.org/package/pg-entity/src/docs/book/index.html
 
-version:            0.0.5.1
+version:            0.0.6.0
 homepage:
   https://hackage.haskell.org/package/pg-entity/src/docs/book/index.html
 
@@ -15,24 +15,24 @@ maintainer:         Théophile Choutri
 category:           Database
 license:            MIT
 build-type:         Simple
-tested-with:        GHC ==9.2.8 || ==9.4.8 || ==9.6.7 || ==9.8.4 || ==9.10.1
+tested-with:        GHC ==9.2.8 || ==9.4.8 || ==9.6.7 || ==9.8.4 || ==9.10.2
 extra-source-files:
   CHANGELOG.md
   LICENSE.md
   README.md
 
 extra-doc-files:
-  -- ./docs/book/*.css
-  -- ./docs/book/*.html
-  -- ./docs/book/*.js
-  -- ./docs/book/css/*.css
-  -- ./docs/book/favicon.png
-  -- ./docs/book/favicon.svg
-  -- ./docs/book/FontAwesome/css/font-awesome.css
-  -- ./docs/book/FontAwesome/fonts/fontawesome-webfont.woff2
-  -- ./docs/book/fonts/*.css
-  -- ./docs/book/fonts/*.woff2
-  -- ./docs/book/searchindex.json
+  ./docs/book/*.css
+  ./docs/book/*.html
+  ./docs/book/*.js
+  ./docs/book/css/*.css
+  ./docs/book/favicon.png
+  ./docs/book/favicon.svg
+  ./docs/book/FontAwesome/css/font-awesome.css
+  ./docs/book/FontAwesome/fonts/fontawesome-webfont.woff2
+  ./docs/book/fonts/*.css
+  ./docs/book/fonts/*.woff2
+  ./docs/book/searchindex.json
 
 flag book
   description: Enable the generation of the book
