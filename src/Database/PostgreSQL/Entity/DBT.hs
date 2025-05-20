@@ -24,17 +24,16 @@ module Database.PostgreSQL.Entity.DBT
   )
 where
 
-
 import Control.Monad.IO.Class
 import Data.Int
 import Data.Maybe (listToMaybe)
 import Data.Pool (Pool, createPool, withResource)
 import Data.Time (NominalDiffTime)
 import Data.Vector (Vector)
-import Database.PostgreSQL.Simple as PG (ConnectInfo, Connection, FromRow, Query, ToRow, close, connect)
-import GHC.Stack
 import qualified Data.Vector as V
+import Database.PostgreSQL.Simple as PG (ConnectInfo, Connection, FromRow, Query, ToRow, close, connect)
 import qualified Database.PostgreSQL.Transact as PGT
+import GHC.Stack
 
 {-| Create a Pool Connection with the appropriate parameters
 
