@@ -22,7 +22,7 @@ module Database.PostgreSQL.Entity
 
     -- * High-level API
     -- $highlevel
- 
+
     -- ** Selection
   , selectById
   , selectOneByField
