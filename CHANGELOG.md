@@ -1,5 +1,9 @@
 # Revision history for Entity
 
+## 0.0.6.0 -- 2025-05-20
+
+* The `prod` flag is removed, end of the experiment. End-users should be in charge of logging the queries.
+
 ## 0.0.5.1 -- 2025-04-23
 
 * Update dependencies
