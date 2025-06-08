@@ -38,6 +38,7 @@ module Database.PostgreSQL.Entity
   , insert
   , insertMany
   , upsert
+  , upsertOnPK_
 
     -- ** Update
   , update
@@ -280,7 +281,7 @@ insert
   -> DBT m ()
 insert fs = void $ execute (_insert @e) fs
 
-{-| Insert an entity with a "ON CONFLICT DO UPDATE" clause on the primary key as the conflict target
+{-| Insert an entity with an "ON CONFLICT DO UPDATE" clause on the primary key as the conflict target
 
  @since 0.0.2.0
 -}
@@ -293,6 +294,20 @@ upsert
   -- ^ Fields to replace in case of conflict
   -> DBT m ()
 upsert entity fieldsToReplace = void $ execute (_insert @e <> _onConflictDoUpdate conflictTarget fieldsToReplace) entity
+  where
+    conflictTarget = V.singleton $ primaryKey @e
+
+{-| Insert an entity with an "ON CONFLICT DO NOTHING" clause
+
+ @since 0.0.2.0
+-}
+upsertOnPK_
+  :: forall e values m
+   . (Entity e, ToRow values, MonadIO m)
+  => values
+  -- ^ Entity to insert
+  -> DBT m ()
+upsertOnPK_ entity = void $ execute (_insert @e <> _onConflictDoNothing conflictTarget ) entity
   where
     conflictTarget = V.singleton $ primaryKey @e
 

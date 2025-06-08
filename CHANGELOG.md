@@ -1,5 +1,9 @@
 # Revision history for Entity
 
+## 0.0.7.0 -- XXXX-XX-XX
+
+* Add `_onConflictDoNothing`
+
 ## 0.0.6.0 -- 2025-05-20
 
 * The `prod` flag is removed, end of the experiment. End-users should be in charge of logging the queries.
