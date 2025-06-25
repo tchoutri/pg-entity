@@ -132,8 +132,6 @@ instance Entity BlogPost where
 -- search in the fields list (of complexity 𝛰(n) whereas the lookup will take 𝛰(1) if the primary key is given in your code. Do this especially if you have
 -- long tables.
 
--- Do it if you have long tables.
-
 -- ### Writing the SQL migrations
 
 -- In a separate file, we will translate our Haskell data models into SQL migrations.
