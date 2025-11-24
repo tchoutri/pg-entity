@@ -307,7 +307,7 @@ upsertOnPK_
   => values
   -- ^ Entity to insert
   -> DBT m ()
-upsertOnPK_ entity = void $ execute (_insert @e <> _onConflictDoNothing conflictTarget ) entity
+upsertOnPK_ entity = void $ execute (_insert @e <> _onConflictDoNothing conflictTarget) entity
   where
     conflictTarget = V.singleton $ primaryKey @e
 
@@ -625,20 +625,21 @@ _onConflictDoUpdate conflictTarget fieldsToReplace =
     replaceField :: Text -> Text
     replaceField f = f <> " = EXCLUDED." <> f
 
--- | Produce a "ON CONFLICT (target) DO NOTHING" statement.
---
--- __Examples__
---
--- >>> _onConflictDoNothing [[field| blog_post_id |]]
--- " ON CONFLICT (blog_post_id) DO NOTHING"
---
--- >>> _onConflictDoNothing [[field| blog_post_id |], [field| author_id |]]
--- " ON CONFLICT (blog_post_id, author_id) DO NOTHING"
---
--- >>> _insert @BlogPost <> _onConflictDoNothing [[field| blog_post_id |]]
--- "INSERT INTO \"blogposts\" (\"blog_post_id\", \"author_id\", \"int_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (blog_post_id) DO NOTHING"
---
--- @since 0.0.2.0
+{-| Produce a "ON CONFLICT (target) DO NOTHING" statement.
+
+__Examples__
+
+>>> _onConflictDoNothing [[field| blog_post_id |]]
+" ON CONFLICT (blog_post_id) DO NOTHING"
+
+>>> _onConflictDoNothing [[field| blog_post_id |], [field| author_id |]]
+" ON CONFLICT (blog_post_id, author_id) DO NOTHING"
+
+>>> _insert @BlogPost <> _onConflictDoNothing [[field| blog_post_id |]]
+"INSERT INTO \"blogposts\" (\"blog_post_id\", \"author_id\", \"int_list\", \"title\", \"content\", \"created_at\") VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (blog_post_id) DO NOTHING"
+
+@since 0.0.2.0
+-}
 _onConflictDoNothing :: Vector Field -> Query
 _onConflictDoNothing conflictTarget =
   textToQuery $ " ON CONFLICT (" <> targetNames <> ") DO NOTHING"
