@@ -101,12 +101,12 @@ library
     , parsec             ^>=3.1
     , pg-transact        ^>=0.3
     , postgresql-simple  ^>=0.7
-    , resource-pool      ^>=0.4
-    , template-haskell   >=2.15.0.0 && <2.23.0.0.0
+    , resource-pool      ^>=0.5
+    , template-haskell   >=2.15.0.0 && <2.25.0.0.0
     , text               ^>=2.1
     , text-display       ^>=1.0
     , text-manipulate    ^>=0.3
-    , time               >=1.12     && <1.16
+    , time               >=1.12     && <1.17
     , vector             ^>=0.13
 
 executable book
