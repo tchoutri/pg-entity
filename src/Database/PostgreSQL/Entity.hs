@@ -371,7 +371,7 @@ updateFieldsBy fs (f, oldValue) newValue = execute (_updateFieldsBy @e fs f) (to
  > let oldName = "Johnson McElroy" :: Text
  > updateFieldsWhere @Author [[field| name |]] [[field| name |]] (newName,oldName)
 
- @since 0.0.1.0
+ @since TODO
 -}
 updateFieldsWhere
   :: forall e values m
@@ -715,7 +715,7 @@ _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
  >>> _updateFieldsWhere @BlogPost [[field| author_id |], [field| title |]] [[field| blogpost_id |], [field| title |]]
  "UPDATE \"blogposts\" SET (\"author_id\", \"title\") = ROW(?, ?) WHERE \"blogpost_id\" = ? AND \"title\" = ?"
 
- @since 0.0.1.0
+ @since TODO
 -}
 _updateFieldsWhere
   :: forall e
