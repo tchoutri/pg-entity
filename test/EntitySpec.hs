@@ -32,6 +32,7 @@ import Database.PostgreSQL.Entity
   , selectWhereNull
   , update
   , updateFieldsBy
+  , updateFieldsWhere
   , _joinSelectWithFields
   , _where
   )
@@ -164,6 +165,19 @@ changeAuthorName = do
   let newName = "Tiberus McElroy" :: Text
   result3 <- liftDB $ updateFieldsBy @Author [[field| name |]] ([field| name |], oldName) (Only newName)
   U.assertEqual 1 result3
+
+  let staleName = "Jane McElroy" :: Text
+  liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure staleName}
+  let freshName = "Sarah McElroy" :: Text
+  result4 <- liftDB $ updateFieldsWhere @Author [[field| name |]] [[field| name |]] (freshName, staleName)
+  U.assertEqual 1 result4
+
+  let previousName = "Andrew Garfield" :: Text
+      currentName = "Cat Garfield" :: Text
+  author3 <- liftDB $ instantiateRandomAuthor randomAuthorTemplate{generateName = pure previousName}
+  let newAuthor3Id = UUID.toText $ getAuthorId $ #authorId author3 :: Text
+  result5 <- liftDB $ updateFieldsWhere @Author [[field| name |]] [[field| author_id |], [field| name |]] (currentName, newAuthor3Id, previousName)
+  U.assertEqual 1 result5
 
 selectWhereIn :: TestM ()
 selectWhereIn = do

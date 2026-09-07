@@ -43,6 +43,7 @@ module Database.PostgreSQL.Entity
     -- ** Update
   , update
   , updateFieldsBy
+  , updateFieldsWhere
 
     -- ** Deletion
   , delete
@@ -73,6 +74,7 @@ module Database.PostgreSQL.Entity
   , _updateBy
   , _updateFields
   , _updateFieldsBy
+  , _updateFieldsWhere
 
     -- ** Deletion
   , _delete
@@ -360,6 +362,28 @@ updateFieldsBy
   -- ^ New values of those fields
   -> DBT m Int64
 updateFieldsBy fs (f, oldValue) newValue = execute (_updateFieldsBy @e fs f) (toRow newValue ++ toRow (Only oldValue))
+
+{-| Update rows of an entity matching the given values
+
+ == Example
+
+ > let newName = "Tiberus McElroy" :: Text
+ > let oldName = "Johnson McElroy" :: Text
+ > updateFieldsWhere @Author [[field| name |]] [[field| name |]] (newName,oldName)
+
+ @since TODO
+-}
+updateFieldsWhere
+  :: forall e values m
+   . (Entity e, MonadIO m, ToRow values)
+  => Vector Field
+  -- ^ Fields to change
+  -> Vector Field
+  -- ^ Field on which to match and its value
+  -> values
+  -- ^ Values of those fields
+  -> DBT m Int64
+updateFieldsWhere fs f values = execute (_updateFieldsWhere @e fs f) values
 
 {-| Delete an entity according to its primary key.
 
@@ -683,6 +707,41 @@ _updateBy f = _updateFieldsBy @e (fields @e) f
 _updateFields :: forall e. Entity e => Vector Field -> Query
 _updateFields fs = _updateFieldsBy @e fs (primaryKey @e)
 
+{-| Produce an UPDATE statement for the given entity and fields, by the specified fields.
+
+ >>> _updateFieldsWhere @Author [[field| name |]] [[field| author_id |], [field| name |]]
+ "UPDATE \"authors\" SET (\"name\") = ROW(?) WHERE \"author_id\" = ? AND \"name\" = ?"
+
+ >>> _updateFieldsWhere @BlogPost [[field| author_id |], [field| title |]] [[field| blogpost_id |], [field| title |]]
+ "UPDATE \"blogposts\" SET (\"author_id\", \"title\") = ROW(?, ?) WHERE \"blogpost_id\" = ? AND \"title\" = ?"
+
+ @since TODO
+-}
+_updateFieldsWhere
+  :: forall e
+   . Entity e
+  => Vector Field
+  -- ^ Field names to update
+  -> Vector Field
+  -- ^ Field on which to match
+  -> Query
+_updateFieldsWhere fs' f =
+  textToQuery
+    ( "UPDATE "
+        <> getTableName @e
+        <> " SET "
+        <> updatedFields
+        <> " = "
+        <> newValues
+    )
+    <> _where f
+  where
+    fs = V.filter (/= (primaryKey @e)) fs'
+    newValues = "ROW" <> inParens (generatePlaceholders fs)
+    updatedFields =
+      inParens $
+        V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . fieldName <$> fs)
+
 {-| Produce an UPDATE statement for the given entity and fields, by the specified field.
 
  >>> _updateFieldsBy @Author [ [field| name |] ] [field| name |]
@@ -701,22 +760,7 @@ _updateFieldsBy
   -> Field
   -- ^ Field on which to match
   -> Query
-_updateFieldsBy fs' f =
-  textToQuery
-    ( "UPDATE "
-        <> getTableName @e
-        <> " SET "
-        <> updatedFields
-        <> " = "
-        <> newValues
-    )
-    <> _where [f]
-  where
-    fs = V.filter (/= (primaryKey @e)) fs'
-    newValues = "ROW" <> inParens (generatePlaceholders fs)
-    updatedFields =
-      inParens $
-        V.foldl1' (\element acc -> element <> ", " <> acc) (quoteName . fieldName <$> fs)
+_updateFieldsBy fs' = _updateFieldsWhere @e fs' . V.singleton
 
 {-| Produce a DELETE statement for the given entity, with a match on the Primary Key
 
